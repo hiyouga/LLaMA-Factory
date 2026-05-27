@@ -114,7 +114,6 @@ class UlyssesAttention(torch.nn.Module):
         # TODO (Reza): change the api on the megatron-deepspeed side so that we only receive all data (q,k, and v) together!
         # in shape : e.g.,  [s/p:h:]
         # (bs, seq_len/N, head_cnt, head_size) -> (bs, seq_len, head_cnt/N, head_size)
-
         # scatter 2, gather 1
         q = SeqAllToAll4D.apply(self.spg, query, self.scatter_idx, self.gather_idx)
         k = SeqAllToAll4D.apply(self.spg, key, self.scatter_idx, self.gather_idx)
@@ -123,19 +122,24 @@ class UlyssesAttention(torch.nn.Module):
         if softmax_scale is None:
             softmax_scale = q.shape[-1] ** -0.5
 
-        if attention_mask is None:
-            if position_ids is not None:
-                attention_mask = torch.ones_like(position_ids).to(torch.int64)
-            else:
-                attention_mask = torch.ones(q.shape[0], q.shape[1], dtype=torch.int64, device=q.device)
+        if position_ids is not None:
+            global_position_ids = [
+                torch.empty_like(position_ids) for _ in range(get_ulysses_sequence_parallel_world_size(self.spg))
+            ]
+            dist.all_gather(global_position_ids, position_ids, group=self.spg)
+            position_ids = torch.cat(global_position_ids, dim=-1).contiguous()
+            attention_mask = None
         else:
-            attention_mask = attention_mask.to(torch.int64)
+            if attention_mask is None:
+                attention_mask = torch.ones(q.shape[0], q.shape[1], dtype=torch.int64, device=q.device)
+            else:
+                attention_mask = attention_mask.to(torch.int64)
 
-        global_attention_mask = [
-            torch.empty_like(attention_mask) for _ in range(get_ulysses_sequence_parallel_world_size(self.spg))
-        ]
-        dist.all_gather(global_attention_mask, attention_mask, group=self.spg)
-        attention_mask = torch.cat(global_attention_mask, dim=1)
+            global_attention_mask = [
+                torch.empty_like(attention_mask) for _ in range(get_ulysses_sequence_parallel_world_size(self.spg))
+            ]
+            dist.all_gather(global_attention_mask, attention_mask, group=self.spg)
+            attention_mask = torch.cat(global_attention_mask, dim=1)
 
         context_layer = self.attn_fn(
             q,

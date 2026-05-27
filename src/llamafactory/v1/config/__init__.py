@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from ..utils.types import AttentionFunction
 from .arg_parser import InputArgument, get_args
 from .arg_utils import BatchingStrategy, ModelClass, SampleBackend
 from .data_args import DataArguments
@@ -21,6 +22,7 @@ from .training_args import TrainingArguments
 
 
 __all__ = [
+    "AttentionFunction",
     "BatchingStrategy",
     "DataArguments",
     "InputArgument",

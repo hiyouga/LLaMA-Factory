@@ -148,7 +148,9 @@ def launch():
         elif command == "dpo":
             raise NotImplementedError("DPO trainer is not implemented yet.")
         elif command == "rm":
-            raise NotImplementedError("RM trainer is not implemented yet.")
+            from llamafactory.v1.trainers.rm_trainer import run_rm
+
+            run_rm()
 
     else:
         print(f"Unknown command: {command}.\n{USAGE}")
@@ -175,9 +177,9 @@ def main():
         # run_dpo()
         raise NotImplementedError("DPO trainer is not implemented yet.")
     elif command == "rm":
-        # from llamafactory.v1.trainers.rm_trainer import run_rm
-        # run_rm()
-        raise NotImplementedError("RM trainer is not implemented yet.")
+        from llamafactory.v1.trainers.rm_trainer import run_rm
+
+        run_rm()
 
 
 if __name__ == "__main__":

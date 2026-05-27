@@ -85,6 +85,10 @@ class TrainingArguments:
         default=42,
         metadata={"help": "Random seed that will be set at the beginning of training."},
     )
+    full_determinism: bool = field(
+        default=False,
+        metadata={"help": "Enable full deterministic mode for reproducible distributed training."},
+    )
     resume_from_checkpoint: str | None = field(
         default=None,
         metadata={"help": "Path to a checkpoint directory to resume training from, or 'auto' to find the latest."},
@@ -116,3 +120,9 @@ class TrainingArguments:
         self.dist_config = get_plugin_config(self.dist_config)
         self.optim_config = get_plugin_config(self.optim_config)
         self.lr_scheduler_config = get_plugin_config(self.lr_scheduler_config)
+
+        if str(self.batching_strategy) == str(BatchingStrategy.DYNAMIC_BATCHING):
+            if self.max_steps is None or self.max_steps <= 0:
+                raise ValueError("`dynamic_batching` requires `max_steps` because it is step-driven.")
+            if self.save_epochs is not None:
+                raise ValueError("`save_epochs` is not supported with `dynamic_batching`; use `save_steps` instead.")

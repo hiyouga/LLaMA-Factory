@@ -34,7 +34,7 @@ import torch.nn.functional as F
 
 from ..accelerator.helper import ReduceOp
 from ..accelerator.interface import Dim, DistributedInterface
-from ..config import TrainingArguments
+from ..config import BatchingStrategy, TrainingArguments
 from ..utils import logging
 from ..utils.callbacks import (
     CallbackHandler,
@@ -134,6 +134,9 @@ class BaseTrainer:
             global_step=self.global_step,
             epoch=self._resume_epoch,
         )
+        # Keep callback state aligned with checkpoint-resumed trainer counters.
+        self.state.global_step = self.global_step
+        self.state.epoch = self._resume_epoch
 
         if self.args.dist_config is not None and self.args.dist_config.get("cp_size", 1) > 1:
             # qwen3.5 is not supported because of the different attention implementation, which will be supported in the future.
@@ -144,13 +147,19 @@ class BaseTrainer:
             from ..plugins.model_plugins.parallelization.sequence_parallel import SequenceParallelModelPlugin
 
             if model.config._attn_implementation != "flash_attention_2":
-                logger.warning_rank0(
-                    "Sequence parallelism is optimized for flash attention only. Replace the attention implementation to flash_attention_2."
+                raise ValueError(
+                    "Sequence parallelism requires flash attention. Please set `flash_attn: flash_attention_2`."
                 )
-                model.config._attn_implementation = "flash_attention_2"
+
             SequenceParallelModelPlugin(self.args.dist_config.get("cp_mode", "ulysses"))(model, self.args.dist_config)
 
     def _create_batch_generator(self) -> None:
+        if (
+            self.args.batching_strategy == BatchingStrategy.PADDING_FREE
+            and getattr(self.model.config, "_attn_implementation", None) != "flash_attention_2"
+        ):
+            raise ValueError("`padding_free` requires `flash_attn: flash_attention_2`.")
+
         self.train_batch_generator = BatchGenerator(
             dataset=self.train_dataset,
             renderer=self.renderer,
@@ -234,6 +243,7 @@ class BaseTrainer:
             self.train_batch_generator.set_epoch(epoch)
             self.callback_handler.on_epoch_begin(self.args, self.state)
 
+            # BatchGenerator is an iterator; each loop step calls its __next__ to produce one optimizer step.
             for micro_batches in self.train_batch_generator:
                 self.global_step += 1
 
@@ -303,7 +313,7 @@ class BaseTrainer:
                 if self.global_step % self.args.logging_steps == 0:
                     logs = {
                         "epoch": epoch,
-                        "step": self.global_step,
+                        "step": self.state.global_step,
                         "loss": step_loss,
                         "grad_norm": grad_norm,
                         "learning_rate": current_lr,
@@ -335,7 +345,9 @@ class BaseTrainer:
             )
         else:
             model_to_save = self.model.module if hasattr(self.model, "module") else self.model
-            model_to_save.save_pretrained(self.args.output_dir, max_shard_size="4GB")
+            model_to_save.save_pretrained(
+                self.args.output_dir, state_dict=model_to_save.state_dict(), max_shard_size="4GB"
+            )
             self.renderer.processor.save_pretrained(self.args.output_dir, max_shard_size="4GB")
             logger.info_rank0(f"Model saved to {self.args.output_dir}")
 

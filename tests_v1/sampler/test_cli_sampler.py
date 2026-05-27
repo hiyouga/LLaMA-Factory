@@ -35,10 +35,3 @@ def test_sync_sampler():
         "role": "assistant",
         "content": [{"type": "text", "value": "This is a test."}],
     }
-
-
-if __name__ == "__main__":
-    """
-    python tests_v1/sampler/test_cli_sampler.py
-    """
-    test_sync_sampler()

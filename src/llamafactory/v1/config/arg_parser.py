@@ -57,15 +57,12 @@ def get_args(args: InputArgument = None) -> tuple[ModelArguments, DataArguments,
             print(f"Got unknown args, potentially deprecated arguments: {unknown_args}")
             raise ValueError(f"Some specified arguments are not used by the HfArgumentParser: {unknown_args}")
 
+    model_args, data_args, training_args, sample_args = parsed_args
     # Seed as early as possible after argument parsing so all downstream
     # components (dist init, dataloader, model init in run_* entrypoints) share the same RNG state.
-    for arg in parsed_args:
-        seed = getattr(arg, "seed", None)
-        if seed is not None:
-            set_seed(seed)
-            break
+    set_seed(training_args.seed, full_determinism=training_args.full_determinism)
 
-    return tuple(parsed_args)
+    return model_args, data_args, training_args, sample_args
 
 
 if __name__ == "__main__":
