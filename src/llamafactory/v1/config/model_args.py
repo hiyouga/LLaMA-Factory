@@ -24,10 +24,6 @@ class ModelArguments:
         default="Qwen/Qwen3-4B-Instruct-2507",
         metadata={"help": "Path to the model or model identifier from Hugging Face."},
     )
-    template: str = field(
-        default="auto",
-        metadata={"help": "Template for the model. 'auto' uses apply_chat_template."},
-    )
     custom_chat_template: str | None = field(
         default=None,
         metadata={"help": "Custom Jinja2 chat template string. Overrides the model's built-in template."},

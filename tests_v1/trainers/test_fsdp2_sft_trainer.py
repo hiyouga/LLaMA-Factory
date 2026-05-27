@@ -28,8 +28,6 @@ model: Qwen/Qwen3-0.6B
 trust_remote_code: true
 model_class: llm
 
-template: qwen3_nothink
-
 kernel_config:
     name: auto
     include_kernels: auto

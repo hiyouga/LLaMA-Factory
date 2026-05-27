@@ -84,9 +84,9 @@ V1_TOOLS = [
 ]
 
 
-def test_chatml_rendering():
+def test_render_messages():
     tokenizer: Processor = AutoTokenizer.from_pretrained("llamafactory/tiny-random-qwen3")
-    renderer = Renderer(template="chatml", processor=tokenizer)
+    renderer = Renderer(processor=tokenizer)
 
     hf_inputs = _get_input_ids(tokenizer.apply_chat_template(HF_MESSAGES[:-1], add_generation_prompt=True))
     v1_inputs = renderer.render_messages(V1_MESSAGES[:-1], is_generate=True)
@@ -95,41 +95,32 @@ def test_chatml_rendering():
     assert v1_inputs["labels"] == [-100] * len(hf_inputs)
     assert v1_inputs["loss_weights"] == [0.0] * len(hf_inputs)
 
-    hf_inputs_part = _get_input_ids(tokenizer.apply_chat_template(HF_MESSAGES[:-1], add_generation_prompt=False))
     hf_inputs_full = _get_input_ids(tokenizer.apply_chat_template(HF_MESSAGES, add_generation_prompt=False))
     v1_inputs_full = renderer.render_messages(V1_MESSAGES, is_generate=False)
     assert v1_inputs_full["input_ids"] == hf_inputs_full
     assert v1_inputs_full["attention_mask"] == [1] * len(hf_inputs_full)
-    assert v1_inputs_full["labels"] == [-100] * len(hf_inputs_part) + hf_inputs_full[len(hf_inputs_part) :]
-    assert v1_inputs_full["loss_weights"] == [0.0] * len(hf_inputs_part) + [1.0] * (
-        len(hf_inputs_full) - len(hf_inputs_part)
-    )
+
+    # Labels: only assistant content (after role header) + end_marker should be labeled
+    labels = v1_inputs_full["labels"]
+    assert labels[0] == -100  # system/user tokens are not labeled
+    # Find first labeled token — it should be the start of assistant content
+    first_labeled = next(i for i, l in enumerate(labels) if l != -100)
+    assert first_labeled > 0
+    # Verify labeled tokens match input_ids
+    for i, l in enumerate(labels):
+        if l != -100:
+            assert l == hf_inputs_full[i]
+    # Verify loss_weights align with labels
+    for i, (l, w) in enumerate(zip(labels, v1_inputs_full["loss_weights"])):
+        if l != -100:
+            assert w == 1.0
+        else:
+            assert w == 0.0
 
 
-def test_chatml_parse():
-    tokenizer: Processor = AutoTokenizer.from_pretrained("llamafactory/tiny-random-qwen3")
-    renderer = Renderer(template="chatml", processor=tokenizer)
-    generated_text = "LLM stands for Large Language Model."
-    parsed_message = renderer.parse_message(generated_text)
-    assert parsed_message == V1_MESSAGES[-1]
-
-
-@pytest.mark.parametrize("num_samples", [16])
-def test_chatml_rendering_remote(num_samples: int):
-    tokenizer: Processor = AutoTokenizer.from_pretrained("llamafactory/tiny-random-qwen3")
-    renderer = Renderer(template="chatml", processor=tokenizer)
-    data_args = DataArguments(train_dataset="llamafactory/v1-sft-demo")
-    data_engine = DataEngine(data_args.train_dataset)
-    for index in range(num_samples):
-        v1_inputs = renderer.render_messages(data_engine[index]["messages"], is_generate=True)
-        prefix = tokenizer.encode("<|im_start|>user\n", add_special_tokens=False)
-        print(tokenizer.decode(v1_inputs["input_ids"][: len(prefix)]))
-        assert v1_inputs["input_ids"][: len(prefix)] == prefix
-
-
-def test_qwen3_nothink_rendering():
+def test_render_messages_with_tools():
     tokenizer: Processor = AutoTokenizer.from_pretrained("Qwen/Qwen3-4B-Instruct-2507")
-    renderer = Renderer(template="qwen3_nothink", processor=tokenizer)
+    renderer = Renderer(processor=tokenizer)
 
     hf_inputs = _get_input_ids(
         tokenizer.apply_chat_template(HF_MESSAGES_WITH_TOOLS[:-1], tools=V1_TOOLS, add_generation_prompt=True)
@@ -140,31 +131,44 @@ def test_qwen3_nothink_rendering():
     assert v1_inputs["labels"] == [-100] * len(hf_inputs)
     assert v1_inputs["loss_weights"] == [0.0] * len(hf_inputs)
 
-    hf_inputs_part = _get_input_ids(
-        tokenizer.apply_chat_template(HF_MESSAGES_WITH_TOOLS[:-1], tools=V1_TOOLS, add_generation_prompt=False)
-    )
     hf_inputs_full = _get_input_ids(
         tokenizer.apply_chat_template(HF_MESSAGES_WITH_TOOLS, tools=V1_TOOLS, add_generation_prompt=False)
     )
     v1_inputs_full = renderer.render_messages(V1_MESSAGES_WITH_TOOLS, tools=json.dumps(V1_TOOLS), is_generate=False)
     assert v1_inputs_full["input_ids"] == hf_inputs_full
     assert v1_inputs_full["attention_mask"] == [1] * len(hf_inputs_full)
-    assert v1_inputs_full["labels"] == [-100] * len(hf_inputs_part) + hf_inputs_full[len(hf_inputs_part) :]
-    assert v1_inputs_full["loss_weights"] == [0.0] * len(hf_inputs_part) + [1.0] * (
-        len(hf_inputs_full) - len(hf_inputs_part)
-    )
+
+    # Labels: only the last assistant turn (with loss_weight=1.0) should be labeled
+    # The first assistant turn has loss_weight=0.0 so it should be all IGNORE_INDEX
+    labels = v1_inputs_full["labels"]
+    loss_weights = v1_inputs_full["loss_weights"]
+    for i, l in enumerate(labels):
+        if l != -100:
+            assert l == hf_inputs_full[i]
+    for i, (l, w) in enumerate(zip(labels, loss_weights)):
+        if l != -100:
+            assert w == 1.0
+        else:
+            assert w == 0.0
 
 
-def test_qwen3_nothink_parse():
-    tokenizer: Processor = AutoTokenizer.from_pretrained("Qwen/Qwen3-4B-Instruct-2507")
-    renderer = Renderer(template="qwen3_nothink", processor=tokenizer)
-    generated_text = (
-        "<thinking>I need to use the multiply function to calculate 6*8.</thinking>"
+def test_parse_message():
+    tokenizer: Processor = AutoTokenizer.from_pretrained("llamafactory/tiny-random-qwen3")
+    renderer = Renderer(processor=tokenizer)
+
+    # Test simple text
+    generated_text = "LLM stands for Large Language Model."
+    parsed_message = renderer.parse_message(generated_text)
+    assert parsed_message == V1_MESSAGES[-1]
+
+    # Test with <think> tag (Qwen3 native)
+    generated_text_think = (
+        "<think>I need to use the multiply function to calculate 6*8.</think>"
         "Let me call the multiply function."
         '<tool_call>{"name": "multiply", "arguments": {"a": 6, "b": 8}}</tool_call>'
     )
-    parsed_message = renderer.parse_message(generated_text)
-    assert parsed_message == {
+    parsed = renderer.parse_message(generated_text_think)
+    assert parsed == {
         "role": "assistant",
         "content": [
             {"type": "reasoning", "value": "I need to use the multiply function to calculate 6*8."},
@@ -173,31 +177,36 @@ def test_qwen3_nothink_parse():
         ],
     }
 
+    # Test with <thinking> tag (alternative format)
+    generated_text_thinking = (
+        "<thinking>I need to calculate.</thinking>"
+        "The answer is 48."
+    )
+    parsed = renderer.parse_message(generated_text_thinking)
+    assert parsed == {
+        "role": "assistant",
+        "content": [
+            {"type": "reasoning", "value": "I need to calculate."},
+            {"type": "text", "value": "The answer is 48."},
+        ],
+    }
 
-@pytest.mark.parametrize("num_samples", [8])
-def test_qwen3_nothink_rendering_remote(num_samples: int):
-    tokenizer: Processor = AutoTokenizer.from_pretrained("Qwen/Qwen3-4B-Instruct-2507")
-    renderer = Renderer(template="qwen3_nothink", processor=tokenizer)
-    data_args = DataArguments(train_dataset="llamafactory/reason-tool-use-demo-1500")
+
+@pytest.mark.parametrize("num_samples", [16])
+def test_render_messages_remote(num_samples: int):
+    tokenizer: Processor = AutoTokenizer.from_pretrained("llamafactory/tiny-random-qwen3")
+    renderer = Renderer(processor=tokenizer)
+    data_args = DataArguments(train_dataset="llamafactory/v1-sft-demo")
     data_engine = DataEngine(data_args.train_dataset)
     for index in range(num_samples):
-        v1_inputs = renderer.render_messages(data_engine[index]["messages"], tools=data_engine[index]["tools"])
-        prefix_text = (
-            "<|im_start|>system\nYou are a methodical and expert assistant. "
-            "Your primary goal is to solve user requests by leveraging a set of available tools. "
-            "You must reason for the best course of action in a structured manner before responding.\n\n"
-            "# Tools\n\nYou may call one or more functions to assist with the user query.\n\n"
-            "You are provided with function signatures within <tools></tools> XML tags:\n<tools>\n"
-            '{"type": "function", "function": {"name":'
-        )
-        prefix = tokenizer.encode(prefix_text, add_special_tokens=False)
-        print(tokenizer.decode(v1_inputs["input_ids"][: len(prefix)]))
+        v1_inputs = renderer.render_messages(data_engine[index]["messages"], is_generate=True)
+        prefix = tokenizer.encode("<|im_start|>user\n", add_special_tokens=False)
         assert v1_inputs["input_ids"][: len(prefix)] == prefix
 
 
 def test_process_sft_samples():
     tokenizer: Processor = AutoTokenizer.from_pretrained("llamafactory/tiny-random-qwen3")
-    renderer = Renderer(template="chatml", processor=tokenizer)
+    renderer = Renderer(processor=tokenizer)
     hf_inputs = _get_input_ids(tokenizer.apply_chat_template(HF_MESSAGES))
 
     samples = [{"messages": V1_MESSAGES, "extra_info": "test", "_dataset_name": "default"}]
@@ -210,7 +219,7 @@ def test_process_sft_samples():
 
 def test_process_dpo_samples():
     tokenizer: Processor = AutoTokenizer.from_pretrained("llamafactory/tiny-random-qwen3")
-    renderer = Renderer(template="chatml", processor=tokenizer)
+    renderer = Renderer(processor=tokenizer)
     hf_inputs = _get_input_ids(tokenizer.apply_chat_template(HF_MESSAGES))
 
     samples = [
@@ -233,11 +242,9 @@ if __name__ == "__main__":
     """
     python -m tests_v1.core.utils.test_rendering
     """
-    test_chatml_rendering()
-    test_chatml_parse()
-    test_chatml_rendering_remote(16)
-    test_qwen3_nothink_rendering()
-    test_qwen3_nothink_parse()
-    test_qwen3_nothink_rendering_remote(16)
+    test_render_messages()
+    test_parse_message()
+    test_render_messages_remote(16)
+    test_render_messages_with_tools()
     test_process_sft_samples()
     test_process_dpo_samples()

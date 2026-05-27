@@ -15,13 +15,14 @@
 """Rendering utils.
 
 How to use:
-renderer = Renderer(template, processor)
+renderer = Renderer(processor)
 renderer.render_messages(messages: list[Message], tools: str | None) -> ModelInputs
 renderer.parse_message(text: str) -> Message
 renderer.process_samples(samples: list[Sample]) -> list[ModelInput]
 """
 
 import json
+import re
 
 import numpy as np
 
@@ -30,7 +31,7 @@ from ...utils.helper import get_tokenizer, is_tokenizer
 from ...utils.types import Message, ModelInput, Processor, Sample
 
 
-DEFAULT_CHATML_JINJA = (
+_FALLBACK_CHATML_JINJA = (
     "{% for message in messages %}"
     "{{'<|im_start|>' + message['role'] + '\n' + message['content'] + '<|im_end|>' + '\n'}}"
     "{% endfor %}"
@@ -41,35 +42,53 @@ DEFAULT_CHATML_JINJA = (
 
 
 def _to_hf_messages(messages: list[Message], is_multimodal: bool = False) -> list[dict]:
-    """Convert v1 Message format to HF format for apply_chat_template."""
+    """Convert v1 Message format to HF format for apply_chat_template.
+
+    Converts structured content types to their HF-native representations:
+    - tool_call → message-level tool_calls field (HF function calling format)
+    - reasoning → message-level reasoning_content field (HF reasoning format)
+    - image/video/audio → multimodal content blocks
+    """
     hf_messages = []
     for message in messages:
+        tool_calls: list[dict] = []
+        reasoning_content = ""
+
         if is_multimodal:
             hf_content = []
             for content in message["content"]:
                 if content["type"] == "text":
                     hf_content.append({"type": "text", "text": content["value"]})
                 elif content["type"] == "reasoning":
-                    hf_content.append({"type": "text", "text": "<think>\n" + content["value"] + "\n</think>\n"})
+                    reasoning_content += content["value"]
                 elif content["type"] == "tool_call":
-                    hf_content.append({"type": "text", "text": content["value"]})
+                    tc = json.loads(content["value"])
+                    tool_calls.append({"type": "function", "function": {"name": tc["name"], "arguments": tc["arguments"]}})
                 elif content["type"] == "image_url":
                     hf_content.append({"type": "image", "image": content["value"]})
                 elif content["type"] == "video_url":
                     hf_content.append({"type": "video", "video": content["value"]})
                 elif content["type"] == "audio_url":
                     hf_content.append({"type": "audio", "audio": content["value"]})
-            hf_messages.append({"role": message["role"], "content": hf_content})
+            hf_msg = {"role": message["role"], "content": hf_content}
         else:
             text = ""
             for content in message["content"]:
                 if content["type"] == "text":
                     text += content["value"]
                 elif content["type"] == "reasoning":
-                    text += "<think>\n" + content["value"] + "\n</think>\n"
+                    reasoning_content += content["value"]
                 elif content["type"] == "tool_call":
-                    text += content["value"]
-            hf_messages.append({"role": message["role"], "content": text})
+                    tc = json.loads(content["value"])
+                    tool_calls.append({"type": "function", "function": {"name": tc["name"], "arguments": tc["arguments"]}})
+            hf_msg = {"role": message["role"], "content": text}
+
+        if tool_calls:
+            hf_msg["tool_calls"] = tool_calls
+        if reasoning_content:
+            hf_msg["reasoning_content"] = reasoning_content
+
+        hf_messages.append(hf_msg)
     return hf_messages
 
 
@@ -124,13 +143,11 @@ def _detect_assistant_markers(template_caller) -> tuple[str, str]:
             "The model's chat_template may not render assistant content literally."
         )
 
-    # end_marker: text immediately after the LAST assistant content to end-of-string
     end_text = rendered[pos_b + len(CONTENT_B):]
     end_marker = end_text.split("\n")[0]
     if not end_marker:
         end_marker = end_text.rstrip()
 
-    # start_marker: text between the previous end_marker and the content
     prefix = rendered[:pos_a]
     last_end = prefix.rfind(end_marker)
     if last_end != -1:
@@ -185,44 +202,65 @@ def _char_region_to_token_region(
     return tok_start, tok_end
 
 
-def _build_expansion_offsets(text_ids: list[int], expanded_ids: list[int], vision_token_ids: set[int]) -> list[int]:
-    """Build cumulative expansion offset for each text token position.
+def _get_vision_token_ids(processor: Processor) -> set[int]:
+    """Get known vision/media token IDs from the processor or its tokenizer."""
+    vision_token_ids: set[int] = set()
+    tokenizer = get_tokenizer(processor)
+    for obj in (processor, tokenizer):
+        for attr in ("image_token_id", "video_token_id", "audio_token_id"):
+            tid = getattr(obj, attr, None)
+            if tid is not None:
+                vision_token_ids.add(tid)
+    return vision_token_ids
 
-    Returns a list of length len(text_ids)+1 where offset[i] is the number of extra
-    tokens inserted before text token i due to vision expansion. So the expanded index
-    for text token i is: i + offset[i].
+
+def _build_text_to_expanded(
+    text_ids: list[int], expanded_ids: list[int], vision_token_ids: set[int] | None = None
+) -> list[int]:
+    """Build mapping from text token index to expanded token index.
+
+    Returns list of length len(text_ids)+1. mapping[i] = expanded position for text token i.
+    mapping[len(text_ids)] = len(expanded_ids).
+
+    When vision_token_ids is provided, uses them for precise expansion detection.
+    Otherwise falls back to sequential scan heuristic.
     """
-    offsets = [0] * (len(text_ids) + 1)
+    mapping = [0] * (len(text_ids) + 1)
     e_ptr = 0
-    cumulative = 0
 
     for t_idx in range(len(text_ids)):
-        offsets[t_idx] = cumulative
-        if e_ptr < len(expanded_ids) and expanded_ids[e_ptr] in vision_token_ids:
-            # Walk past all contiguous vision tokens in expanded
+        mapping[t_idx] = e_ptr
+        if vision_token_ids and text_ids[t_idx] in vision_token_ids:
+            # Vision placeholder in text: skip all consecutive vision tokens in expanded
             while e_ptr < len(expanded_ids) and expanded_ids[e_ptr] in vision_token_ids:
                 e_ptr += 1
-                cumulative += 1
-            cumulative -= 1  # the text token itself accounts for 1
-            e_ptr += 0  # don't advance e_ptr further; next iteration handles next text token
-        else:
+        elif e_ptr < len(expanded_ids) and text_ids[t_idx] == expanded_ids[e_ptr]:
             e_ptr += 1
+        else:
+            # Fallback: scan expanded until we find the next text token
+            if t_idx + 1 < len(text_ids):
+                next_text_token = text_ids[t_idx + 1]
+                while e_ptr < len(expanded_ids) and expanded_ids[e_ptr] != next_text_token:
+                    e_ptr += 1
+            else:
+                e_ptr = len(expanded_ids)
 
-    offsets[len(text_ids)] = cumulative
-    return offsets
+    mapping[len(text_ids)] = e_ptr
+    return mapping
 
 
-def _render_auto_messages(
+def _render_messages(
     processor: Processor,
     messages: list[Message],
     tools: str | None = None,
     is_generate: bool = False,
     assistant_start_marker: str | None = None,
     assistant_end_marker: str | None = None,
+    enable_thinking: bool = False,
 ) -> ModelInput:
     """Render messages using the model's own template with text-based boundary detection.
 
-    Uses apply_chat_template once to render the full conversation, then finds assistant
+    Uses apply_chat_template to render the full conversation, then finds assistant
     content regions by searching for role markers in the rendered text. Character positions
     are mapped to token positions via offset_mapping.
     """
@@ -232,7 +270,7 @@ def _render_auto_messages(
 
     template_caller = processor if is_multimodal else tokenizer
     if not getattr(template_caller, "chat_template", None):
-        template_caller.chat_template = DEFAULT_CHATML_JINJA
+        template_caller.chat_template = _FALLBACK_CHATML_JINJA
 
     hf_messages = _to_hf_messages(messages, is_multimodal=is_multimodal)
 
@@ -243,8 +281,13 @@ def _render_auto_messages(
             tools_parsed = [tools_parsed]
 
     # 1. Render full text with model's own template
+    template_kwargs = {}
+    if enable_thinking is not None:
+        template_kwargs["enable_thinking"] = enable_thinking
+
     full_text = template_caller.apply_chat_template(
-        hf_messages, tokenize=False, add_generation_prompt=is_generate, tools=tools_parsed
+        hf_messages, tokenize=False, add_generation_prompt=is_generate,
+        tools=tools_parsed, **template_kwargs
     )
 
     if has_media:
@@ -277,7 +320,8 @@ def _render_auto_messages(
     # Render without generation prompt for boundary detection (gen prompt is not assistant content)
     if is_generate:
         boundary_text = template_caller.apply_chat_template(
-            hf_messages, tokenize=False, add_generation_prompt=False, tools=tools_parsed
+            hf_messages, tokenize=False, add_generation_prompt=False,
+            tools=tools_parsed, **template_kwargs
         )
     else:
         boundary_text = full_text
@@ -293,9 +337,8 @@ def _render_auto_messages(
 
     # 4. Map text-token regions to expanded-token regions (multimodal expansion)
     if has_media and len(input_ids) != len(text_ids):
-        # Build expansion offset map: for text token i, expanded index = i + exp_offsets[i]
-        # Use a simple walk: text tokens map 1:1 except where vision placeholders expand
-        exp_map = _build_text_to_expanded_simple(text_ids, input_ids)
+        vision_token_ids = _get_vision_token_ids(processor)
+        exp_map = _build_text_to_expanded(text_ids, input_ids, vision_token_ids)
         regions_expanded = []
         for tok_start, tok_end in regions_text_tok:
             regions_expanded.append((exp_map[tok_start], exp_map[tok_end]))
@@ -306,7 +349,6 @@ def _render_auto_messages(
     labels = [IGNORE_INDEX] * len(input_ids)
     loss_weights = [0.0] * len(input_ids)
 
-    # Assign per-turn weights: i-th assistant region → i-th assistant message's loss_weight
     assistant_messages = [m for m in messages if m["role"] == "assistant"]
     for region_idx, (tok_start, tok_end) in enumerate(regions_expanded):
         if region_idx < len(assistant_messages):
@@ -341,110 +383,57 @@ def _render_auto_messages(
     return result
 
 
-def _build_text_to_expanded_simple(text_ids: list[int], expanded_ids: list[int]) -> list[int]:
-    """Build mapping from text token index → expanded token index.
+def _parse_message(generated_text: str) -> Message:
+    """Parse generated text to structured Message.
 
-    Returns list of length len(text_ids)+1. mapping[i] = expanded position for text token i.
-    mapping[len(text_ids)] = len(expanded_ids).
-
-    Walks both sequences in parallel. When they diverge (expansion point), scans the expanded
-    sequence until tokens sync again.
+    Handles common patterns: <think>/<thinking> for reasoning, <tool_call> for tool calls.
     """
-    mapping = [0] * (len(text_ids) + 1)
-    e_ptr = 0
+    pattern = re.compile(r"<(think|thinking|tool_call)>\s*(.*?)\s*</\1>\s*", re.DOTALL)
+    content = []
+    last_end = 0
 
-    for t_idx in range(len(text_ids)):
-        mapping[t_idx] = e_ptr
-        if e_ptr < len(expanded_ids) and text_ids[t_idx] == expanded_ids[e_ptr]:
-            # 1:1 correspondence
-            e_ptr += 1
-        else:
-            # Expansion point: text has one token, expanded has many
-            # Scan expanded until we find the next text token
-            if t_idx + 1 < len(text_ids):
-                next_text_token = text_ids[t_idx + 1]
-                # Skip all expanded tokens that are part of this expansion
-                while e_ptr < len(expanded_ids) and expanded_ids[e_ptr] != next_text_token:
-                    e_ptr += 1
-            else:
-                # Last text token expands to everything remaining
-                e_ptr = len(expanded_ids)
+    for match in pattern.finditer(generated_text):
+        start, end = match.span()
+        if start > last_end:
+            text = generated_text[last_end:start].strip()
+            if text:
+                content.append({"type": "text", "value": text})
 
-    mapping[len(text_ids)] = e_ptr
-    return mapping
+        tag_type = match.group(1)
+        tag_value = match.group(2).strip()
+        if tag_type in ("think", "thinking"):
+            content.append({"type": "reasoning", "value": tag_value})
+        elif tag_type == "tool_call":
+            json.loads(tag_value)
+            content.append({"type": "tool_call", "value": tag_value})
 
+        last_end = end
 
-def _parse_auto_message(generated_text: str) -> Message:
-    """Parse generated text to Message (generic)."""
-    return Message(role="assistant", content=[{"type": "text", "value": generated_text}])
+    if last_end < len(generated_text):
+        text = generated_text[last_end:].strip()
+        if text:
+            content.append({"type": "text", "value": text})
 
+    if not content:
+        content.append({"type": "text", "value": generated_text})
 
-def render_chatml_messages(
-    processor: Processor,
-    messages: list[Message],
-    tools: str | None = None,
-    is_generate: bool = False,
-) -> ModelInput:
-    """Apply chatml template to messages and convert them to model input.
-
-    See https://huggingface.co/spaces/huggingfacejs/chat-template-playground?modelId=Qwen/Qwen2-7B-Instruct
-    """
-    tokenizer = get_tokenizer(processor)
-    input_ids, labels, loss_weights = [], [], []
-
-    for message in messages:
-        temp_str = "<|im_start|>" + message["role"] + "\n"
-        for content in message["content"]:
-            if content["type"] == "text":
-                temp_str += content["value"]
-            else:
-                raise ValueError(f"Unsupported content type: {content['type']}")
-
-        temp_str += "<|im_end|>\n"
-        temp_weight = message.get("loss_weight", 1.0 if message["role"] == "assistant" else 0.0)
-        temp_ids = tokenizer.encode(temp_str, add_special_tokens=False)
-        input_ids.extend(temp_ids)
-        loss_weights.extend([temp_weight] * len(temp_ids))
-        if temp_weight > 1e-6:
-            labels.extend(temp_ids)
-        else:
-            labels.extend([IGNORE_INDEX] * len(temp_ids))
-
-    if is_generate:
-        temp_ids = tokenizer.encode("<|im_start|>assistant\n", add_special_tokens=False)
-        input_ids.extend(temp_ids)
-        loss_weights.extend([0.0] * len(temp_ids))
-        labels.extend([IGNORE_INDEX] * len(temp_ids))
-
-    return ModelInput(
-        input_ids=input_ids,
-        attention_mask=[1] * len(input_ids),
-        labels=labels,
-        loss_weights=loss_weights,
-    )
-
-
-def parse_chatml_message(generated_text: str) -> Message:
-    """Parse a message in ChatML format."""
-    return Message(role="assistant", content=[{"type": "text", "value": generated_text}])
+    return Message(role="assistant", content=content)
 
 
 class Renderer:
-    def __init__(self, template: str, processor: Processor):
-        self.template = template
+    def __init__(self, processor: Processor):
         self.processor = processor
         self._assistant_start_marker = None
         self._assistant_end_marker = None
 
-        if template == "auto":
-            template_caller = processor if not is_tokenizer(processor) else get_tokenizer(processor)
-            if getattr(template_caller, "chat_template", None):
-                try:
-                    self._assistant_start_marker, self._assistant_end_marker = (
-                        _detect_assistant_markers(template_caller)
-                    )
-                except (ValueError, Exception):
-                    pass
+        template_caller = processor if not is_tokenizer(processor) else get_tokenizer(processor)
+        if getattr(template_caller, "chat_template", None):
+            try:
+                self._assistant_start_marker, self._assistant_end_marker = (
+                    _detect_assistant_markers(template_caller)
+                )
+            except (ValueError, Exception):
+                pass
 
     def render_messages(
         self,
@@ -453,61 +442,46 @@ class Renderer:
         is_generate: bool = False,
         enable_thinking: bool = False,
     ) -> ModelInput:
-        """Apply template to messages and convert them to model input.
+        """Render messages to model input using apply_chat_template.
 
         Args:
-            messages (list[Message]): The messages to render.
-            tools (str | None, optional): The tools to use. Defaults to None.
-            is_generate (bool, optional): Whether to render for generation. Defaults to False.
-            enable_thinking (bool, optional): Whether to enable thinking mode for generation. Defaults to False.
+            messages: The messages to render.
+            tools: JSON string of tool definitions.
+            is_generate: Whether to render for generation (adds generation prompt).
+            enable_thinking: Whether to enable thinking mode (passed as template kwarg).
 
         Returns:
-            ModelInput: The rendered model input.
+            ModelInput with input_ids, attention_mask, labels, and loss_weights.
         """
-        if self.template == "auto":
-            return _render_auto_messages(
-                self.processor,
-                messages,
-                tools,
-                is_generate,
-                self._assistant_start_marker,
-                self._assistant_end_marker,
-            )
-        elif self.template == "chatml":
-            return render_chatml_messages(self.processor, messages, tools, is_generate)
-        else:
-            from ...plugins.model_plugins.rendering import RenderingPlugin
-
-            return RenderingPlugin(self.template).render_messages(
-                self.processor, messages, tools, is_generate, enable_thinking
-            )
+        return _render_messages(
+            self.processor,
+            messages,
+            tools,
+            is_generate,
+            self._assistant_start_marker,
+            self._assistant_end_marker,
+            enable_thinking=enable_thinking,
+        )
 
     def parse_message(self, generated_text: str) -> Message:
-        """Parse a message in the template format.
+        """Parse generated text into a structured Message.
 
         Args:
-            generated_text (str): The generated text in the template format.
+            generated_text: The raw generated text from the model.
 
         Returns:
-            Message: The parsed message.
+            Parsed Message with typed content blocks.
         """
-        if self.template == "auto":
-            return _parse_auto_message(generated_text)
-        elif self.template == "chatml":
-            return parse_chatml_message(generated_text)
-        else:
-            from ...plugins.model_plugins.rendering import RenderingPlugin
-
-            return RenderingPlugin(self.template).parse_message(generated_text)
+        return _parse_message(generated_text)
 
     def process_samples(self, samples: list[Sample]) -> list[ModelInput]:
         """Process samples to model input.
 
         Args:
-            samples (list[Sample]): The samples to process.
+            samples: The samples to process.
 
         Returns:
-            list[ModelInput]: The processed model inputs.
+            List of processed model inputs.
         """
         model_inputs = []
         for sample in samples:

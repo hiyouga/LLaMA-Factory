@@ -16,7 +16,7 @@ import importlib
 
 from ...utils import logging
 from ...utils.plugin import BasePlugin
-from ...utils.types import Message, ModelInput, Processor
+from ...utils.types import Message
 
 
 logger = logging.get_logger(__name__)
@@ -40,17 +40,6 @@ class RenderingPlugin(BasePlugin):
         self._ensure_template_imported()
         return super().__getitem__(method_name)
 
-    def render_messages(
-        self,
-        processor: Processor,
-        messages: list[Message],
-        tools: str | None = None,
-        is_generate: bool = False,
-        enable_thinking: bool = False,
-    ) -> ModelInput:
-        """Render messages in the template format."""
-        return self["render_messages"](processor, messages, tools, is_generate, enable_thinking)
-
-    def parse_messages(self, generated_text: str) -> Message:
-        """Parse messages in the template format."""
-        return self["parse_messages"](generated_text)
+    def parse_message(self, generated_text: str) -> Message:
+        """Parse generated text using a model-specific parser."""
+        return self["parse_message"](generated_text)

@@ -65,7 +65,7 @@ class ModelEngine:
         self.processor = self._init_processor()
         """Tokenizer or multi-modal processor."""
         self._sync_chat_template()
-        self.renderer = Renderer(self.args.template, self.processor)
+        self.renderer = Renderer(self.processor)
         """Renderer."""
         self.model_config = self._init_model_config()
         """Model configuration."""
