@@ -2406,7 +2406,7 @@ class Qwen3VLPlugin(Qwen2VLPlugin):
                     timestamps = processor._calculate_timestamps(
                         metadata.frames_indices,
                         metadata.fps,
-                        video_processor.temporal_patch_size,
+                        getattr(video_processor, "temporal_patch_size", 2),
                     )
                     video_structure = ""
                     video_seqlen = int((video_grid[1:].prod() // video_merge_length).item())
