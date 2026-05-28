@@ -70,18 +70,21 @@ ROLE_MAPPING = {
 }
 
 
-def _fetch_remote_media(url: str):
+def _fetch_remote_media(url: str) -> io.BytesIO:
     check_ssrf_url(url)
+    response = None
     try:
-        response = requests.get(url, stream=True, timeout=10, allow_redirects=False)
+        response = requests.get(url, timeout=10, allow_redirects=False)
+        if response.is_redirect:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Media URL redirects are not allowed.")
+
         response.raise_for_status()
+        return io.BytesIO(response.content)
     except requests.RequestException as err:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Failed to fetch media URL: {err}")
-
-    if response.is_redirect:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Media URL redirects are not allowed.")
-
-    return response.raw
+    finally:
+        if response is not None:
+            response.close()
 
 
 def _process_request(
