@@ -53,21 +53,12 @@ class TokenizerModule(TypedDict):
     processor: Optional["ProcessorMixin"]
 
 
-def _ensure_hf_device_map_property() -> None:
-    r"""Patch a writable hf_device_map fallback for model classes missing it."""
-    import transformers
-
-    if hasattr(transformers.PreTrainedModel, "hf_device_map"):
+def _patch_missing_hf_device_map(model: "PreTrainedModel", model_args: "ModelArguments") -> None:
+    r"""Patch a fallback hf_device_map for export models that require it."""
+    if model_args.export_dir is None or model_args.export_device != "auto" or hasattr(model, "hf_device_map"):
         return
 
-    setattr(
-        transformers.PreTrainedModel,
-        "hf_device_map",
-        property(
-            fget=lambda self: getattr(self, "_hf_device_map", {"": str(getattr(self, "device", "cpu"))}),
-            fset=lambda self, value: setattr(self, "_hf_device_map", value),
-        ),
-    )
+    model.hf_device_map = {"": str(getattr(model, "device", "cpu"))}
 
 
 def _get_init_kwargs(model_args: "ModelArguments") -> dict[str, Any]:
@@ -186,8 +177,8 @@ def load_model(
             if model_args.train_from_scratch:
                 model = load_class.from_config(config, trust_remote_code=model_args.trust_remote_code)
             else:
-                _ensure_hf_device_map_property()
                 model = load_class.from_pretrained(**init_kwargs)
+                _patch_missing_hf_device_map(model, model_args)
 
                 if getattr(model.config, "model_type", None) in ["qwen2_5_omni", "qwen3_omni_moe"]:
                     model = getattr(model, "thinker")
