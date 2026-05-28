@@ -141,7 +141,7 @@ def load_model(
     config = load_config(model_args)
 
     if is_trainable and getattr(config, "model_type", None) in ["qwen3_5", "qwen3_5_moe"]:
-        if model_args.flash_attn == "fa2" and is_torch_npu_available():
+        if model_args.flash_attn == "fa2" and is_torch_npu_available() and "Ascend910" in torch.npu.get_device_name(0):
             # Patch FLA availability before loading model (must be done before model import)
             from .patcher import patch_transformers_flash_linear_attention_available
 

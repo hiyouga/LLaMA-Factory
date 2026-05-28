@@ -482,7 +482,7 @@ def patch_model(
         add_z3_leaf_module(model)
 
         if getattr(model.config, "model_type", None) in ["qwen3_5", "qwen3_5_moe"] and model_args.flash_attn == "fa2":
-            if is_torch_npu_available():
+            if is_torch_npu_available() and "Ascend910" in torch.npu.get_device_name(0):
                 patch_qwen3_5_forward_npu(model)
             else:
                 patch_qwen3_5_forward_gpu(model)

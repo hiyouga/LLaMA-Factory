@@ -1,10 +1,10 @@
 # Start FSDP2 full fine-tuning on Ascend NPU
 # Usage:
 #   accelerate launch \
-#       --config_file examples/accelerate/fsdp2_config_qwen35.yaml \
-#       src/train.py examples/ascend/qwen3_5_full_sft_fsdp2.yaml
+#       --config_file examples/accelerate/fsdp2_config_qwen35_moe.yaml \
+#       src/train.py examples/ascend/qwen3_5moe_lora_sft_fsdp2.yaml
 #
-# Note: Change `num_processes` in fsdp2_config_qwen35.yaml to match your NPU count
+# Note: Change `num_processes` in fsdp2_config_qwen35_moe.yaml to match your NPU count
 
 ### model
 model_name_or_path: Qwen/Qwen3.5-35B-A3B
