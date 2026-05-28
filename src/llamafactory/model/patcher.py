@@ -18,9 +18,10 @@ from typing import TYPE_CHECKING, Any
 
 import torch
 from peft import PeftModel
-from transformers import GenerationMixin, PreTrainedModel, PreTrainedTokenizerBase, is_torch_npu_available
+from transformers import GenerationMixin, PreTrainedModel, PreTrainedTokenizerBase
 from transformers.integrations import is_deepspeed_zero3_enabled
 from transformers.modeling_utils import is_fsdp_enabled
+from transformers.utils import is_torch_cuda_available, is_torch_npu_available
 
 from ..extras import logging
 from ..extras.misc import infer_optim_dtype
@@ -484,7 +485,7 @@ def patch_model(
         if getattr(model.config, "model_type", None) in ["qwen3_5", "qwen3_5_moe"] and model_args.flash_attn == "fa2":
             if is_torch_npu_available() and "Ascend910" in torch.npu.get_device_name(0):
                 patch_qwen3_5_forward_npu(model)
-            else:
+            elif is_torch_cuda_available():
                 patch_qwen3_5_forward_gpu(model)
 
     if not model_args.use_unsloth:
