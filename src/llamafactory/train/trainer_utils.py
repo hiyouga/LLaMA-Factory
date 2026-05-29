@@ -180,6 +180,11 @@ def load_ref_adapter(
         (p.dtype for n, p in model.named_parameters() if "lora" not in n and "modules_to_save" not in n),
         None,
     )
+    if base_dtype is None or not base_dtype.is_floating_point:
+        base_dtype = next(
+            (p.dtype for n, p in model.named_parameters() if ".default." in n),
+            None,
+        )
     ref_cast_count = 0
     for name, param in model.named_parameters():
         if ".ref." in name:
