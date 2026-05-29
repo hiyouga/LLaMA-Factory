@@ -215,11 +215,12 @@ def switch_ref_adapter_context(unwrapped_model: "PreTrainedModel"):
     if not isinstance(unwrapped_model, PeftModel):
         raise RuntimeError("switch_ref_adapter_context requires a PeftModel.")
 
+    old_adapter = unwrapped_model.active_adapter
     try:
         unwrapped_model.set_adapter("ref")
         yield
     finally:
-        unwrapped_model.set_adapter("default")
+        unwrapped_model.set_adapter(old_adapter)
 
 
 def create_reward_model(
