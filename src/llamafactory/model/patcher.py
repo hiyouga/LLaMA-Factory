@@ -163,7 +163,10 @@ def patch_qwen3_5_forward(model: "PreTrainedModel") -> None:
             position_ids = position_ids[0]
 
         # `prepare_fa_kwargs_from_position_ids` would crash on None; guard for safety.
-        cu_seqlens = prepare_fa_kwargs_from_position_ids(position_ids)[0][0] if position_ids is not None else None
+        if position_ids is not None and batch_size == 1:
+            cu_seqlens = prepare_fa_kwargs_from_position_ids(position_ids)[0][0]
+        else:
+            cu_seqlens = None
 
         # FLA varlen kernels expect [B, T, D] layout, not [B, D, T] like the
         # standard causal-conv1d path that the upstream forward uses.
