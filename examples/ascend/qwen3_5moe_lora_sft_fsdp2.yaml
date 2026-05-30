@@ -9,7 +9,7 @@
 ### model
 model_name_or_path: Qwen/Qwen3.5-35B-A3B
 trust_remote_code: true
-use_v1_kernels: true
+use_v1_kernels: false
 flash_attn: fa2
 
 ### method
