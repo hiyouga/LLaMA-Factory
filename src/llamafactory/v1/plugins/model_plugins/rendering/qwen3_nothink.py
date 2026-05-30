@@ -18,7 +18,6 @@ import re
 from ....utils.constants import IGNORE_INDEX
 from ....utils.helper import get_tokenizer
 from ....utils.types import Message, ModelInput, Processor, ToolCall
-from ..rendering import RenderingPlugin
 
 
 def _update_model_input(
@@ -57,67 +56,16 @@ def _concat_text_content(message: Message) -> str:
     return message_text
 
 
-def _get_last_query_index(messages: list[Message]) -> int:
-    """Find the last user query index, excluding wrapped tool responses."""
-    last_query_index = len(messages) - 1
-    for idx in range(len(messages) - 1, -1, -1):
-        message = messages[idx]
-        if message["role"] != "user":
-            continue
-
-        user_text = ""
-        is_plain_text = True
-        for content in message["content"]:
-            if content["type"] != "text":
-                is_plain_text = False
-                break
-            user_text += content["value"]
-
-        if not is_plain_text:
-            continue
-
-        if not (user_text.startswith("<tool_response>") and user_text.endswith("</tool_response>")):
-            last_query_index = idx
-            break
-
-    return last_query_index
-
-
-def _split_assistant_content(message: Message) -> tuple[str, str, list[ToolCall]]:
-    """Split assistant message into text, reasoning and tool calls."""
-    text_content = ""
-    reasoning_content = ""
-    tool_calls: list[ToolCall] = []
-
-    for content in message["content"]:
-        if content["type"] == "text":
-            text_content += content["value"]
-        elif content["type"] == "reasoning":
-            reasoning_content += content["value"]
-        elif content["type"] == "tool_call":
-            try:
-                tool_call: ToolCall = json.loads(content["value"])
-            except json.JSONDecodeError:
-                raise ValueError(f"Invalid tool call format: {content['value']}.")
-
-            tool_calls.append(tool_call)
-        else:
-            raise ValueError(f"Unsupported content type: {content['type']}")
-
-    return text_content, reasoning_content, tool_calls
-
-
-@RenderingPlugin("qwen3").register("render_messages")
-def render_qwen3_messages(
+def render_qwen3_nothink_messages(
     processor: Processor,
     messages: list[Message],
     tools: str | None = None,
     is_generate: bool = False,
     enable_thinking: bool = False,
 ) -> ModelInput:
-    """Render messages in the Qwen3 template format.
+    """Render messages in the Qwen3 nothink template format.
 
-    See https://huggingface.co/spaces/huggingfacejs/chat-template-playground?modelId=Qwen/Qwen3-8B
+    See https://huggingface.co/spaces/huggingfacejs/chat-template-playground?modelId=Qwen/Qwen3-4B-Instruct-2507
     """
     input_ids, labels, loss_weights = [], [], []
     temp_str, temp_weight = "", 0.0
@@ -131,6 +79,7 @@ def render_qwen3_messages(
             "# Tools\n\nYou may call one or more functions to assist with the user query.\n\n"
             "You are provided with function signatures within <tools></tools> XML tags:\n<tools>"
         )
+
         try:
             tools = json.loads(tools)
         except json.JSONDecodeError:
@@ -152,7 +101,6 @@ def render_qwen3_messages(
         temp_weight = messages[0].get("loss_weight", 0.0)
 
     temp_str = _update_model_input(processor, input_ids, labels, loss_weights, temp_str, temp_weight)
-    last_query_index = _get_last_query_index(messages)
 
     for turn_idx, message in enumerate(messages):
         if message["role"] == "user" or (message["role"] == "system" and turn_idx != 0):
@@ -160,30 +108,30 @@ def render_qwen3_messages(
             temp_weight = message.get("loss_weight", 0.0)
         elif message["role"] == "assistant":
             temp_str += "<|im_start|>" + message["role"] + "\n"
+            for val_idx, content in enumerate(message["content"]):
+                if content["type"] == "text":
+                    temp_str += content["value"]
+                elif content["type"] == "reasoning":
+                    temp_str += "<thinking>\n" + content["value"] + "\n</thinking>\n\n"  # avoid using special tokens
+                elif content["type"] == "tool_call":
+                    if val_idx != 0 and message["content"][val_idx - 1]["type"] in ["text", "tool_call"]:
+                        temp_str += "\n"
 
-            text_content, reasoning_content, tool_calls = _split_assistant_content(message)
-            if turn_idx > last_query_index and (turn_idx == len(messages) - 1 or reasoning_content):
-                temp_str += "<think>\n" + reasoning_content.strip("\n") + "\n</think>\n\n" + text_content.lstrip("\n")
-            else:
-                temp_str += text_content
+                    try:
+                        tool_call: ToolCall = json.loads(content["value"])
+                    except json.JSONDecodeError:
+                        raise ValueError(f"Invalid tool call format: {content['value']}.")
 
-            for tool_call_idx, tool_call in enumerate(tool_calls):
-                if (tool_call_idx == 0 and text_content) or tool_call_idx > 0:
-                    temp_str += "\n"
+                    temp_str += (
+                        '<tool_call>\n{"name": "'
+                        + tool_call["name"]
+                        + '", "arguments": '
+                        + json.dumps(tool_call["arguments"], ensure_ascii=False)
+                        + "}\n</tool_call>"
+                    )
 
-                arguments = tool_call.get("arguments")
-                if isinstance(arguments, str):
-                    arguments_str = arguments
                 else:
-                    arguments_str = json.dumps(arguments, ensure_ascii=False)
-
-                temp_str += (
-                    '<tool_call>\n{"name": "'
-                    + tool_call["name"]
-                    + '", "arguments": '
-                    + arguments_str
-                    + "}\n</tool_call>"
-                )
+                    raise ValueError(f"Unsupported content type: {content['type']}")
 
             temp_str += "<|im_end|>\n"
             temp_weight = message.get("loss_weight", 1.0)
@@ -202,8 +150,8 @@ def render_qwen3_messages(
     if is_generate:
         temp_str += "<|im_start|>assistant\n"
         temp_weight = 0.0
-        if enable_thinking is False:
-            temp_str += "<think>\n\n</think>\n\n"
+        if enable_thinking:
+            raise ValueError("The qwen3_nothink template does not support thinking mode.")
 
     temp_str = _update_model_input(processor, input_ids, labels, loss_weights, temp_str, temp_weight)
 
@@ -216,17 +164,16 @@ def render_qwen3_messages(
     )
 
 
-@RenderingPlugin("qwen3").register("parse_message")
-def parse_qwen3_message(generated_text: str) -> Message:
-    """Parse a message in the Qwen3 template format. Supports interleaved reasoning and tool calls.
+def parse_qwen3_nothink_message(generated_text: str) -> Message:
+    """Parse a message in the Qwen3 nothink template format. Supports interleaved reasoning and tool calls.
 
     Args:
-        generated_text (str): The generated text in the Qwen3 template format.
+        generated_text (str): The generated text in the Qwen3 nothink template format.
 
     Returns:
         Message: The parsed message.
     """
-    pattern = re.compile(r"<(think|tool_call)>\s*(.*?)\s*</\1>\s*", re.DOTALL)
+    pattern = re.compile(r"<(thinking|tool_call)>\s*(.*?)\s*</\1>\s*", re.DOTALL)
     content = []
     last_end = 0
 
@@ -239,7 +186,7 @@ def parse_qwen3_message(generated_text: str) -> Message:
 
         tag_type = match.group(1)
         tag_value = match.group(2).strip()
-        if tag_type == "think":
+        if tag_type == "thinking":
             content.append({"type": "reasoning", "value": tag_value.strip()})
         elif tag_type == "tool_call":
             try:

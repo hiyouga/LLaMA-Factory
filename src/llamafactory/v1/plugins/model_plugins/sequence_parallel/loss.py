@@ -12,118 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import sys
-from functools import partial
-
 import torch
 import torch.distributed as dist
 import torch.nn.functional as F
-import transformers
 
 from ....accelerator.interface import Dim, DistributedInterface
-from ....utils import logging
-from ....utils.plugin import BasePlugin
 from ....utils.types import ModelOutput
 from .ulysses import (
-    UlyssesAttention,
     get_ulysses_sequence_parallel_group,
     get_ulysses_sequence_parallel_rank,
     get_ulysses_sequence_parallel_world_size,
-    set_ulysses_sequence_parallel_group,
 )
-
-
-logger = logging.get_logger(__name__)
-
-
-class SequenceParallelModelPlugin(BasePlugin):
-    def __call__(self, model, model_args):
-        return super().__call__(model, model_args)
-
-
-class SequenceParallelLossPlugin(BasePlugin):
-    def __call__(self, model, inputs, *args, **kwargs):
-        return super().__call__(model, inputs, *args, **kwargs)
-
-
-def new_flash_attn_forward(
-    query_states,
-    key_states,
-    value_states,
-    attention_mask,
-    sequence_parallel_size=1,
-    dropout=0,
-    deterministic=False,
-    is_causal=True,
-    group=None,
-    mode="ulysses",
-    attn_fn=None,
-    target_dtype=None,
-    **kwargs,
-):
-    if mode == "ulysses":
-        dist_attn = UlyssesAttention(sequence_process_group=group, attn_fn=attn_fn)
-        attn_output = dist_attn(
-            query_states,
-            key_states,
-            value_states,
-            attention_mask,
-            query_length=query_states.shape[1] * sequence_parallel_size,
-            deterministic=deterministic,
-            dropout_p=dropout,
-            causal=is_causal,
-            position_ids=kwargs.get("position_ids", None),
-            target_dtype=target_dtype,
-        )
-    else:
-        raise NotImplementedError("Other sequence parallel modes are to be implemented.")
-
-    return attn_output
-
-
-@SequenceParallelModelPlugin("ulysses").register()
-def apply_sequence_parallel(model, model_args):
-    # Replace _flash_attention_forward with new_flash_attn_forward
-    module = sys.modules[model.__module__]
-    cp_size = model_args.get("cp_size", 1)
-
-    set_ulysses_sequence_parallel_group(DistributedInterface().get_group(Dim.CP))
-
-    try:
-        num_attention_heads, num_key_value_heads = model.config.num_attention_heads, model.config.num_attention_heads
-    except AttributeError:
-        num_attention_heads, num_key_value_heads = (
-            model.config.text_config.num_attention_heads,
-            model.config.text_config.num_key_value_heads,
-        )
-
-    assert num_attention_heads % cp_size == 0, "num_attention_heads must be divisible by cp_size"
-    assert num_key_value_heads % cp_size == 0 or cp_size % num_key_value_heads == 0, (
-        "num_key_value_heads must be divisible by cp_size"
-    )
-
-    origin_attn = transformers.modeling_flash_attention_utils._flash_attention_forward
-    new_flash_attention_forward = partial(
-        new_flash_attn_forward,
-        group=get_ulysses_sequence_parallel_group(),
-        mode="ulysses",
-        attn_fn=origin_attn,
-        sequence_parallel_size=cp_size,
-    )
-
-    for module_name, module in list(sys.modules.items()):
-        try:
-            if (
-                hasattr(module, "__file__")
-                and "transformers" in module.__file__
-                and getattr(module._flash_attention_forward, "__name__", "") == "_flash_attention_forward"
-            ):
-                module._flash_attention_forward = new_flash_attention_forward
-                logger.info_rank0(
-                    f"Replaced _flash_attention_forward in module {module_name} with new_flash_attn_forward for sequence parallel."
-                )
-        except (AttributeError, TypeError):
-            continue
 
 
 def padding_and_split_data(data, device_mesh=None):
@@ -149,7 +48,6 @@ def padding_and_split_data(data, device_mesh=None):
     return data
 
 
-@SequenceParallelLossPlugin("sequence_parallel_loss").register()
 def sequence_parallel_loss(model, model_inputs):
     device_mesh = DistributedInterface().get_device_mesh(Dim.CP)
 

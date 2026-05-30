@@ -109,6 +109,11 @@ class BatchGenerator(Iterator):
             "num_micro_batch": self.num_micro_batch,
             "cutoff_len": self.cutoff_len,
         }
+        self._batcher = None
+        if self.batching_strategy != BatchingStrategy.NORMAL:
+            from ...plugins.trainer_plugins.batching import BatchingPlugin
+
+            self._batcher = BatchingPlugin(self.batching_strategy)
 
         self._init_data_provider()
 
@@ -141,9 +146,7 @@ class BatchGenerator(Iterator):
         if self.batching_strategy == BatchingStrategy.NORMAL:
             batch_size = self.micro_batch_size * self.num_micro_batch
         else:
-            from ...plugins.trainer_plugins.batching import BatchingPlugin
-
-            batch_size = BatchingPlugin(self.batching_strategy).get_data_provider_batch_size(self._batch_info)
+            batch_size = self._batcher.get_data_provider_batch_size(self._batch_info)
 
         generator_seed = torch.Generator()
         generator_seed.manual_seed(self.seed)
@@ -162,9 +165,7 @@ class BatchGenerator(Iterator):
         if self.batching_strategy == BatchingStrategy.NORMAL:
             self._length = len(self._data_provider)
         else:
-            from ...plugins.trainer_plugins.batching import BatchingPlugin
-
-            self._length = BatchingPlugin(self.batching_strategy).compute_length(self._data_provider, self._batch_info)
+            self._length = self._batcher.compute_length(self._data_provider, self._batch_info)
 
     def __len__(self) -> int:
         return self._length
@@ -195,17 +196,13 @@ class BatchGenerator(Iterator):
 
                 self._buffer.put(samples)
         else:
-            from ...plugins.trainer_plugins.batching import BatchingPlugin
-
-            BatchingPlugin(self.batching_strategy).fill_buffer(self._buffer, self._batch_info, self._next_samples)
+            self._batcher.fill_buffer(self._buffer, self._next_samples, self._batch_info)
 
     def _generate_batch(self) -> list[BatchInput] | None:
         if self.batching_strategy == BatchingStrategy.NORMAL:
             return default_collate_fn(self._buffer, self._batch_info)
         else:
-            from ...plugins.trainer_plugins.batching import BatchingPlugin
-
-            return BatchingPlugin(self.batching_strategy).generate_batch(self._buffer, self._batch_info)
+            return self._batcher.generate_batch(self._buffer, self._batch_info)
 
     def _next_samples(self, restart: bool) -> list[ModelInput] | None:
         try:

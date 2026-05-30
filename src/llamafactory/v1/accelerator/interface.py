@@ -29,14 +29,18 @@ And data parallelism types:
 from dataclasses import dataclass
 from datetime import timedelta
 from enum import StrEnum
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 from torch.distributed import barrier, destroy_process_group, init_process_group
 from torch.distributed.device_mesh import DeviceMesh, init_device_mesh
 
 from ..utils import logging
-from ..utils.types import DistributedConfig, ProcessGroup, TensorLike
+from ..utils.types import ProcessGroup, TensorLike
 from . import helper
+
+
+if TYPE_CHECKING:
+    from ..config.training_args import MeshConfig
 
 
 logger = logging.get_logger(__name__)
@@ -119,11 +123,9 @@ class DistributedInterface:
 
         return cls._instance
 
-    def __init__(self, config: DistributedConfig | None = None) -> None:
+    def __init__(self, config: "MeshConfig | None" = None) -> None:
         if self._initialized:
             return
-
-        self.dist_config = config
 
         helper.set_device_index()
         self._is_distributed = helper.is_distributed()
@@ -136,18 +138,18 @@ class DistributedInterface:
 
         if config is None:
             self.strategy = DistributedStrategy()
-            timeout = 18000
+            dist_timeout = 18000
         else:
             self.strategy = DistributedStrategy(
-                mp_replicate_size=config.get("mp_replicate_size", 1),
-                mp_shard_size=config.get("mp_shard_size", None),
-                dp_size=config.get("dp_size", None),
-                cp_size=config.get("cp_size", 1),
+                mp_replicate_size=config.mp_replicate_size,
+                mp_shard_size=config.mp_shard_size,
+                dp_size=config.dp_size,
+                cp_size=config.cp_size,
             )
-            timeout = config.get("timeout", 18000)
+            dist_timeout = config.dist_timeout
 
         if self._is_distributed:
-            init_process_group(timeout=timedelta(seconds=timeout), backend=helper.get_process_group_backend())
+            init_process_group(timeout=timedelta(seconds=dist_timeout), backend=helper.get_process_group_backend())
             self.model_device_mesh = init_device_mesh(
                 device_type=self.current_device.type,
                 mesh_shape=self.strategy.model_mesh_shape,

@@ -111,7 +111,7 @@ class Renderer:
         if self.template == "chatml":
             return render_chatml_messages(self.processor, messages, tools, is_generate)
         else:
-            from ...plugins.model_plugins.rendering import RenderingPlugin
+            from ...plugins.model_plugins.rendering.interface import RenderingPlugin
 
             return RenderingPlugin(self.template).render_messages(
                 self.processor, messages, tools, is_generate, enable_thinking
@@ -129,7 +129,7 @@ class Renderer:
         if self.template == "chatml":
             return parse_chatml_message(generated_text)
         else:
-            from ...plugins.model_plugins.rendering import RenderingPlugin
+            from ...plugins.model_plugins.rendering.interface import RenderingPlugin
 
             return RenderingPlugin(self.template).parse_message(generated_text)
 

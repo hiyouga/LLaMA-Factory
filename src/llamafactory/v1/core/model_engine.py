@@ -67,24 +67,26 @@ class ModelEngine:
         """Renderer."""
         self.model_config = self._init_model_config()
         """Model configuration."""
-        self._dist_config = DistributedInterface().dist_config
-        self._deepspeed_zero3_plugin = None
-        self._deepspeed_zero3_enabled = False
 
-        if self.is_train and self._dist_config is not None and self._dist_config.get("name") == "deepspeed":
+        # The deepspeed plugin is optional; guard the import so removing it degrades gracefully.
+        self._deepspeed_zero3_enabled = False
+        try:
             from ..plugins.model_plugins.deepspeed_utils import (
+                is_deepspeed_zero3_enabled,
                 setup_deepspeed_zero3_model_loading,
                 teardown_deepspeed_zero3_model_loading,
             )
 
+            self._deepspeed_zero3_enabled = self.is_train and is_deepspeed_zero3_enabled()
+        except ImportError:
+            pass
+
+        if self._deepspeed_zero3_enabled:
+            plugin = setup_deepspeed_zero3_model_loading()
             try:
-                self._deepspeed_zero3_plugin = setup_deepspeed_zero3_model_loading(self.is_train, self._dist_config)
-                self._deepspeed_zero3_enabled = self._deepspeed_zero3_plugin is not None
                 self.model = self._init_model()
             finally:
-                teardown_deepspeed_zero3_model_loading(self._deepspeed_zero3_plugin)
-                self._deepspeed_zero3_plugin = None
-                self._deepspeed_zero3_enabled = False
+                teardown_deepspeed_zero3_model_loading(plugin)
         else:
             self.model = self._init_model()
 
@@ -127,9 +129,7 @@ class ModelEngine:
 
             init_kwargs = QuantizationPlugin(self.args.quant_config.name)(
                 init_kwargs=init_kwargs,
-                config=self.model_config,
-                tokenizer=self.processor,
-                model_args=self.args,
+                quant_config=self.args.quant_config,
                 is_trainable=self.is_train,
             )
 
@@ -185,17 +185,16 @@ class ModelEngine:
 
             from ..plugins.model_plugins.peft import PeftPlugin
 
-            model = PeftPlugin(self.args.peft_config.name)(model, self.args.peft_config, self.is_train)
+            model = PeftPlugin(self.args.peft_config.name)(
+                model,
+                peft_config=self.args.peft_config,
+                is_train=self.is_train,
+            )
 
         if self.args.kernel_config is not None:
-            from ..plugins.model_plugins.kernels.interface import KernelPlugin
+            from ..plugins.model_plugins.kernels.interface import apply_kernels
 
-            kernel_config = self.args.kernel_config
-            kernel_kwargs: dict = {"model": model, "include_kernels": kernel_config.get("include_kernels")}
-            if kernel_config.name == "liger_kernel":
-                # Fused linear CE omits logits; SFT stage needs logits for loss_weights.
-                kernel_kwargs["require_logits"] = self.is_train
-            model = KernelPlugin(kernel_config.name)(**kernel_kwargs)
+            model = apply_kernels(model=model, config=self.args.kernel_config)
 
         return model
 

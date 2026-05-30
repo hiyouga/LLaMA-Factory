@@ -22,7 +22,7 @@ Init Phase:
 
 import inspect
 
-from ....accelerator.helper import DeviceType, get_current_accelerator
+from ....accelerator.helper import DeviceType
 from ....utils.logging import get_logger
 from ....utils.types import HFModel
 from .base import BaseKernel
@@ -47,20 +47,24 @@ class LigerKernel(BaseKernel):
     _device = [DeviceType.CUDA, DeviceType.NPU]
 
     @classmethod
-    def check_deps(cls) -> bool:
+    def check_deps(cls) -> None:
         """Checks if the required dependencies for the kernel are available."""
+        from ....accelerator.helper import get_current_accelerator
+
+        if get_current_accelerator().type not in cls._device:
+            raise RuntimeError(
+                f"Kernel {cls.__name__!r} requires one of {cls._device}, "
+                f"current accelerator is {get_current_accelerator().type}."
+            )
         try:
             import liger_kernel  # noqa: F401
-
-            return super().check_deps()
         except ImportError:
-            logger.warning_rank0(
-                "Liger kernel is not installed, the kernel_config liger_kernel will be ignored. Please install it from https://github.com/linkedin/Liger-Kernel."
-            )
-            return False
+            raise RuntimeError(
+                "Liger kernel is not installed. Please install it from https://github.com/linkedin/Liger-Kernel."
+            ) from None
 
     @classmethod
-    def apply(cls, **kwargs) -> "HFModel":
+    def _apply(cls, **kwargs) -> "HFModel":
         """Applies the Liger kernel to the model.
 
         Args:
@@ -81,11 +85,6 @@ class LigerKernel(BaseKernel):
         use_kernels = kwargs.get("use_kernels", None)
         if model is None:
             raise ValueError(f"HFModel instance is required for {cls.__name__}.")
-
-        if not cls.check_deps():
-            raise RuntimeError(
-                f"current device is not supported by liger_kernel. Current device is {get_current_accelerator().type}, supported devices are {cls.get_device()}"
-            )
 
         require_logits = kwargs.get("require_logits", False)
 

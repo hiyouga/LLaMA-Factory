@@ -233,7 +233,7 @@ class TrainingCheckpointCoordinator:
 
     @property
     def _dist_name(self) -> str | None:
-        return self._t.args.dist_config.name if self._t.args.dist_config is not None else None
+        return self._t._dist_config.name if self._t._dist_config is not None else None
 
     def save(self, epoch: int) -> None:
         """Save a full training checkpoint at the current global step."""
@@ -251,7 +251,7 @@ class TrainingCheckpointCoordinator:
             )
 
         if self._dist_name in ("fsdp2", "deepspeed"):
-            from ...plugins.trainer_plugins.distributed.hub import DistributedPlugin
+            from ...plugins.trainer_plugins.distributed.interface import DistributedPlugin
 
             DistributedPlugin(self._dist_name).save_checkpoint(
                 self._t.model,
@@ -307,7 +307,7 @@ class TrainingCheckpointCoordinator:
         self._t._resume_epoch = metadata["epoch"]
 
         if self._dist_name in ("fsdp2", "deepspeed"):
-            from ...plugins.trainer_plugins.distributed.hub import DistributedPlugin
+            from ...plugins.trainer_plugins.distributed.interface import DistributedPlugin
 
             DistributedPlugin(self._dist_name).load_checkpoint(
                 self._t.model,

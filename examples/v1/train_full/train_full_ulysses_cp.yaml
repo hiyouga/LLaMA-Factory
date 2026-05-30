@@ -8,8 +8,10 @@ template: qwen3_nothink
 dist_config:
   name: fsdp2
   dcp_path: null
-  cp_mode: ulysses
-  cp_size: 2
+
+# Sequence/context parallel topology (mesh-path; flat training args)
+cp_size: 2
+cp_mode: ulysses
 
 ### data
 train_dataset: data/v1_sft_demo.yaml

@@ -20,6 +20,26 @@ from .arg_utils import BatchingStrategy, PluginConfig, get_plugin_config
 
 
 @dataclass
+class MeshConfig:
+    """Device-mesh topology consumed by the accelerator (`DistributedInterface`).
+
+    These are mesh-path (fsdp2) concepts. deepspeed defines its parallelism in its
+    own config_file and ignores this mesh, so it runs with the defaults here.
+    """
+
+    mp_replicate_size: int = 1
+    """Model parallel replicate size."""
+    mp_shard_size: int | None = None
+    """Model parallel shard size, default to world_size // mp_replicate_size."""
+    dp_size: int | None = None
+    """Data parallel size, default to world_size // cp_size."""
+    cp_size: int = 1
+    """Context (sequence) parallel size."""
+    dist_timeout: int = 18000
+    """Timeout (seconds) for distributed process group initialization."""
+
+
+@dataclass
 class TrainingArguments:
     output_dir: str = field(
         default=os.path.join("outputs", str(uuid4().hex)),
@@ -71,7 +91,33 @@ class TrainingArguments:
     )
     dist_config: PluginConfig | None = field(
         default=None,
-        metadata={"help": "Distribution configuration for training."},
+        metadata={"help": "Distributed backend plugin config (e.g. {name: fsdp2} or {name: deepspeed})."},
+    )
+    dp_size: int | None = field(
+        default=None,
+        metadata={"help": "Data parallel size. Mesh-path (fsdp2) topology; default to world_size // cp_size."},
+    )
+    cp_size: int = field(
+        default=1,
+        metadata={"help": "Context (sequence) parallel size. Mesh-path topology; deepspeed only supports 1."},
+    )
+    cp_mode: str = field(
+        default="ulysses",
+        metadata={"help": "Sequence parallel implementation to use when cp_size > 1."},
+    )
+    mp_replicate_size: int = field(
+        default=1,
+        metadata={"help": "Model parallel replicate size. Mesh-path topology."},
+    )
+    mp_shard_size: int | None = field(
+        default=None,
+        metadata={
+            "help": "Model parallel shard size. Mesh-path topology; default to world_size // mp_replicate_size."
+        },
+    )
+    dist_timeout: int = field(
+        default=18000,
+        metadata={"help": "Timeout (seconds) for distributed process group initialization."},
     )
     optim_config: PluginConfig | None = field(
         default=None,
@@ -117,8 +163,28 @@ class TrainingArguments:
         self.optim_config = get_plugin_config(self.optim_config)
         self.lr_scheduler_config = get_plugin_config(self.lr_scheduler_config)
 
+        # Device-mesh topology consumed by the accelerator (`DistributedInterface`).
+        self.mesh_config = MeshConfig(
+            mp_replicate_size=self.mp_replicate_size,
+            mp_shard_size=self.mp_shard_size,
+            dp_size=self.dp_size,
+            cp_size=self.cp_size,
+            dist_timeout=self.dist_timeout,
+        )
+
         if str(self.batching_strategy) == str(BatchingStrategy.DYNAMIC_BATCHING):
             if self.max_steps is None or self.max_steps <= 0:
                 raise ValueError("`dynamic_batching` requires `max_steps` because it is step-driven.")
             if self.save_epochs is not None:
                 raise ValueError("`save_epochs` is not supported with `dynamic_batching`; use `save_steps` instead.")
+
+
+        # Parse the DeepSpeed ZeRO-3 judgment ahead of time so downstream callers (e.g. ModelEngine)
+        # only check `is_deepspeed_zero3_enabled()` and never read the config themselves.
+        # The deepspeed plugin is optional; guard the import so removing it degrades gracefully.
+        try:
+            from ..plugins.model_plugins.deepspeed_utils import register_deepspeed_dist_config
+
+            register_deepspeed_dist_config(self.dist_config)
+        except ImportError:
+            pass

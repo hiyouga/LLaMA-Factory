@@ -30,7 +30,6 @@ import torch.nn.functional as F
 from ......accelerator.helper import DeviceType
 from ......utils.types import HFModel
 from ...base import BaseKernel
-from ...registry import register_kernel
 from .triton_grouped_gemm import (
     group_gemm_same_mn,
     group_gemm_same_nk,
@@ -351,7 +350,6 @@ _TRITON_MOE_MAPPING: dict[str, dict[str, object]] = {
 # ---------------------------------------------------------------------------
 
 
-@register_kernel
 class CudaFusedMoEKernel(BaseKernel):
     """Pure-Triton fused MoE kernel for NVIDIA CUDA GPUs.
 
@@ -362,30 +360,21 @@ class CudaFusedMoEKernel(BaseKernel):
     Requires: CUDA GPU + Triton
     """
 
-    _kernel_id = "cuda_fused_moe"
     _device = DeviceType.CUDA
 
     @classmethod
-    def check_deps(cls) -> bool:
-        if not super().check_deps():
-            return False
+    def check_deps(cls) -> None:
+        super().check_deps()
         try:
             import triton  # noqa: F401
-
-            return True
         except ImportError:
-            logger.info("cuda_fused_moe: Triton not available, kernel disabled.")
-            return False
+            raise RuntimeError("cuda_fused_moe requires Triton.") from None
 
     @classmethod
-    def apply(cls, **kwargs) -> HFModel:
+    def _apply(cls, **kwargs) -> HFModel:
         model = kwargs.get("model")
         if model is None:
             raise ValueError(f"HFModel instance is required for {cls.__name__}.")
-
-        if not cls.check_deps():
-            logger.warning("cuda_fused_moe: Dependencies not met. Skipping kernel application.")
-            return model
 
         archs = getattr(model.config, "architectures", None) or []
         target_mapping = None
