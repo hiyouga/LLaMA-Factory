@@ -58,6 +58,8 @@ def is_safe_url(url: str) -> bool:
     """
     Security invariant: URLs must be validated before fetching.
     Only allow HTTP/HTTPS to non-private, non-loopback, non-metadata hosts.
+    Delegates to the production check_ssrf_url function to ensure tests
+    verify the actual security controls used by the application.
     """
     from fastapi import HTTPException
     from llamafactory.api.common import check_ssrf_url
