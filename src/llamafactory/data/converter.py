@@ -157,6 +157,54 @@ class SharegptDatasetConverter(DatasetConverter):
 
         aligned_messages = []
         broken_data = False
+
+        # Pre-process: merge adjacent assistant + function_call into single function_call (Issue A),
+        # and merge consecutive observations into single observation (Issue B).
+        # This matches native jinja behavior where text + tool_call coexist in one assistant turn,
+        # and multiple tool_responses are merged in one user block.
+        preprocessed = []
+        i = 0
+        while i < len(messages):
+            role = messages[i][self.dataset_attr.role_tag]
+            content = messages[i][self.dataset_attr.content_tag]
+
+            # Issue A: merge gpt (text) + function_call into single function_call
+            if (
+                role == self.dataset_attr.assistant_tag
+                and i + 1 < len(messages)
+                and messages[i + 1][self.dataset_attr.role_tag] == self.dataset_attr.function_tag
+            ):
+                merged_content = content + "\n\n" + messages[i + 1][self.dataset_attr.content_tag]
+                preprocessed.append(
+                    {self.dataset_attr.role_tag: self.dataset_attr.function_tag, self.dataset_attr.content_tag: merged_content}
+                )
+                i += 2
+                continue
+
+            # Issue B: merge consecutive observations
+            if role == self.dataset_attr.observation_tag:
+                obs_parts = [content]
+                while (
+                    i + 1 < len(messages)
+                    and messages[i + 1][self.dataset_attr.role_tag] == self.dataset_attr.observation_tag
+                ):
+                    i += 1
+                    obs_parts.append(messages[i][self.dataset_attr.content_tag])
+                if len(obs_parts) > 1:
+                    merged_obs = "\n</tool_response>\n<tool_response>\n".join(obs_parts)
+                    preprocessed.append(
+                        {self.dataset_attr.role_tag: self.dataset_attr.observation_tag, self.dataset_attr.content_tag: merged_obs}
+                    )
+                else:
+                    preprocessed.append(messages[i])
+                i += 1
+                continue
+
+            preprocessed.append(messages[i])
+            i += 1
+
+        messages = preprocessed
+
         for turn_idx, message in enumerate(messages):
             if message[self.dataset_attr.role_tag] not in accept_tags[turn_idx % 2]:
                 logger.warning_rank0(f"Invalid role tag in {messages}.")
