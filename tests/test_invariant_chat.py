@@ -1,5 +1,4 @@
 import pytest
-import re
 from urllib.parse import urlparse
 
 
@@ -60,63 +59,14 @@ def is_safe_url(url: str) -> bool:
     Security invariant: URLs must be validated before fetching.
     Only allow HTTP/HTTPS to non-private, non-loopback, non-metadata hosts.
     """
+    from fastapi import HTTPException
+    from llamafactory.api.common import check_ssrf_url
+
     try:
-        parsed = urlparse(url)
-    except Exception:
+        check_ssrf_url(url)
+        return True
+    except HTTPException:
         return False
-
-    # Only allow http and https schemes
-    if parsed.scheme not in ("http", "https"):
-        return False
-
-    hostname = parsed.hostname
-    if hostname is None:
-        return False
-
-    hostname_lower = hostname.lower()
-
-    # Block loopback addresses
-    if hostname_lower in ("localhost", "127.0.0.1", "::1", "0.0.0.0"):
-        return False
-
-    # Block cloud metadata endpoints
-    METADATA_HOSTS = {
-        "169.254.169.254",
-        "metadata.google.internal",
-        "100.100.100.200",
-        "fd00:ec2::254",
-    }
-    if hostname_lower in METADATA_HOSTS:
-        return False
-
-    # Block internal/private IP ranges using regex patterns
-    private_patterns = [
-        r"^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$",           # 10.0.0.0/8
-        r"^172\.(1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3}$",  # 172.16.0.0/12
-        r"^192\.168\.\d{1,3}\.\d{1,3}$",               # 192.168.0.0/16
-        r"^0\.\d{1,3}\.\d{1,3}\.\d{1,3}$",             # 0.x.x.x
-        r"^0x[0-9a-fA-F]+$",                            # Hex IP
-        r"^\d{8,10}$",                                  # Decimal IP
-        r"^0[0-7]{1,11}$",                              # Octal IP
-    ]
-    for pattern in private_patterns:
-        if re.match(pattern, hostname_lower):
-            return False
-
-    # Block internal-sounding hostnames
-    internal_hostname_patterns = [
-        r"\.internal$",
-        r"\.local$",
-        r"^kubernetes\.default",
-        r"^db\.",
-        r"^redis\.",
-        r"^internal-",
-    ]
-    for pattern in internal_hostname_patterns:
-        if re.search(pattern, hostname_lower):
-            return False
-
-    return True
 
 
 @pytest.mark.parametrize("payload", SSRF_PAYLOADS)
