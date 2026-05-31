@@ -893,7 +893,7 @@ def get_swanlab_callback(finetuning_args: "FinetuningArguments") -> "TrainerCall
 
 def get_placement_group(num_workers: int) -> tuple["PlacementGroup", dict[str, int]]:
     r"""Get the Ray placement group for distributed training."""
-    bundle = {"CPU": 10}
+    bundle = {"CPU": 1}
     device_name = get_device_name().upper()
     if device_name != "CPU":
         bundle[device_name] = 1
@@ -928,7 +928,7 @@ def get_ray_remote_config_for_worker(
             placement_group_bundle_index=bundle_idx,
         ),
         "runtime_env": {"env_vars": env},
-        "num_cpus": 10,
+        "num_cpus": 1,
     }
 
     device_name = get_device_name()
@@ -946,10 +946,12 @@ def get_ray_head_node_ip() -> str:
     return head_ip
 
 
-def sort_placement_group_by_node_ip(placement_group: "PlacementGroup", master_addr: str = None) -> list[int]:
+def sort_placement_group_by_node_ip(
+    placement_group: "PlacementGroup", master_addr: str = None
+) -> tuple[list[int], str]:
     r"""Sort the placement group bundles by their node IP addresses."""
 
-    @ray.remote
+    @ray.remote(num_cpus=0)
     def _get_node_ip():
         return ray.util.get_node_ip_address().strip("[]")
 
@@ -974,5 +976,11 @@ def sort_placement_group_by_node_ip(placement_group: "PlacementGroup", master_ad
         if preferred_indices:
             remaining = [i for i in sorted_bundle_indices if i not in preferred_indices]
             sorted_bundle_indices = preferred_indices + remaining
+        else:
+            rank0_ip = bundle_ips[sorted_bundle_indices[0]]
+            logger.warning(f"No bundle found on master_addr={master_addr}, falling back to rank 0 node IP: {rank0_ip}")
+            master_addr = rank0_ip
+    else:
+        master_addr = bundle_ips[sorted_bundle_indices[0]]
 
-    return sorted_bundle_indices
+    return sorted_bundle_indices, master_addr
