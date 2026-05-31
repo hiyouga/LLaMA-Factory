@@ -56,6 +56,7 @@ class Template:
     enable_thinking: Optional[bool]
     preserve_thinking: bool
     mm_plugin: "BasePlugin"
+    tools_first: bool = False
 
     def encode_oneturn(
         self,
@@ -129,6 +130,13 @@ class Template:
 
         return token_ids
 
+    def _concat_system_and_tools(self, system: str, tool_text: str) -> str:
+        r"""Return the combined system and tool prompt."""
+        if self.tools_first:
+            return tool_text + ("\n\n" if tool_text and system else "") + system
+
+        return system + tool_text
+
     def _encode(
         self,
         tokenizer: "PreTrainedTokenizer",
@@ -150,7 +158,7 @@ class Template:
                 elements += self.format_prefix.apply()
                 if system or tools:
                     tool_text = self.format_tools.apply(content=tools)[0] if tools else ""
-                    elements += self.format_system.apply(content=(system + tool_text))
+                    elements += self.format_system.apply(content=self._concat_system_and_tools(system, tool_text))
 
             if message["role"] == Role.USER:
                 elements += self.format_user.apply(content=message["content"], idx=str(i // 2))
@@ -355,7 +363,7 @@ class Llama2Template(Template):
                 elements += self.format_prefix.apply()
                 if system or tools:
                     tool_text = self.format_tools.apply(content=tools)[0] if tools else ""
-                    system_text = self.format_system.apply(content=(system + tool_text))[0]
+                    system_text = self.format_system.apply(content=self._concat_system_and_tools(system, tool_text))[0]
 
             if message["role"] == Role.USER:
                 elements += self.format_user.apply(content=system_text + message["content"])
@@ -506,6 +514,7 @@ def register_template(
     enable_thinking: Optional[bool] = True,
     preserve_thinking: bool = False,
     mm_plugin: "BasePlugin" = get_mm_plugin(name="base"),
+    tools_first: bool = False,
     template_class: type["Template"] = Template,
 ) -> None:
     r"""Register a chat template.
@@ -559,6 +568,7 @@ def register_template(
         enable_thinking=enable_thinking,
         preserve_thinking=preserve_thinking,
         mm_plugin=mm_plugin,
+        tools_first=tools_first,
     )
 
 
@@ -2134,6 +2144,7 @@ register_template(
     stop_words=["<|im_end|>"],
     replace_eos=True,
     mm_plugin=get_mm_plugin(name="qwen3_vl", image_token="<|image_pad|>", video_token="<|video_pad|>"),
+    tools_first=True,
     template_class=ReasoningTemplate,
 )
 
@@ -2151,6 +2162,7 @@ register_template(
     stop_words=["<|im_end|>"],
     replace_eos=True,
     mm_plugin=get_mm_plugin(name="qwen3_vl", image_token="<|image_pad|>", video_token="<|video_pad|>"),
+    tools_first=True,
 )
 
 
@@ -2168,6 +2180,7 @@ register_template(
     stop_words=["<|im_end|>"],
     replace_eos=True,
     mm_plugin=get_mm_plugin(name="qwen3_vl", image_token="<|image_pad|>", video_token="<|video_pad|>"),
+    tools_first=True,
     template_class=ReasoningTemplate,
 )
 
