@@ -270,6 +270,37 @@ def _get_expected_position_ids(
     return torch.cat(all_position_ids, dim=-1)
 
 
+def test_multimodal_collator_single_sequence_packing_slices_mm_inputs():
+    collator = object.__new__(MultiModalDataCollatorForSeq2Seq)
+    seen_mm_inputs = {}
+
+    def fake_compute_rope_position_ids(features, mm_inputs):
+        seen_mm_inputs.update(mm_inputs)
+        seq_len = features["attention_mask"].size(1)
+        features["position_ids"] = torch.arange(seq_len).unsqueeze(0)
+        features["rope_deltas"] = torch.zeros(features["attention_mask"].size(0))
+
+    collator._compute_rope_position_ids = fake_compute_rope_position_ids
+    features = {
+        "input_ids": torch.tensor([[0, 1, 2]]),
+        "attention_mask": torch.tensor([[1, 1, 1]]),
+    }
+    mm_inputs = {"image_grid_thw": torch.tensor([[1, 4, 4]])}
+
+    collator._compute_rope_position_ids_with_packing(
+        features=features,
+        mm_inputs=mm_inputs,
+        packing_params_list=[{"sequence_boundaries": [0, 3]}],
+        batch_imglens=[1],
+        batch_vidlens=[0],
+        batch_audlens=[0],
+        has_dummy_image=False,
+    )
+
+    assert features["position_ids"].eq(torch.tensor([[0, 1, 2]])).all()
+    assert seen_mm_inputs["image_grid_thw"].eq(torch.tensor([[1, 4, 4]])).all()
+
+
 @pytest.mark.runs_on(["cpu", "mps"])
 def test_multimodal_collator_with_packing():
     model_args, data_args, *_ = get_infer_args(
