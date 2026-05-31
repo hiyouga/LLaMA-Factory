@@ -58,6 +58,7 @@ def _patch_missing_hf_device_map(model: "PreTrainedModel", model_args: "ModelArg
     if model_args.export_dir is None or model_args.export_device != "auto" or hasattr(model, "hf_device_map"):
         return
 
+    # Keep the fallback scoped to export auto-device loading to avoid affecting training paths.
     model.hf_device_map = {"": str(getattr(model, "device", "cpu"))}
 
 
