@@ -17,7 +17,7 @@ from typing import TYPE_CHECKING, Any
 
 import torch
 from peft import PeftModel
-from transformers import GenerationMixin, PreTrainedModel, PreTrainedTokenizerBase
+from transformers import GenerationMixin, PreTrainedModel, PreTrainedTokenizerBase, is_torch_npu_available
 from transformers.integrations import is_deepspeed_zero3_enabled
 from transformers.modeling_utils import is_fsdp_enabled
 
@@ -421,7 +421,11 @@ def patch_model(
         autocast_projector_dtype(model, model_args)
         add_z3_leaf_module(model)
 
-        if getattr(model.config, "model_type", None) in ["qwen3_5", "qwen3_5_moe"] and model_args.flash_attn == "fa2":
+        if (
+            getattr(model.config, "model_type", None) in ["qwen3_5", "qwen3_5_moe"]
+            and model_args.flash_attn == "fa2"
+            and not is_torch_npu_available()
+        ):
             patch_qwen3_5_forward(model)
 
     if not model_args.use_unsloth:
