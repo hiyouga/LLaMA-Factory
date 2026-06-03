@@ -20,7 +20,7 @@ train_dataset: data/v1_dpo_demo.yaml
 output_dir: ./outputs/test_rm
 micro_batch_size: 1
 cutoff_len: 2048
-learning_rate: 1.0e-4
+learning_rate: 1.0e-5
 max_steps: 10
 
 ### sample
