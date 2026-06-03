@@ -158,6 +158,8 @@ def _detect_assistant_markers(template_caller) -> tuple[str, str]:
         start_marker = prefix
 
     start_marker = start_marker.lstrip("\n")
+    if not start_marker or not end_marker:
+        raise ValueError("Detected empty assistant start or end marker.")
     return start_marker, end_marker
 
 
@@ -515,3 +517,4 @@ class Renderer:
             model_inputs.append(model_input)
 
         return model_inputs
+

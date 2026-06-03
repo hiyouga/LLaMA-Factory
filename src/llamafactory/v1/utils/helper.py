@@ -175,23 +175,14 @@ def _align_multimodal_on_truncation(sample: ModelInput, max_length: int) -> Mode
         video_frame_blocks = _find_contiguous_blocks(sample.get("mm_token_type_ids", mm_type_ids), target=2)
         video_grid_thw = sample["video_grid_thw"]
 
-        # Group frames into videos: video_i has T=video_grid_thw[i][0] frames
+        # Each video occupies one contiguous block in video_frame_blocks (one block per video, not per frame).
         n_complete_videos = 0
-        frame_idx = 0
         for vid_i in range(len(video_grid_thw)):
-            T = int(video_grid_thw[vid_i][0])
-            all_frames_in = True
-            for f in range(T):
-                if frame_idx + f >= len(video_frame_blocks):
-                    all_frames_in = False
-                    break
-                start, length = video_frame_blocks[frame_idx + f]
-                if start + length > max_length:
-                    all_frames_in = False
-                    break
-            if all_frames_in:
+            if vid_i >= len(video_frame_blocks):
+                break
+            start, length = video_frame_blocks[vid_i]
+            if start + length <= max_length:
                 n_complete_videos += 1
-                frame_idx += T
             else:
                 break
 
@@ -201,7 +192,6 @@ def _align_multimodal_on_truncation(sample: ModelInput, max_length: int) -> Mode
             sample["video_grid_thw"] = video_grid_thw[:n_complete_videos]
 
             # Zero out orphaned video frame tokens
-            complete_frame_count = sum(int(video_grid_thw[i][0]) for i in range(n_complete_videos))
             input_ids = list(sample["input_ids"]) if not isinstance(sample["input_ids"], list) else sample["input_ids"]
             cur_mm_type_ids = sample.get("mm_token_type_ids", mm_type_ids)
             if not isinstance(cur_mm_type_ids, list):
@@ -217,7 +207,7 @@ def _align_multimodal_on_truncation(sample: ModelInput, max_length: int) -> Mode
                 else sample.get("loss_weights")
             )
 
-            for block_idx in range(complete_frame_count, len(video_frame_blocks)):
+            for block_idx in range(n_complete_videos, len(video_frame_blocks)):
                 start, length = video_frame_blocks[block_idx]
                 for pos in range(start, min(start + length, max_length)):
                     input_ids[pos] = 0
@@ -290,3 +280,4 @@ def compute_valid_tokens(batches: list[BatchInput]) -> int:
         for batch in batches
         if "labels" in batch
     )
+
