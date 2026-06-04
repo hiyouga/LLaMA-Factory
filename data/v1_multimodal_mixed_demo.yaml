@@ -1,3 +1,0 @@
-multimodal_mixed_demo:
-  path: data/v1_multimodal_mixed_demo.jsonl
-  source: local
