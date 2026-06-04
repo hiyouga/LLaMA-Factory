@@ -886,6 +886,9 @@ register_model_group(
         "Gemma-4-E4B-Thinking": {
             DownloadSource.DEFAULT: "google/gemma-4-E4B-it",
         },
+        "Gemma-4-12B-Thinking": {
+            DownloadSource.DEFAULT: "google/",
+        },
     },
     template="gemma4n",
     multimodal=True,
