@@ -73,20 +73,33 @@ def _make_safetensor_loader(checkpoint_file: str, tensor_key: str):
     return _load_tensor
 
 
-def get_transformer_layer_cls(model: HFModel) -> type[nn.Module] | None:
+def get_transformer_layer_classes(model: HFModel) -> set[type[nn.Module]]:
+    
+    # Return the set of Transformer layer classes that should each be wrapped by FSDP2.
+
+    for candidate in (
+        getattr(getattr(model, "model", None), "language_model", None),
+        getattr(model, "language_model", None),
+        getattr(model, "model", None),
+        model,
+    ):
+        if candidate is not None and hasattr(candidate, "layers") and len(candidate.layers) > 0:
+            return {type(candidate.layers[0])}
+
+    # Fallback for unusual architectures without a discoverable .layers attribute.
     no_split_modules = getattr(model, "_no_split_modules", None)
     if no_split_modules:
-        if isinstance(no_split_modules, (list, tuple)):
-            for name, module in model.named_modules():
-                for cls_name in no_split_modules:
-                    if module.__class__.__name__ == cls_name:
-                        return module.__class__
-    if hasattr(model, "model") and hasattr(model.model, "layers"):
-        return type(model.model.layers[0])
-    if hasattr(model, "layers"):
-        return type(model.layers[0])
+        found: dict[str, type[nn.Module]] = {}
+        for _, module in model.named_modules():
+            cls_name = module.__class__.__name__
+            if cls_name in no_split_modules and cls_name not in found:
+                found[cls_name] = module.__class__
+            if len(found) == len(no_split_modules):
+                break
+        if found:
+            return set(found.values())
 
-    return None
+    return set()
 
 
 def save_model(model: HFModel, output_dir: str, processor: Processor) -> None:
@@ -196,16 +209,15 @@ class FSDP2Engine:
             return model
 
         mp_policy = self.get_mp_policy()
-        layer_cls = get_transformer_layer_cls(model)
+        transformer_layer_cls_to_wrap = get_transformer_layer_classes(model)
 
-        if layer_cls is None:
+        if not transformer_layer_cls_to_wrap:
             logger.warning(
                 "Could not identify Transformer Layer class, applying FSDP to the whole model structure only."
             )
-            transformer_layer_cls_to_wrap = set()
         else:
-            logger.info(f"Applying per-layer FSDP to {layer_cls.__name__}")
-            transformer_layer_cls_to_wrap = {layer_cls}
+            names = ", ".join(cls.__name__ for cls in transformer_layer_cls_to_wrap)
+            logger.info(f"Applying per-layer FSDP to: {names}")
 
         if self.is_lora_module_wrap(model):
             lora_modules = []
@@ -683,3 +695,4 @@ class FSDP2Engine:
                 local_tensor[tuple(slices)].copy_(sliced_tensor)
         else:
             param.data.copy_(loaded_tensor)
+

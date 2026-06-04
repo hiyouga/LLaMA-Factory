@@ -71,3 +71,4 @@ class ModelArguments:
         self.peft_config = get_plugin_config(self.peft_config)
         self.kernel_config = get_plugin_config(self.kernel_config)
         self.quant_config = get_plugin_config(self.quant_config)
+

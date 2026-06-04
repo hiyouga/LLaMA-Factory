@@ -19,16 +19,23 @@ renderer = Renderer(processor)
 renderer.render_messages(messages: list[Message], tools: str | None) -> ModelInputs
 renderer.parse_message(text: str) -> Message
 renderer.process_samples(samples: list[Sample]) -> list[ModelInput]
+
+By default ``render_messages`` and ``parse_message`` use the built-in implementations
+below. To customize a step for a given template, register an override in source code via
+``RenderingPlugin`` (see ``plugins/model_plugins/rendering.py``) and construct the renderer
+with that template name: ``Renderer(processor, name="my_template")``. When no override is
+registered for the name, the built-in default path is used.
 """
 
 import json
 import re
 
 import numpy as np
+import torch
 
 from ...utils.constants import IGNORE_INDEX
 from ...utils.helper import get_tokenizer, is_tokenizer
-from ...utils.types import Message, ModelInput, Processor, Sample
+from ...utils.types import BatchInput, Message, ModelInput, Processor, Sample, Tensor
 
 
 _FALLBACK_CHATML_JINJA = (
@@ -423,8 +430,9 @@ def _parse_message(generated_text: str) -> Message:
 
 
 class Renderer:
-    def __init__(self, processor: Processor):
+    def __init__(self, processor: Processor, name: str | None = None):
         self.processor = processor
+        self.name = name
         self._assistant_start_marker = None
         self._assistant_end_marker = None
 
@@ -435,6 +443,20 @@ class Renderer:
             except (ValueError, Exception):
                 pass
 
+    def _override(self, method_name: str):
+        """Return a registered plugin override for ``method_name``, or ``None``.
+
+        Returns ``None`` when no name is set or nothing is registered, so callers fall
+        back to the built-in default path. Imported lazily to avoid a core->plugins
+        import cycle at module load.
+        """
+        if self.name is None:
+            return None
+
+        from ...plugins.model_plugins.rendering import RenderingPlugin
+
+        return RenderingPlugin(self.name).get(method_name)
+
     def render_messages(
         self,
         messages: list[Message],
@@ -443,6 +465,10 @@ class Renderer:
         enable_thinking: bool = False,
     ) -> ModelInput:
         """Render messages to model input using apply_chat_template.
+
+        Uses the built-in renderer by default. If a ``render_messages`` override is
+        registered for this renderer's ``name`` via ``RenderingPlugin``, it is used
+        instead.
 
         Args:
             messages: The messages to render.
@@ -453,6 +479,16 @@ class Renderer:
         Returns:
             ModelInput with input_ids, attention_mask, labels, and loss_weights.
         """
+        override = self._override("render_messages")
+        if override is not None:
+            return override(
+                self.processor,
+                messages,
+                tools=tools,
+                is_generate=is_generate,
+                enable_thinking=enable_thinking,
+            )
+
         return _render_messages(
             self.processor,
             messages,
@@ -466,12 +502,20 @@ class Renderer:
     def parse_message(self, generated_text: str) -> Message:
         """Parse generated text into a structured Message.
 
+        Uses the built-in parser by default. If a ``parse_message`` override is
+        registered for this renderer's ``name`` via ``RenderingPlugin``, it is used
+        instead.
+
         Args:
             generated_text: The raw generated text from the model.
 
         Returns:
             Parsed Message with typed content blocks.
         """
+        override = self._override("parse_message")
+        if override is not None:
+            return override(generated_text)
+
         return _parse_message(generated_text)
 
     def process_samples(self, samples: list[Sample]) -> list[ModelInput]:
@@ -517,4 +561,175 @@ class Renderer:
             model_inputs.append(model_input)
 
         return model_inputs
+
+
+_MULTIMODAL_PASSTHROUGH_KEYS = frozenset(
+    {
+        "pixel_values",
+        "image_grid_thw",
+        "pixel_values_videos",
+        "video_grid_thw",
+        "second_per_grid_ts",
+    }
+)
+
+
+def _pad_and_truncate(tensor: Tensor, max_seqlen: int, pad_value: int = 0) -> Tensor:
+    if tensor.shape[-1] >= max_seqlen:
+        return tensor[..., :max_seqlen]
+
+    pad_shape = list(tensor.shape)
+    pad_shape[-1] = max_seqlen - tensor.shape[-1]
+    pad_tensor = torch.full(pad_shape, pad_value, dtype=tensor.dtype, device=tensor.device)
+    return torch.cat([tensor, pad_tensor], dim=-1)
+
+
+def _align_modality(
+    sample: ModelInput,
+    mm_type_ids: list[int],
+    max_length: int,
+    *,
+    target: int,
+    grid_key: str,
+    pixel_key: str,
+) -> list[int]:
+    """Trim and zero one modality's orphaned tokens for a single sample.
+
+    Layout-agnostic: a media item's placeholder tokens may be a single contiguous run
+    (e.g. Qwen2.5-VL videos) or split into per-frame sub-runs separated by timestamp
+    tokens (e.g. Qwen3-VL videos). Completeness is decided per token *position* rather
+    than per contiguous block, so both layouts are handled identically.
+
+    Returns the (possibly updated) ``mm_token_type_ids`` list so chained calls see the
+    zeroed positions from earlier modalities.
+    """
+    if grid_key not in sample or pixel_key not in sample:
+        return mm_type_ids
+
+    grid = sample[grid_key]
+    n_items = len(grid)
+    if n_items == 0:
+        return mm_type_ids
+
+    # Positions of this modality's placeholder tokens, in sequence order.
+    positions = [i for i, t in enumerate(mm_type_ids) if t == target]
+    patches_per_item = [int(grid[i].prod()) for i in range(n_items)]
+    total_patches = sum(patches_per_item)
+    total_tokens = len(positions)
+
+    # merge_size**2 = pixel patches per placeholder token. Derive it from the data so we
+    # don't need the processor here. Bail out untouched if the sample is inconsistent.
+    if total_tokens == 0 or total_patches % total_tokens != 0:
+        return mm_type_ids
+    merge_sq = total_patches // total_tokens
+    tokens_per_item = [p // merge_sq for p in patches_per_item]
+    if sum(tokens_per_item) != total_tokens:
+        return mm_type_ids
+
+    # Each item owns a contiguous slice of `positions`; it is complete iff its last
+    # placeholder token lands inside the kept window [0, max_length).
+    n_complete = 0
+    cum = 0
+    for n_i in tokens_per_item:
+        if positions[cum + n_i - 1] < max_length:
+            n_complete += 1
+            cum += n_i
+        else:
+            break
+
+    if n_complete >= n_items:
+        return mm_type_ids
+
+    # Trim pixel features and grid to the complete prefix.
+    keep_patches = sum(patches_per_item[:n_complete])
+    sample[pixel_key] = sample[pixel_key][:keep_patches]
+    sample[grid_key] = grid[:n_complete]
+
+    # Zero out orphaned placeholder tokens that fall inside the kept window; tokens
+    # beyond max_length are removed by truncation anyway (positions are sorted).
+    input_ids = list(sample["input_ids"])
+    mm_type_ids = list(mm_type_ids)
+    labels = list(sample["labels"]) if "labels" in sample else None
+    loss_weights = list(sample["loss_weights"]) if "loss_weights" in sample else None
+
+    for pos in positions[cum:]:
+        if pos >= max_length:
+            break
+        input_ids[pos] = 0
+        mm_type_ids[pos] = 0
+        if labels is not None:
+            labels[pos] = IGNORE_INDEX
+        if loss_weights is not None:
+            loss_weights[pos] = 0.0
+
+    sample["input_ids"] = input_ids
+    sample["mm_token_type_ids"] = mm_type_ids
+    if labels is not None:
+        sample["labels"] = labels
+    if loss_weights is not None:
+        sample["loss_weights"] = loss_weights
+    return mm_type_ids
+
+
+def _align_multimodal_on_truncation(sample: ModelInput, max_length: int) -> ModelInput:
+    """Remove orphaned multimodal data when sequence will be truncated.
+
+    When cutoff_len truncates input_ids, images/videos whose placeholder tokens are
+    partially cut lose their token<->pixel correspondence. This function:
+    1. Determines which images/videos are fully within max_length
+    2. Trims pixel_values and grid_thw to keep only complete ones
+    3. Zeros out orphaned vision tokens so the model ignores them
+    """
+    mm_type_ids = sample.get("mm_token_type_ids")
+    if mm_type_ids is None:
+        return sample
+
+    sample = dict(sample)
+
+    mm_type_ids = _align_modality(
+        sample, mm_type_ids, max_length, target=1, grid_key="image_grid_thw", pixel_key="pixel_values"
+    )
+    mm_type_ids = _align_modality(
+        sample, mm_type_ids, max_length, target=2, grid_key="video_grid_thw", pixel_key="pixel_values_videos"
+    )
+
+    # Remove empty multimodal fields entirely
+    if "image_grid_thw" in sample and len(sample["image_grid_thw"]) == 0:
+        del sample["pixel_values"]
+        del sample["image_grid_thw"]
+    if "video_grid_thw" in sample and len(sample["video_grid_thw"]) == 0:
+        del sample["pixel_values_videos"]
+        del sample["video_grid_thw"]
+
+    return sample
+
+
+def pad_and_truncate(samples: list[ModelInput], max_seqlen: int) -> list[BatchInput]:
+    max_length = min(max(len(sample["input_ids"]) for sample in samples), max_seqlen)
+    padded_samples = []
+    for sample in samples:
+        # Align multimodal fields before truncation: remove images/videos whose
+        # placeholder tokens would be partially cut, preventing pixel<->token mismatch.
+        if len(sample["input_ids"]) > max_length and any(k in sample for k in _MULTIMODAL_PASSTHROUGH_KEYS):
+            sample = _align_multimodal_on_truncation(sample, max_length)
+
+        padded_sample = {}
+        for key, value in sample.items():
+            if key in _MULTIMODAL_PASSTHROUGH_KEYS:
+                padded_sample[key] = value
+                continue
+
+            if "label" in key:
+                pad_value = IGNORE_INDEX
+            else:
+                pad_value = 0
+
+            if not isinstance(value, str):
+                padded_sample[key] = _pad_and_truncate(torch.tensor(value), max_length, pad_value)
+            else:
+                padded_sample[key] = value
+
+        padded_samples.append(padded_sample)
+
+    return padded_samples
 

@@ -19,8 +19,8 @@ from typing import Any
 import torch
 from torch.utils.data import default_collate
 
+from ...core.utils.rendering import pad_and_truncate
 from ...utils.constants import IGNORE_INDEX
-from ...utils.helper import pad_and_truncate
 from ...utils.objects import StatefulBuffer
 from ...utils.plugin import BasePlugin
 from ...utils.types import BatchInfo, BatchInput, DataLoader, ModelInput
@@ -281,3 +281,4 @@ def generate_dynamic_padding_free_batch(buffer: StatefulBuffer, batch_info: Batc
         batch.append(packed_batch)
 
     return batch
+

@@ -56,3 +56,4 @@ def parse_qwen3_message(generated_text: str) -> Message:
             content.append({"type": "text", "value": text})
 
     return Message(role="assistant", content=content)
+

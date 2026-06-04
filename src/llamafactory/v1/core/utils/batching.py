@@ -34,10 +34,9 @@ from torchdata.stateful_dataloader.sampler import StatefulDistributedSampler
 from ...accelerator.interface import Dim, DistributedInterface
 from ...config import BatchingStrategy
 from ...utils import logging
-from ...utils.helper import _MULTIMODAL_PASSTHROUGH_KEYS, pad_and_truncate
 from ...utils.objects import StatefulBuffer
 from ...utils.types import BatchInfo, BatchInput, ModelInput, TorchDataset
-from .rendering import Renderer
+from .rendering import _MULTIMODAL_PASSTHROUGH_KEYS, Renderer, pad_and_truncate
 
 
 logger = logging.get_logger(__name__)
@@ -277,3 +276,4 @@ if __name__ == "__main__":
         print(len(batch))
         print(batch[0]["input_ids"].shape)
         break
+

@@ -203,3 +203,4 @@ class BatchInfo(TypedDict):
 class ModelOutput(NamedTuple):
     logits: Tensor
     """Logits for the model."""
+

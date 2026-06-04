@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import importlib
+from collections.abc import Callable
 
 from ...utils import logging
 from ...utils.plugin import BasePlugin
@@ -23,6 +24,22 @@ logger = logging.get_logger(__name__)
 
 
 class RenderingPlugin(BasePlugin):
+    """Override hook for the built-in :class:`~llamafactory.v1.core.utils.rendering.Renderer`.
+
+    The default rendering path (``render_messages`` / ``parse_message``) lives in the
+    core ``Renderer`` and is used as-is when nothing is registered here. To customize a
+    step for a given template, register a replacement in source code::
+
+        @RenderingPlugin("my_template").register("render_messages")
+        def render_my_template(processor, messages, tools=None, *, is_generate=False, enable_thinking=False):
+            ...
+            return ModelInput(...)
+
+    and construct the renderer with that name (``Renderer(processor, name="my_template")``).
+    Methods left unregistered for a name fall back to the built-in default, so a template
+    may override only ``parse_message`` and still use the default ``render_messages``.
+    """
+
     _attempted_template_imports: set[str] = set()
 
     def _ensure_template_imported(self) -> None:
@@ -40,6 +57,22 @@ class RenderingPlugin(BasePlugin):
         self._ensure_template_imported()
         return super().__getitem__(method_name)
 
+    def get(self, method_name: str) -> Callable | None:
+        """Return the registered override for ``method_name``, or ``None`` if there is none.
+
+        Unlike ``__getitem__`` this never raises, so the caller can cleanly fall back to
+        the built-in default when no custom implementation is registered.
+        """
+        self._ensure_template_imported()
+        if self.name is None:
+            return None
+        return self._registry[self.name].get(method_name)
+
+    def render_messages(self, *args, **kwargs):
+        """Render messages using a template-specific renderer."""
+        return self["render_messages"](*args, **kwargs)
+
     def parse_message(self, generated_text: str) -> Message:
         """Parse generated text using a model-specific parser."""
         return self["parse_message"](generated_text)
+
