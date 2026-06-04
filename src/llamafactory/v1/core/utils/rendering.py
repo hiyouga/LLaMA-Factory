@@ -549,6 +549,19 @@ class Renderer:
                     model_input["position_ids"] = np.concatenate(
                         [chosen_input["position_ids"], rejected_input["position_ids"]], axis=-1
                     )
+
+                # Carry multimodal features. Chosen tokens precede rejected ones in the
+                # concatenated sequence, so concatenate their pixel features in the same
+                # order to keep the token<->pixel correspondence intact.
+                for key in _MULTIMODAL_PASSTHROUGH_KEYS:
+                    tensors = [inp[key] for inp in (chosen_input, rejected_input) if key in inp]
+                    if tensors:
+                        model_input[key] = torch.cat(tensors, dim=0)
+
+                if "mm_token_type_ids" in chosen_input or "mm_token_type_ids" in rejected_input:
+                    chosen_mm = chosen_input.get("mm_token_type_ids", [0] * len(chosen_input["input_ids"]))
+                    rejected_mm = rejected_input.get("mm_token_type_ids", [0] * len(rejected_input["input_ids"]))
+                    model_input["mm_token_type_ids"] = chosen_mm + rejected_mm
             else:
                 raise ValueError("No valid messages or chosen_messages/rejected_messages found in sample.")
 
