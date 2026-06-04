@@ -24,7 +24,6 @@ from transformers import (
     AutoModelForTextToWaveform,
     AutoProcessor,
     AutoTokenizer,
-    is_torch_npu_available,
 )
 from trl import AutoModelForCausalLMWithValueHead
 
@@ -139,19 +138,6 @@ def load_model(
     r"""Load pretrained model."""
     init_kwargs = _get_init_kwargs(model_args)
     config = load_config(model_args)
-
-    if is_trainable and getattr(config, "model_type", None) in ["qwen3_5", "qwen3_5_moe"]:
-        if model_args.flash_attn == "fa2" and is_torch_npu_available() and "Ascend910" in torch.npu.get_device_name(0):
-            # Patch FLA availability before loading model (must be done before model import)
-            from .patcher import patch_transformers_flash_linear_attention_available
-
-            patch_transformers_flash_linear_attention_available()
-
-            # The original modeling codes hardcodes device=torch.cuda.current_device() for
-            # FusedRMSNormGated. Using transfer_to_npu monkey-patches torch.cuda APIs to
-            # automatically map to torch.npu
-            from torch_npu.contrib import transfer_to_npu  # noqa: F401
-
     patch_config(config, tokenizer, model_args, init_kwargs, is_trainable)
     apply_liger_kernel(config, model_args, is_trainable, require_logits=(finetuning_args.stage not in ["pt", "sft"]))
 

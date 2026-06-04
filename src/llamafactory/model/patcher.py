@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import importlib
 from types import MethodType
 from typing import TYPE_CHECKING, Any
 
@@ -86,27 +85,6 @@ def _check_fla_dependencies() -> None:
         ) from exc
 
 
-def _import_optional_module(module_name: str) -> Any | None:
-    try:
-        return importlib.import_module(module_name)
-    except ImportError as exc:
-        logger.debug("Failed to import optional module %s: %s", module_name, exc)
-        return None
-
-
-def patch_transformers_flash_linear_attention_available() -> None:
-    def _is_flash_linear_attention_available() -> bool:
-        return True
-
-    transformers_utils = _import_optional_module("transformers.utils")
-    if transformers_utils is not None:
-        setattr(transformers_utils, "is_flash_linear_attention_available", _is_flash_linear_attention_available)
-
-    transformers_import_utils = _import_optional_module("transformers.utils.import_utils")
-    if transformers_import_utils is not None:
-        setattr(transformers_import_utils, "is_flash_linear_attention_available", _is_flash_linear_attention_available)
-
-
 def patch_qwen3_5_forward_npu(model: "PreTrainedModel") -> None:
     """Patch for Qwen3.5 models on NPU by importing torch_npu to enable torch.cuda compatibility.
 
@@ -115,15 +93,24 @@ def patch_qwen3_5_forward_npu(model: "PreTrainedModel") -> None:
 
     Also replaces chunk_gated_delta_rule with NPU-compatible implementation.
     """
-    try:
-        from torch_npu.contrib import transfer_to_npu  # noqa: F401
+    import importlib.metadata
 
-        logger.info_rank0("Imported torch_npu for NPU compatibility with torch.cuda operations in Qwen3.5 models.")
-    except ImportError:
+    if "Ascend910" not in torch.npu.get_device_name(0):
+        logger.warning_rank0("Currently only 910B series NPUs are supported for the NPU GDN patch.")
+        return
+
+    try:
+        importlib.metadata.version("triton_ascend")
+    except importlib.metadata.PackageNotFoundError:
         logger.warning_rank0(
-            "torch_npu is not installed. Qwen3.5 models may fail on NPU due to torch.cuda.current_device() calls. "
-            "Please install torch_npu: pip install torch-npu"
+            "triton_ascend not installed, skipping NPU GDN patch. "
+            "To enable it on NPU, reinstall Triton with the Ascend build: "
+            "`pip uninstall -y triton && pip install -r requirements/triton_ascend.txt`. "
+            "Note: triton and triton_ascend cannot coexist — triton must be uninstalled first."
         )
+        return
+
+    logger.info_rank0("triton_ascend detected for NPU compatibility.")
 
     from ..third_party.triton.chunk_gated_delta_rule import chunk_gated_delta_rule as npu_chunk_gated_delta_rule
 
@@ -482,10 +469,11 @@ def patch_model(
         autocast_projector_dtype(model, model_args)
         add_z3_leaf_module(model)
 
-        if getattr(model.config, "model_type", None) in ["qwen3_5", "qwen3_5_moe"] and model_args.flash_attn == "fa2":
-            if is_torch_npu_available() and "Ascend910" in torch.npu.get_device_name(0):
+        if getattr(model.config, "model_type", None) in ["qwen3_5", "qwen3_5_moe"]:
+            if is_torch_npu_available():
                 patch_qwen3_5_forward_npu(model)
-            elif is_torch_cuda_available():
+            elif is_torch_cuda_available() and model_args.flash_attn == "fa2":
+                # this is the patch for packing/neat_packing for GPU GDN. And when setting packing, flash_attn must be fa2.
                 patch_qwen3_5_forward_gpu(model)
 
     if not model_args.use_unsloth:
