@@ -27,6 +27,7 @@ with that template name: ``Renderer(processor, name="my_template")``. When no ov
 registered for the name, the built-in default path is used.
 """
 
+import bisect
 import json
 import re
 
@@ -194,22 +195,53 @@ def _find_assistant_regions(text: str, start_marker: str, end_marker: str) -> li
     return regions
 
 
-def _char_region_to_token_region(
-    offsets: list[tuple[int, int]], content_start: int, region_end: int
-) -> tuple[int, int]:
-    """Map a character region to token indices using offset_mapping.
+def _build_offset_index(offsets: list[tuple[int, int]]) -> tuple[list[int], list[int], list[int]]:
+    """Precompute monotonic arrays over non-empty tokens for binary-search boundary mapping.
 
-    Returns (token_start, token_end) as a half-open interval [start, end).
+    Special tokens often map to empty (``char_s == char_e``) offsets; they are excluded so the
+    remaining (start, end) pairs are monotonic non-decreasing and therefore bisect-able. This
+    is built once per sequence and reused across all assistant regions, turning region mapping
+    from O(regions x seq_len) into O(seq_len + regions x log seq_len).
+
+    Returns ``(orig_indices, starts, ends)`` where each list is aligned by position in the
+    filtered (non-empty) token list; ``orig_indices[j]`` is the index into the original
+    ``offsets`` so callers report token positions in the original indexing.
     """
-    tok_start = None
-    tok_end = None
+    orig_indices: list[int] = []
+    starts: list[int] = []
+    ends: list[int] = []
     for i, (char_s, char_e) in enumerate(offsets):
         if char_s == char_e:
             continue
-        if tok_start is None and char_e > content_start:
-            tok_start = i
-        if char_s < region_end:
-            tok_end = i + 1
+        orig_indices.append(i)
+        starts.append(char_s)
+        ends.append(char_e)
+    return orig_indices, starts, ends
+
+
+def _char_region_to_token_region(
+    offset_index: tuple[list[int], list[int], list[int]], content_start: int, region_end: int
+) -> tuple[int | None, int | None]:
+    """Map a character region to token indices via binary search over ``offset_index``.
+
+    ``offset_index`` is the output of ``_build_offset_index``. Returns (token_start, token_end)
+    as a half-open interval [start, end) in the ORIGINAL offsets indexing. The semantics match
+    the previous linear scan exactly:
+    - token_start: first non-empty token whose ``char_end`` > ``content_start``
+    - token_end:   one past the last non-empty token whose ``char_start`` < ``region_end``
+    """
+    orig_indices, starts, ends = offset_index
+    if not orig_indices:
+        return None, None
+
+    # ends is non-decreasing: first token with char_end > content_start.
+    j = bisect.bisect_right(ends, content_start)
+    tok_start = orig_indices[j] if j < len(orig_indices) else None
+
+    # starts is non-decreasing: positions [0, k) have char_start < region_end.
+    k = bisect.bisect_left(starts, region_end)
+    tok_end = orig_indices[k - 1] + 1 if k > 0 else None
+
     return tok_start, tok_end
 
 
@@ -337,10 +369,11 @@ def _render_messages(
 
     regions_char = _find_assistant_regions(boundary_text, assistant_start_marker, assistant_end_marker)
 
-    # 3. Map char regions to text-token regions
+    # 3. Map char regions to text-token regions (binary search over a per-sequence index)
+    offset_index = _build_offset_index(text_offsets)
     regions_text_tok = []
     for content_start, region_end in regions_char:
-        tok_start, tok_end = _char_region_to_token_region(text_offsets, content_start, region_end)
+        tok_start, tok_end = _char_region_to_token_region(offset_index, content_start, region_end)
         if tok_start is not None and tok_end is not None:
             regions_text_tok.append((tok_start, tok_end))
 
