@@ -75,4 +75,3 @@ class RenderingPlugin(BasePlugin):
     def parse_message(self, generated_text: str) -> Message:
         """Parse generated text using a model-specific parser."""
         return self["parse_message"](generated_text)
-

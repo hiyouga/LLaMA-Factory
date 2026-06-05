@@ -35,4 +35,3 @@ def test_sync_sampler():
         "role": "assistant",
         "content": [{"type": "text", "value": "This is a test."}],
     }
-

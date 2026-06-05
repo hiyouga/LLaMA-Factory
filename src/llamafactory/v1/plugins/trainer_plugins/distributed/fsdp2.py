@@ -74,7 +74,6 @@ def _make_safetensor_loader(checkpoint_file: str, tensor_key: str):
 
 
 def get_transformer_layer_classes(model: HFModel) -> set[type[nn.Module]]:
-    
     # Return the set of Transformer layer classes that should each be wrapped by FSDP2.
 
     for candidate in (
@@ -695,4 +694,3 @@ class FSDP2Engine:
                 local_tensor[tuple(slices)].copy_(sliced_tensor)
         else:
             param.data.copy_(loaded_tensor)
-

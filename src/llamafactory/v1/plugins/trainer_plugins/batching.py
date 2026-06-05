@@ -281,4 +281,3 @@ def generate_dynamic_padding_free_batch(buffer: StatefulBuffer, batch_info: Batc
         batch.append(packed_batch)
 
     return batch
-

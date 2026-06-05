@@ -778,4 +778,3 @@ def pad_and_truncate(samples: list[ModelInput], max_seqlen: int) -> list[BatchIn
         padded_samples.append(padded_sample)
 
     return padded_samples
-

@@ -94,4 +94,3 @@ def compute_valid_tokens(batches: list[BatchInput]) -> int:
         for batch in batches
         if "labels" in batch
     )
-
