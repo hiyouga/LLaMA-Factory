@@ -14,17 +14,8 @@
 
 """Rendering utils.
 
-How to use:
-renderer = Renderer(processor)
-renderer.render_messages(messages: list[Message], tools: str | None) -> ModelInputs
-renderer.parse_message(text: str) -> Message
-renderer.process_samples(samples: list[Sample]) -> list[ModelInput]
-
-By default ``render_messages`` and ``parse_message`` use the built-in implementations
-below. To customize a step for a given template, register an override in source code via
-``RenderingPlugin`` (see ``plugins/model_plugins/rendering.py``) and construct the renderer
-with that template name: ``Renderer(processor, name="my_template")``. When no override is
-registered for the name, the built-in default path is used.
+Per-template steps can be customized by registering an override via ``RenderingPlugin``
+(see ``plugins/model_plugins/rendering.py``) and constructing ``Renderer(processor, name=...)``.
 """
 
 import bisect
@@ -50,13 +41,7 @@ _FALLBACK_CHATML_JINJA = (
 
 
 def _to_hf_messages(messages: list[Message], is_multimodal: bool = False) -> list[dict]:
-    """Convert v1 Message format to HF format for apply_chat_template.
-
-    Converts structured content types to their HF-native representations:
-    - tool_call → message-level tool_calls field (HF function calling format)
-    - reasoning → message-level reasoning_content field (HF reasoning format)
-    - image/video/audio → multimodal content blocks
-    """
+    """Convert v1 Message format to HF format for apply_chat_template."""
     hf_messages = []
     for message in messages:
         tool_calls: list[dict] = []
@@ -131,9 +116,7 @@ def _count_media_in_messages(messages: list[Message]) -> tuple[int, int]:
 def _detect_assistant_markers(template_caller) -> tuple[str, str]:
     r"""Detect the text markers that bracket assistant content in the rendered template.
 
-    Returns (start_marker, end_marker) where:
-    - start_marker: text immediately before assistant content (e.g., '<|im_start|>assistant\n')
-    - end_marker: text immediately after assistant content (e.g., '<|im_end|>')
+    Returns (start_marker, end_marker), e.g. ('<|im_start|>assistant\n', '<|im_end|>').
     """
     CONTENT_A = "AABBCC_PROBE_CONTENT_1_XXYYZZ"
     CONTENT_B = "AABBCC_PROBE_CONTENT_2_XXYYZZ"
@@ -172,11 +155,9 @@ def _detect_assistant_markers(template_caller) -> tuple[str, str]:
 
 
 def _find_assistant_regions(text: str, start_marker: str, end_marker: str) -> list[tuple[int, int]]:
-    """Find character ranges of assistant content (inclusive of end_marker) in rendered text.
+    """Find char ranges of assistant content (inclusive of end_marker) in rendered text.
 
-    Returns list of (content_start_char, region_end_char) where:
-    - content_start_char: first char of assistant content (after start_marker)
-    - region_end_char: char after end_marker (exclusive bound)
+    Returns list of (content_start_char, region_end_char) half-open ranges.
     """
     regions = []
     pos = 0
@@ -199,13 +180,10 @@ def _build_offset_index(offsets: list[tuple[int, int]]) -> tuple[list[int], list
     """Precompute monotonic arrays over non-empty tokens for binary-search boundary mapping.
 
     Special tokens often map to empty (``char_s == char_e``) offsets; they are excluded so the
-    remaining (start, end) pairs are monotonic non-decreasing and therefore bisect-able. This
-    is built once per sequence and reused across all assistant regions, turning region mapping
-    from O(regions x seq_len) into O(seq_len + regions x log seq_len).
+    remaining (start, end) pairs are monotonic non-decreasing and bisect-able.
 
-    Returns ``(orig_indices, starts, ends)`` where each list is aligned by position in the
-    filtered (non-empty) token list; ``orig_indices[j]`` is the index into the original
-    ``offsets`` so callers report token positions in the original indexing.
+    Returns ``(orig_indices, starts, ends)`` aligned by position in the filtered token list;
+    ``orig_indices[j]`` is the index into the original ``offsets``.
     """
     orig_indices: list[int] = []
     starts: list[int] = []
@@ -224,9 +202,7 @@ def _char_region_to_token_region(
 ) -> tuple[int | None, int | None]:
     """Map a character region to token indices via binary search over ``offset_index``.
 
-    ``offset_index`` is the output of ``_build_offset_index``. Returns (token_start, token_end)
-    as a half-open interval [start, end) in the ORIGINAL offsets indexing. The semantics match
-    the previous linear scan exactly:
+    Returns (token_start, token_end) as a half-open interval in the ORIGINAL offsets indexing:
     - token_start: first non-empty token whose ``char_end`` > ``content_start``
     - token_end:   one past the last non-empty token whose ``char_start`` < ``region_end``
     """
@@ -234,11 +210,9 @@ def _char_region_to_token_region(
     if not orig_indices:
         return None, None
 
-    # ends is non-decreasing: first token with char_end > content_start.
     j = bisect.bisect_right(ends, content_start)
     tok_start = orig_indices[j] if j < len(orig_indices) else None
 
-    # starts is non-decreasing: positions [0, k) have char_start < region_end.
     k = bisect.bisect_left(starts, region_end)
     tok_end = orig_indices[k - 1] + 1 if k > 0 else None
 
@@ -262,11 +236,9 @@ def _build_text_to_expanded(
 ) -> list[int]:
     """Build mapping from text token index to expanded token index.
 
-    Returns list of length len(text_ids)+1. mapping[i] = expanded position for text token i.
-    mapping[len(text_ids)] = len(expanded_ids).
-
-    When vision_token_ids is provided, uses them for precise expansion detection.
-    Otherwise falls back to sequential scan heuristic.
+    Returns a list of length len(text_ids)+1 where mapping[i] is the expanded position for
+    text token i. When vision_token_ids is provided it is used for precise expansion detection;
+    otherwise a sequential scan heuristic is used.
     """
     mapping = [0] * (len(text_ids) + 1)
     e_ptr = 0
@@ -274,13 +246,13 @@ def _build_text_to_expanded(
     for t_idx in range(len(text_ids)):
         mapping[t_idx] = e_ptr
         if vision_token_ids and text_ids[t_idx] in vision_token_ids:
-            # Vision placeholder in text: skip all consecutive vision tokens in expanded
+            # Skip all consecutive vision tokens in expanded for a vision placeholder.
             while e_ptr < len(expanded_ids) and expanded_ids[e_ptr] in vision_token_ids:
                 e_ptr += 1
         elif e_ptr < len(expanded_ids) and text_ids[t_idx] == expanded_ids[e_ptr]:
             e_ptr += 1
         else:
-            # Fallback: scan expanded until we find the next text token
+            # Fallback: scan expanded until we find the next text token.
             if t_idx + 1 < len(text_ids):
                 next_text_token = text_ids[t_idx + 1]
                 while e_ptr < len(expanded_ids) and expanded_ids[e_ptr] != next_text_token:
@@ -303,9 +275,8 @@ def _render_messages(
 ) -> ModelInput:
     """Render messages using the model's own template with text-based boundary detection.
 
-    Uses apply_chat_template to render the full conversation, then finds assistant
-    content regions by searching for role markers in the rendered text. Character positions
-    are mapped to token positions via offset_mapping.
+    Renders the full conversation via apply_chat_template, locates assistant content regions
+    by role markers in the rendered text, and maps character positions to token positions.
     """
     tokenizer = get_tokenizer(processor)
     is_multimodal = not is_tokenizer(processor)
@@ -333,7 +304,6 @@ def _render_messages(
     )
 
     if has_media:
-        # Multimodal path: call processor once for expansion
         images, videos = _extract_media_from_messages(messages)
         proc_kwargs = {"return_tensors": "pt"}
         if images:
@@ -343,12 +313,11 @@ def _render_messages(
         outputs = processor(text=full_text, **proc_kwargs)
         input_ids = outputs["input_ids"][0].tolist()
 
-        # Get text-level tokenization for boundary detection
+        # Text-level tokenization for boundary detection.
         text_encoding = tokenizer(full_text, return_offsets_mapping=True, add_special_tokens=False)
         text_ids = text_encoding["input_ids"]
         text_offsets = text_encoding["offset_mapping"]
     else:
-        # Text-only path
         encoding = tokenizer(full_text, return_offsets_mapping=True, add_special_tokens=False)
         input_ids = encoding["input_ids"]
         text_ids = input_ids
@@ -359,7 +328,7 @@ def _render_messages(
     if assistant_start_marker is None or assistant_end_marker is None:
         assistant_start_marker, assistant_end_marker = _detect_assistant_markers(template_caller)
 
-    # Render without generation prompt for boundary detection (gen prompt is not assistant content)
+    # The generation prompt is not assistant content, so detect boundaries without it.
     if is_generate:
         boundary_text = template_caller.apply_chat_template(
             hf_messages, tokenize=False, add_generation_prompt=False, tools=tools_parsed, **template_kwargs
@@ -369,7 +338,7 @@ def _render_messages(
 
     regions_char = _find_assistant_regions(boundary_text, assistant_start_marker, assistant_end_marker)
 
-    # 3. Map char regions to text-token regions (binary search over a per-sequence index)
+    # 3. Map char regions to text-token regions
     offset_index = _build_offset_index(text_offsets)
     regions_text_tok = []
     for content_start, region_end in regions_char:
@@ -479,9 +448,7 @@ class Renderer:
     def _override(self, method_name: str):
         """Return a registered plugin override for ``method_name``, or ``None``.
 
-        Returns ``None`` when no name is set or nothing is registered, so callers fall
-        back to the built-in default path. Imported lazily to avoid a core->plugins
-        import cycle at module load.
+        Imported lazily to avoid a core->plugins import cycle at module load.
         """
         if self.name is None:
             return None
@@ -498,10 +465,6 @@ class Renderer:
         enable_thinking: bool = False,
     ) -> ModelInput:
         """Render messages to model input using apply_chat_template.
-
-        Uses the built-in renderer by default. If a ``render_messages`` override is
-        registered for this renderer's ``name`` via ``RenderingPlugin``, it is used
-        instead.
 
         Args:
             messages: The messages to render.
@@ -534,10 +497,6 @@ class Renderer:
 
     def parse_message(self, generated_text: str) -> Message:
         """Parse generated text into a structured Message.
-
-        Uses the built-in parser by default. If a ``parse_message`` override is
-        registered for this renderer's ``name`` via ``RenderingPlugin``, it is used
-        instead.
 
         Args:
             generated_text: The raw generated text from the model.
@@ -641,13 +600,11 @@ def _align_modality(
 ) -> list[int]:
     """Trim and zero one modality's orphaned tokens for a single sample.
 
-    Layout-agnostic: a media item's placeholder tokens may be a single contiguous run
-    (e.g. Qwen2.5-VL videos) or split into per-frame sub-runs separated by timestamp
-    tokens (e.g. Qwen3-VL videos). Completeness is decided per token *position* rather
-    than per contiguous block, so both layouts are handled identically.
+    Layout-agnostic: a media item's placeholder tokens may be a single contiguous run or split
+    into per-frame sub-runs; completeness is decided per token *position*, so both are handled
+    identically.
 
-    Returns the (possibly updated) ``mm_token_type_ids`` list so chained calls see the
-    zeroed positions from earlier modalities.
+    Returns the (possibly updated) ``mm_token_type_ids`` so chained calls see earlier zeroing.
     """
     if grid_key not in sample or pixel_key not in sample:
         return mm_type_ids
@@ -657,14 +614,13 @@ def _align_modality(
     if n_items == 0:
         return mm_type_ids
 
-    # Positions of this modality's placeholder tokens, in sequence order.
     positions = [i for i, t in enumerate(mm_type_ids) if t == target]
     patches_per_item = [int(grid[i].prod()) for i in range(n_items)]
     total_patches = sum(patches_per_item)
     total_tokens = len(positions)
 
-    # merge_size**2 = pixel patches per placeholder token. Derive it from the data so we
-    # don't need the processor here. Bail out untouched if the sample is inconsistent.
+    # merge_size**2 = pixel patches per placeholder token, derived from the data. Bail out
+    # untouched if the sample is inconsistent.
     if total_tokens == 0 or total_patches % total_tokens != 0:
         return mm_type_ids
     merge_sq = total_patches // total_tokens
@@ -718,13 +674,11 @@ def _align_modality(
 
 
 def _align_multimodal_on_truncation(sample: ModelInput, max_length: int) -> ModelInput:
-    """Remove orphaned multimodal data when sequence will be truncated.
+    """Remove orphaned multimodal data when the sequence will be truncated.
 
-    When cutoff_len truncates input_ids, images/videos whose placeholder tokens are
-    partially cut lose their token<->pixel correspondence. This function:
-    1. Determines which images/videos are fully within max_length
-    2. Trims pixel_values and grid_thw to keep only complete ones
-    3. Zeros out orphaned vision tokens so the model ignores them
+    When cutoff_len truncates input_ids, media whose placeholder tokens are partially cut lose
+    their token<->pixel correspondence. Trims pixel_values/grid_thw to the complete items and
+    zeros out orphaned vision tokens so the model ignores them.
     """
     mm_type_ids = sample.get("mm_token_type_ids")
     if mm_type_ids is None:
