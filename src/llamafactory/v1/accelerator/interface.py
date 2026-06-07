@@ -68,6 +68,11 @@ class DistributedStrategy:
         if not helper.is_distributed():
             self.mp_shard_size = 1
         elif self.mp_shard_size is None:
+            if helper.get_world_size() % self.mp_replicate_size != 0:
+                raise ValueError(
+                    f"world_size ({helper.get_world_size()}) must be divisible by "
+                    f"mp_replicate_size ({self.mp_replicate_size})."
+                )
             self.mp_shard_size = helper.get_world_size() // self.mp_replicate_size
         elif self.mp_replicate_size * self.mp_shard_size != helper.get_world_size():
             raise ValueError(
@@ -78,11 +83,25 @@ class DistributedStrategy:
         if not helper.is_distributed():
             self.dp_size = 1
         elif self.dp_size is None:
+            if helper.get_world_size() % self.cp_size != 0:
+                raise ValueError(
+                    f"world_size ({helper.get_world_size()}) must be divisible by cp_size ({self.cp_size})."
+                )
             self.dp_size = helper.get_world_size() // self.cp_size
         elif self.dp_size * self.cp_size != helper.get_world_size():
             raise ValueError(
                 f"dp_size * cp_size must equal to world_size, "
                 f"got {self.dp_size} * {self.cp_size} != {helper.get_world_size()}."
+            )
+
+        # The CP sequence group must fit entirely inside one FSDP shard group; otherwise it spans multiple
+        # shard groups and corrupts gradients / hangs NCCL. With both products pinned to world_size above,
+        # this is the only remaining cross-mesh constraint -- it already implies
+        # dp == mp_replicate * (mp_shard / cp), i.e. the model and data meshes describe the same split.
+        if helper.is_distributed() and self.mp_shard_size % self.cp_size != 0:
+            raise ValueError(
+                f"mp_shard_size ({self.mp_shard_size}) must be divisible by cp_size ({self.cp_size}); "
+                f"otherwise the CP sequence group spans multiple FSDP shard groups."
             )
 
     @property
