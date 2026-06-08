@@ -62,7 +62,7 @@ def test_padding_free():
     assert len(batch) == 1
     assert batch[0]["input_ids"].shape == (1, 5)
     assert batch[0]["input_ids"].tolist() == [[0, 1, 10, 11, 12]]
-    assert batch[0]["attention_mask"].tolist() == [[1, 1, 1, 1, 1]]
+    assert batch[0]["attention_mask"] is None
     assert batch[0]["position_ids"].tolist() == [[0, 1, 0, 1, 2]]
     assert batch[0]["labels"].tolist() == [[0, 1, IGNORE_INDEX, 11, 12]]
     assert batch[0]["loss_weights"].tolist() == [[1.0, 1.0, 0.0, 1.0, 1.0]]
@@ -280,8 +280,8 @@ def test_dynamic_padding_free():
         ]  # Sample 3
     ]
 
-    # Verify attention_mask
-    assert packed_batch["attention_mask"].tolist() == [[1] * 15]
+    # Verify attention_mask: padding-free relies on reset-style position_ids instead of a dense mask.
+    assert packed_batch["attention_mask"] is None
 
     # Verify position_ids
     assert packed_batch["position_ids"].tolist() == [
