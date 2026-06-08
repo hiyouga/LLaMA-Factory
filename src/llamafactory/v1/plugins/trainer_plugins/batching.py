@@ -149,8 +149,8 @@ def _pack_padding_free_samples(samples: list[ModelInput], cutoff_len: int) -> Ba
         return None
 
     packed["position_ids"] = position_ids
-    packed["attention_mask"] = [1] * len(position_ids)
-    return {key: torch.tensor(value).unsqueeze(0) for key, value in packed.items()}
+    packed["attention_mask"] = None
+    return {key: None if value is None else torch.tensor(value).unsqueeze(0) for key, value in packed.items()}
 
 
 @BatchingPlugin("padding_free").register("get_data_provider_batch_size")

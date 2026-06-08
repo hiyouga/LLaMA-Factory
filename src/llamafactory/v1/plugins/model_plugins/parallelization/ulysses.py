@@ -81,7 +81,7 @@ class UlyssesAttention(torch.nn.Module):
         query: Tensor,
         key: Tensor,
         value: Tensor,
-        attention_mask: torch.Tensor,
+        attention_mask: Optional[torch.Tensor],
         query_length: int,
         dropout_p=0.0,
         softmax_scale=None,
@@ -122,24 +122,18 @@ class UlyssesAttention(torch.nn.Module):
         if softmax_scale is None:
             softmax_scale = q.shape[-1] ** -0.5
 
+        sp_world_size = get_ulysses_sequence_parallel_world_size(self.spg)
         if position_ids is not None:
-            global_position_ids = [
-                torch.empty_like(position_ids) for _ in range(get_ulysses_sequence_parallel_world_size(self.spg))
-            ]
+            global_position_ids = [torch.empty_like(position_ids) for _ in range(sp_world_size)]
             dist.all_gather(global_position_ids, position_ids, group=self.spg)
             position_ids = torch.cat(global_position_ids, dim=-1).contiguous()
             attention_mask = None
-        else:
-            if attention_mask is None:
-                attention_mask = torch.ones(q.shape[0], q.shape[1], dtype=torch.int64, device=q.device)
-            else:
-                attention_mask = attention_mask.to(torch.int64)
 
-            global_attention_mask = [
-                torch.empty_like(attention_mask) for _ in range(get_ulysses_sequence_parallel_world_size(self.spg))
-            ]
+        elif attention_mask is not None:
+            attention_mask = attention_mask.to(torch.int64)
+            global_attention_mask = [torch.empty_like(attention_mask) for _ in range(sp_world_size)]
             dist.all_gather(global_attention_mask, attention_mask, group=self.spg)
-            attention_mask = torch.cat(global_attention_mask, dim=1)
+            attention_mask = torch.cat(global_attention_mask, dim=1).contiguous()
 
         context_layer = self.attn_fn(
             q,
