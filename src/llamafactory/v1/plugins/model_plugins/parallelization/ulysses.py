@@ -127,9 +127,8 @@ class UlyssesAttention(torch.nn.Module):
             global_position_ids = [torch.empty_like(position_ids) for _ in range(sp_world_size)]
             dist.all_gather(global_position_ids, position_ids, group=self.spg)
             position_ids = torch.cat(global_position_ids, dim=-1).contiguous()
-            attention_mask = None
 
-        elif attention_mask is not None:
+        if attention_mask is not None:
             attention_mask = attention_mask.to(torch.int64)
             global_attention_mask = [torch.empty_like(attention_mask) for _ in range(sp_world_size)]
             dist.all_gather(global_attention_mask, attention_mask, group=self.spg)
