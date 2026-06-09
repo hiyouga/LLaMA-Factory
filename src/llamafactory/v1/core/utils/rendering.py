@@ -18,7 +18,6 @@ Per-template steps can be customized by registering an override via ``RenderingP
 (see ``plugins/model_plugins/rendering.py``) and constructing ``Renderer(processor, name=...)``.
 """
 
-import bisect
 import json
 import re
 
@@ -154,114 +153,218 @@ def _detect_assistant_markers(template_caller) -> tuple[str, str]:
     return start_marker, end_marker
 
 
-def _find_assistant_regions(text: str, start_marker: str, end_marker: str) -> list[tuple[int, int]]:
-    """Find char ranges of assistant content (inclusive of end_marker) in rendered text.
+def _find_subseq(haystack: list[int], needle: list[int], start: int = 0) -> int:
+    """First index >= ``start`` where ``needle`` occurs as a contiguous subsequence, else -1."""
+    if not needle:
+        return -1
+    first = needle[0]
+    for i in range(start, len(haystack) - len(needle) + 1):
+        if haystack[i] == first and haystack[i : i + len(needle)] == needle:
+            return i
+    return -1
 
-    Returns list of (content_start_char, region_end_char) half-open ranges.
+
+def _rfind_subseq(haystack: list[int], needle: list[int], end: int | None = None) -> int:
+    """Last index where ``needle`` occurs as a contiguous subsequence within ``haystack[:end]``."""
+    if not needle:
+        return -1
+    hi = (len(haystack) if end is None else end) - len(needle)
+    for i in range(hi, -1, -1):
+        if haystack[i : i + len(needle)] == needle:
+            return i
+    return -1
+
+
+def _special_token_strings(tokenizer) -> list[str]:
+    """Strings the tokenizer encodes to a reserved/special id.
+
+    Such strings must be neutralized if they appear literally in user text. Derived from
+    ``added_tokens_decoder`` so it covers every control token of the model (``<|im_start|>``,
+    ``<|image_pad|>``, ``<tts_pad>`` ...), not only ``<|...|>``-shaped ones. Sorted longest-first
+    so nested matches escape correctly.
     """
-    regions = []
-    pos = 0
-    while True:
-        start = text.find(start_marker, pos)
-        if start == -1:
-            break
-        content_start = start + len(start_marker)
-        end = text.find(end_marker, content_start)
-        if end == -1:
-            region_end = len(text)
-        else:
-            region_end = end + len(end_marker)
-        regions.append((content_start, region_end))
-        pos = region_end
-    return regions
+    specials = [str(t) for t in tokenizer.added_tokens_decoder.values() if getattr(t, "special", False)]
+    return sorted((s for s in specials if len(s) >= 2), key=len, reverse=True)
 
 
-def _build_offset_index(offsets: list[tuple[int, int]]) -> tuple[list[int], list[int], list[int]]:
-    """Precompute monotonic arrays over non-empty tokens for binary-search boundary mapping.
+def _escape_special(text: str, specials: list[str], special_ids: set[int], tokenizer) -> str:
+    """Break any special-token string in user text by inserting U+200B after its first char.
 
-    Special tokens often map to empty (``char_s == char_e``) offsets; they are excluded so the
-    remaining (start, end) pairs are monotonic non-decreasing and bisect-able.
-
-    Returns ``(orig_indices, starts, ends)`` aligned by position in the filtered token list;
-    ``orig_indices[j]`` is the index into the original ``offsets``.
+    No-op (no tokenization cost) when the text contains no special-token string. When it does,
+    self-validate that the result no longer encodes to a special id -- some normalizers strip
+    zero-width chars and would resurrect the collision -- and raise if it does.
     """
-    orig_indices: list[int] = []
-    starts: list[int] = []
-    ends: list[int] = []
-    for i, (char_s, char_e) in enumerate(offsets):
-        if char_s == char_e:
-            continue
-        orig_indices.append(i)
-        starts.append(char_s)
-        ends.append(char_e)
-    return orig_indices, starts, ends
+    if not any(sp in text for sp in specials):
+        return text
+    out = text
+    for sp in specials:
+        if sp in out:
+            # Insert a zero-width space (U+200B) after the first char to break the exact
+            # special-token string match while keeping the text visually/semantically intact.
+            out = out.replace(sp, sp[0] + "\u200b" + sp[1:])
+    if special_ids.intersection(tokenizer(out, add_special_tokens=False)["input_ids"]):
+        raise ValueError(
+            "special-token escape failed: the tokenizer normalized away the break char; "
+            "user text contains a literal control token that cannot be safely neutralized."
+        )
+    return out
 
 
-def _char_region_to_token_region(
-    offset_index: tuple[list[int], list[int], list[int]], content_start: int, region_end: int
-) -> tuple[int | None, int | None]:
-    """Map a character region to token indices via binary search over ``offset_index``.
+def _escape_special_in_messages(
+    messages: list[Message], specials: list[str], special_ids: set[int], tokenizer
+) -> list[Message]:
+    """Return messages with special-token strings neutralized in user-controlled literal text.
 
-    Returns (token_start, token_end) as a half-open interval in the ORIGINAL offsets indexing:
-    - token_start: first non-empty token whose ``char_end`` > ``content_start``
-    - token_end:   one past the last non-empty token whose ``char_start`` < ``region_end``
+    Covers ``text``/``reasoning`` block values and string values inside ``tool_call`` arguments.
     """
-    orig_indices, starts, ends = offset_index
-    if not orig_indices:
-        return None, None
-
-    j = bisect.bisect_right(ends, content_start)
-    tok_start = orig_indices[j] if j < len(orig_indices) else None
-
-    k = bisect.bisect_left(starts, region_end)
-    tok_end = orig_indices[k - 1] + 1 if k > 0 else None
-
-    return tok_start, tok_end
-
-
-def _get_vision_token_ids(processor: Processor) -> set[int]:
-    """Get known vision/media token IDs from the processor or its tokenizer."""
-    vision_token_ids: set[int] = set()
-    tokenizer = get_tokenizer(processor)
-    for obj in (processor, tokenizer):
-        for attr in ("image_token_id", "video_token_id", "audio_token_id"):
-            tid = getattr(obj, attr, None)
-            if tid is not None:
-                vision_token_ids.add(tid)
-    return vision_token_ids
-
-
-def _build_text_to_expanded(
-    text_ids: list[int], expanded_ids: list[int], vision_token_ids: set[int] | None = None
-) -> list[int]:
-    """Build mapping from text token index to expanded token index.
-
-    Returns a list of length len(text_ids)+1 where mapping[i] is the expanded position for
-    text token i. When vision_token_ids is provided it is used for precise expansion detection;
-    otherwise a sequential scan heuristic is used.
-    """
-    mapping = [0] * (len(text_ids) + 1)
-    e_ptr = 0
-
-    for t_idx in range(len(text_ids)):
-        mapping[t_idx] = e_ptr
-        if vision_token_ids and text_ids[t_idx] in vision_token_ids:
-            # Skip all consecutive vision tokens in expanded for a vision placeholder.
-            while e_ptr < len(expanded_ids) and expanded_ids[e_ptr] in vision_token_ids:
-                e_ptr += 1
-        elif e_ptr < len(expanded_ids) and text_ids[t_idx] == expanded_ids[e_ptr]:
-            e_ptr += 1
-        else:
-            # Fallback: scan expanded until we find the next text token.
-            if t_idx + 1 < len(text_ids):
-                next_text_token = text_ids[t_idx + 1]
-                while e_ptr < len(expanded_ids) and expanded_ids[e_ptr] != next_text_token:
-                    e_ptr += 1
+    if not specials:
+        return messages
+    escaped: list[Message] = []
+    for message in messages:
+        new_content = []
+        for content in message["content"]:
+            if content["type"] in ("text", "reasoning"):
+                new_content.append(
+                    {**content, "value": _escape_special(content["value"], specials, special_ids, tokenizer)}
+                )
+            elif content["type"] == "tool_call":
+                try:
+                    tc = json.loads(content["value"])
+                    args = tc.get("arguments")
+                    if isinstance(args, dict):
+                        tc["arguments"] = {
+                            k: (_escape_special(v, specials, special_ids, tokenizer) if isinstance(v, str) else v)
+                            for k, v in args.items()
+                        }
+                    new_content.append({**content, "value": json.dumps(tc)})
+                except (json.JSONDecodeError, TypeError):
+                    new_content.append(content)
             else:
-                e_ptr = len(expanded_ids)
+                new_content.append(content)
+        escaped.append({**message, "content": new_content})
+    return escaped
 
-    mapping[len(text_ids)] = e_ptr
-    return mapping
+
+def _detect_assistant_marker_ids(template_caller) -> tuple[list[int], list[int]]:
+    r"""Token-id form of the assistant start/end markers, for scanning the expanded id stream.
+
+    Derived from a probe so the ids match in-context tokenization (not standalone encoding).
+    The start marker is taken from the FIRST probe assistant turn, because some templates inject
+    a ``<think>`` wrapper only on the LAST turn; the marker proper is the role-opening run that
+    begins at the first special token (e.g. ``<|im_start|>assistant\n``). The end marker is the
+    run up to and including the first special token after the content (e.g. ``<|im_end|>``).
+    """
+    tokenizer = get_tokenizer(template_caller)
+    content_a = "AABBCC_PROBE_CONTENT_1_XXYYZZ"
+    content_b = "AABBCC_PROBE_CONTENT_2_XXYYZZ"
+    test_msgs = [
+        {"role": "user", "content": "Q1"},
+        {"role": "assistant", "content": content_a},
+        {"role": "user", "content": "Q2"},
+        {"role": "assistant", "content": content_b},
+    ]
+    rendered = template_caller.apply_chat_template(test_msgs, tokenize=False, add_generation_prompt=False)
+    ids = tokenizer(rendered, add_special_tokens=False)["input_ids"]
+    a_ids = tokenizer(content_a, add_special_tokens=False)["input_ids"]
+    pa = _find_subseq(ids, a_ids)
+    if pa == -1:
+        raise ValueError("Cannot detect assistant marker ids: probe content not found.")
+
+    special_ids = {tid for tid, t in tokenizer.added_tokens_decoder.items() if getattr(t, "special", False)}
+
+    # End marker: tokens right after the assistant content up to and including the first special
+    # (turn-terminator) token.
+    end_ids: list[int] = []
+    for tid in ids[pa + len(a_ids) :]:
+        end_ids.append(tid)
+        if tid in special_ids:
+            break
+    if not end_ids or end_ids[-1] not in special_ids:
+        raise ValueError("Cannot detect assistant end marker id.")
+
+    # Start marker: between the previous end-marker occurrence and the content, trimmed to begin
+    # at the turn-opening special token (drops the previous turn's trailing newline).
+    prev = _rfind_subseq(ids, end_ids, pa)
+    region = ids[prev + len(end_ids) : pa] if prev != -1 else ids[:pa]
+    while region and region[0] not in special_ids:
+        region = region[1:]
+    if not region:
+        raise ValueError("Cannot detect assistant start marker id.")
+    return region, end_ids
+
+
+def _check_placeholder_counts(processor: Processor, full_text: str, n_images: int, n_videos: int) -> None:
+    """Guard: every media placeholder in the rendered text must originate from a media block.
+
+    After escaping, literal placeholder strings in user text are broken, so any remaining
+    placeholder must come from an image_url/video_url block. A mismatch means the data encodes
+    media some other way (e.g. inline tags) -- raise rather than crash inside the processor.
+    """
+    tokenizer = get_tokenizer(processor)
+    for attr, count, kind in (("image_token_id", n_images, "image"), ("video_token_id", n_videos, "video")):
+        tid = getattr(processor, attr, None)
+        if tid is None:
+            tid = getattr(tokenizer, attr, None)
+        if tid is None:
+            continue
+        placeholder = tokenizer.convert_ids_to_tokens(tid)
+        seen = full_text.count(placeholder)
+        if seen != count:
+            raise ValueError(
+                f"{kind} placeholder count ({seen}) != number of {kind} blocks ({count}); "
+                "media must be provided via image_url/video_url content blocks."
+            )
+
+
+def _label_assistant_regions(
+    input_ids: list[int], start_ids: list[int], end_ids: list[int], assistant_messages: list[Message]
+) -> tuple[list[int], list[float], int]:
+    """Label assistant content by scanning for the marker token-id subsequences.
+
+    Each properly-closed ``start_ids ... end_ids`` span is one assistant region; the closing
+    ``end_ids`` is included (parity with the previous char-based renderer). Regions map in order
+    to assistant messages and take that message's ``loss_weight`` (weight 0 leaves the region
+    unlabeled). An unterminated trailing start marker (the generation prompt under
+    ``is_generate``) yields no region.
+    """
+    labels = [IGNORE_INDEX] * len(input_ids)
+    loss_weights = [0.0] * len(input_ids)
+    regions: list[tuple[int, int]] = []
+    n = len(input_ids)
+    i = 0
+    while i <= n - len(start_ids):
+        if input_ids[i : i + len(start_ids)] == start_ids:
+            content_start = i + len(start_ids)
+            end = _find_subseq(input_ids, end_ids, content_start)
+            if end == -1:
+                break  # unterminated (generation prompt) -> not labeled
+            region_end = end + len(end_ids)
+            regions.append((content_start, region_end))
+            i = region_end
+        else:
+            i += 1
+
+    for idx, (start, end) in enumerate(regions):
+        weight = assistant_messages[idx].get("loss_weight", 1.0) if idx < len(assistant_messages) else 1.0
+        if weight > 1e-6:
+            for t in range(start, min(end, n)):
+                labels[t] = input_ids[t]
+                loss_weights[t] = weight
+    return labels, loss_weights, len(regions)
+
+
+def _verify_render(regions_count: int, assistant_messages: list[Message]) -> None:
+    """Cheap structural invariant: exactly one region per assistant message.
+
+    A mismatch signals marker injection that slipped through, a tools-text false marker, or
+    marker-detection failure -- fail loud rather than train on corrupted labels.
+    """
+    n_assistant = len(assistant_messages)
+    if regions_count != n_assistant:
+        raise ValueError(
+            f"assistant region count ({regions_count}) != assistant messages ({n_assistant}); "
+            "possible marker collision or detection failure."
+        )
 
 
 def _render_messages(
@@ -271,12 +374,22 @@ def _render_messages(
     is_generate: bool = False,
     assistant_start_marker: str | None = None,
     assistant_end_marker: str | None = None,
+    assistant_start_ids: list[int] | None = None,
+    assistant_end_ids: list[int] | None = None,
     enable_thinking: bool = False,
 ) -> ModelInput:
-    """Render messages using the model's own template with text-based boundary detection.
+    r"""Render messages using the model's own template, with provenance-preserving labeling.
 
-    Renders the full conversation via apply_chat_template, locates assistant content regions
-    by role markers in the rendered text, and maps character positions to token positions.
+    User-controlled literal text (``text``/``reasoning`` values, ``tool_call`` arg values, and
+    ``tools`` definitions) is escaped first so any control token written literally by the user
+    is neutralized -- this is a no-op for normal data. The escaped conversation is rendered and
+    run through the processor/tokenizer, whose output (``input_ids``, ``mm_token_type_ids``,
+    pixel features) is used VERBATIM (no splicing, so multimodal arrays stay aligned). Assistant
+    regions are then located by scanning for the role-marker token-id subsequences directly in
+    the expanded ``input_ids`` -- no character offsets and no text->expanded remap.
+
+    Note: ``position_ids`` are not produced here; ``process_samples`` assigns a 1-based range and
+    multimodal (mrope) position ids are expected to be recomputed by the model/trainer.
     """
     tokenizer = get_tokenizer(processor)
     is_multimodal = not is_tokenizer(processor)
@@ -286,25 +399,33 @@ def _render_messages(
     if not getattr(template_caller, "chat_template", None):
         template_caller.chat_template = _FALLBACK_CHATML_JINJA
 
+    # 0. Neutralize special-token strings in user-controlled text (no-op for normal data).
+    specials = _special_token_strings(tokenizer)
+    special_ids = {tid for tid, t in tokenizer.added_tokens_decoder.items() if getattr(t, "special", False)}
+    messages = _escape_special_in_messages(messages, specials, special_ids, tokenizer)
+
     hf_messages = _to_hf_messages(messages, is_multimodal=is_multimodal)
 
     tools_parsed = None
     if tools:
+        tools = _escape_special(tools, specials, special_ids, tokenizer)  # E3: tools text is user-controlled
         tools_parsed = json.loads(tools)
         if not isinstance(tools_parsed, list):
             tools_parsed = [tools_parsed]
 
-    # 1. Render full text with model's own template
     template_kwargs = {}
     if enable_thinking is not None:
         template_kwargs["enable_thinking"] = enable_thinking
 
+    # 1. Render full text, then run the processor/tokenizer and use its output verbatim.
     full_text = template_caller.apply_chat_template(
         hf_messages, tokenize=False, add_generation_prompt=is_generate, tools=tools_parsed, **template_kwargs
     )
 
     if has_media:
         images, videos = _extract_media_from_messages(messages)
+        # Every placeholder must come from a media block (escaping broke any literal ones).
+        _check_placeholder_counts(processor, full_text, len(images), len(videos))
         proc_kwargs = {"return_tensors": "pt"}
         if images:
             proc_kwargs["images"] = images
@@ -312,65 +433,19 @@ def _render_messages(
             proc_kwargs["videos"] = videos
         outputs = processor(text=full_text, **proc_kwargs)
         input_ids = outputs["input_ids"][0].tolist()
-
-        # Text-level tokenization for boundary detection.
-        text_encoding = tokenizer(full_text, return_offsets_mapping=True, add_special_tokens=False)
-        text_ids = text_encoding["input_ids"]
-        text_offsets = text_encoding["offset_mapping"]
     else:
-        encoding = tokenizer(full_text, return_offsets_mapping=True, add_special_tokens=False)
-        input_ids = encoding["input_ids"]
-        text_ids = input_ids
-        text_offsets = encoding["offset_mapping"]
         outputs = None
+        input_ids = tokenizer(full_text, add_special_tokens=False)["input_ids"]
 
-    # 2. Find assistant content regions in rendered text
-    if assistant_start_marker is None or assistant_end_marker is None:
-        assistant_start_marker, assistant_end_marker = _detect_assistant_markers(template_caller)
-
-    # The generation prompt is not assistant content, so detect boundaries without it.
-    if is_generate:
-        boundary_text = template_caller.apply_chat_template(
-            hf_messages, tokenize=False, add_generation_prompt=False, tools=tools_parsed, **template_kwargs
-        )
-    else:
-        boundary_text = full_text
-
-    regions_char = _find_assistant_regions(boundary_text, assistant_start_marker, assistant_end_marker)
-
-    # 3. Map char regions to text-token regions
-    offset_index = _build_offset_index(text_offsets)
-    regions_text_tok = []
-    for content_start, region_end in regions_char:
-        tok_start, tok_end = _char_region_to_token_region(offset_index, content_start, region_end)
-        if tok_start is not None and tok_end is not None:
-            regions_text_tok.append((tok_start, tok_end))
-
-    # 4. Map text-token regions to expanded-token regions (multimodal expansion)
-    if has_media and len(input_ids) != len(text_ids):
-        vision_token_ids = _get_vision_token_ids(processor)
-        exp_map = _build_text_to_expanded(text_ids, input_ids, vision_token_ids)
-        regions_expanded = []
-        for tok_start, tok_end in regions_text_tok:
-            regions_expanded.append((exp_map[tok_start], exp_map[tok_end]))
-    else:
-        regions_expanded = regions_text_tok
-
-    # 5. Build labels and loss_weights
-    labels = [IGNORE_INDEX] * len(input_ids)
-    loss_weights = [0.0] * len(input_ids)
+    # 2. Label assistant regions by scanning marker token-id subsequences in the expanded stream.
+    if assistant_start_ids is None or assistant_end_ids is None:
+        assistant_start_ids, assistant_end_ids = _detect_assistant_marker_ids(template_caller)
 
     assistant_messages = [m for m in messages if m["role"] == "assistant"]
-    for region_idx, (tok_start, tok_end) in enumerate(regions_expanded):
-        if region_idx < len(assistant_messages):
-            weight = assistant_messages[region_idx].get("loss_weight", 1.0)
-        else:
-            weight = 1.0
-
-        for t in range(tok_start, min(tok_end, len(input_ids))):
-            if weight > 1e-6:
-                labels[t] = input_ids[t]
-                loss_weights[t] = weight
+    labels, loss_weights, regions_count = _label_assistant_regions(
+        input_ids, assistant_start_ids, assistant_end_ids, assistant_messages
+    )
+    _verify_render(regions_count, assistant_messages)
 
     result = ModelInput(
         input_ids=input_ids,
@@ -380,14 +455,9 @@ def _render_messages(
     )
 
     if outputs is not None:
-        if "pixel_values" in outputs:
-            result["pixel_values"] = outputs["pixel_values"]
-        if "image_grid_thw" in outputs:
-            result["image_grid_thw"] = outputs["image_grid_thw"]
-        if "pixel_values_videos" in outputs:
-            result["pixel_values_videos"] = outputs["pixel_values_videos"]
-        if "video_grid_thw" in outputs:
-            result["video_grid_thw"] = outputs["video_grid_thw"]
+        for key in _MULTIMODAL_PASSTHROUGH_KEYS:
+            if key in outputs:
+                result[key] = outputs[key]
         if "mm_token_type_ids" in outputs:
             result["mm_token_type_ids"] = outputs["mm_token_type_ids"][0].tolist()
 
@@ -437,11 +507,17 @@ class Renderer:
         self.name = name
         self._assistant_start_marker = None
         self._assistant_end_marker = None
+        self._assistant_start_ids = None
+        self._assistant_end_ids = None
 
         template_caller = processor if not is_tokenizer(processor) else get_tokenizer(processor)
         if getattr(template_caller, "chat_template", None):
             try:
                 self._assistant_start_marker, self._assistant_end_marker = _detect_assistant_markers(template_caller)
+            except (ValueError, Exception):
+                pass
+            try:
+                self._assistant_start_ids, self._assistant_end_ids = _detect_assistant_marker_ids(template_caller)
             except (ValueError, Exception):
                 pass
 
@@ -492,6 +568,8 @@ class Renderer:
             is_generate,
             self._assistant_start_marker,
             self._assistant_end_marker,
+            self._assistant_start_ids,
+            self._assistant_end_ids,
             enable_thinking=enable_thinking,
         )
 
@@ -509,6 +587,67 @@ class Renderer:
             return override(generated_text)
 
         return _parse_message(generated_text)
+
+    def get_dummy_media_fragment(self, modality: str) -> dict:
+        """Build (and cache) a minimal valid media fragment for ``modality`` ("image"|"video").
+
+        Renders one tiny synthetic image/video through the model's own processor and extracts
+        the contiguous token span it emits for that media (the ``vision_start … vision_end``
+        block, delimiters included) together with its pixel features. The collator appends this
+        zero-loss fragment to a micro batch that lacks the modality so that every data-parallel
+        rank invokes the vision tower the same number of times per step -- otherwise FSDP/DDP
+        collectives over the (sharded) vision blocks desync and hang (NCCL timeout).
+
+        The fragment is self-consistent by construction: the placeholder-token count matches the
+        patch count, because both come from the same processor call.
+        """
+        if modality not in ("image", "video"):
+            raise ValueError(f"Unsupported dummy media modality: {modality!r} (expected 'image' or 'video').")
+        if is_tokenizer(self.processor):
+            raise RuntimeError("Cannot build a dummy media fragment for a text-only processor.")
+
+        if not hasattr(self, "_dummy_fragments"):
+            self._dummy_fragments: dict[str, dict] = {}
+        if modality in self._dummy_fragments:
+            return self._dummy_fragments[modality]
+
+        from PIL import Image as _PILImage
+
+        if modality == "image":
+            media_block = {"type": "image_url", "value": _PILImage.new("RGB", (64, 64))}
+            target, pixel_key, grid_key = 1, "pixel_values", "image_grid_thw"
+        else:
+            # A minimal clip: the temporal patch size is typically 2, so provide two frames.
+            media_block = {"type": "video_url", "value": np.zeros((2, 64, 64, 3), dtype=np.uint8)}
+            target, pixel_key, grid_key = 2, "pixel_values_videos", "video_grid_thw"
+
+        messages: list[Message] = [
+            {"role": "user", "content": [media_block]},
+            {"role": "assistant", "content": [{"type": "text", "value": "ok"}]},
+        ]
+        rendered = self.render_messages(messages)
+
+        mm_type_ids = rendered.get("mm_token_type_ids")
+        if not mm_type_ids or target not in mm_type_ids or pixel_key not in rendered:
+            raise RuntimeError(f"Processor did not emit {modality} placeholder tokens for the dummy sample.")
+
+        positions = [i for i, t in enumerate(mm_type_ids) if t == target]
+        # Include the surrounding vision_start/vision_end delimiters so the fragment matches
+        # exactly what the template emits around real media.
+        lo = max(positions[0] - 1, 0)
+        hi = min(positions[-1] + 2, len(rendered["input_ids"]))
+
+        fragment: dict = {
+            "input_ids": list(rendered["input_ids"][lo:hi]),
+            "mm_token_type_ids": list(mm_type_ids[lo:hi]),
+            pixel_key: rendered[pixel_key],
+            grid_key: rendered[grid_key],
+        }
+        if modality == "video" and "second_per_grid_ts" in rendered:
+            fragment["second_per_grid_ts"] = rendered["second_per_grid_ts"]
+
+        self._dummy_fragments[modality] = fragment
+        return fragment
 
     def process_samples(self, samples: list[Sample]) -> list[ModelInput]:
         """Process samples to model input.

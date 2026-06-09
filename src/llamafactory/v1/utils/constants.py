@@ -12,4 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
 IGNORE_INDEX = -100
+IMAGE_PLACEHOLDER = "<image>"
+VIDEO_PLACEHOLDER = "<video>"
+AUDIO_PLACEHOLDER = "<audio>"

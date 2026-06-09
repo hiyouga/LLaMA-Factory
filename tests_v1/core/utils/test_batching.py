@@ -366,3 +366,91 @@ def test_dynamic_padding_free_fill_buffer_restarts_until_micro_batch_is_complete
     assert len(batch) == 1
     assert batch[0]["input_ids"].shape == (1, 18)
     assert len(batch_generator._buffer) == 1
+
+
+# ----------------------------- multimodal vision-tower alignment (dummy injection) -----------------------------
+
+
+def _image_fragment(n_pad: int = 4, merge_sq: int = 4):
+    """Hand-crafted image fragment: vision_start + n_pad image_pad + vision_end."""
+    import torch
+
+    pad, vstart, vend = 9, 8, 7
+    return {
+        "input_ids": [vstart] + [pad] * n_pad + [vend],
+        "mm_token_type_ids": [0] + [1] * n_pad + [0],
+        "pixel_values": torch.zeros((n_pad * merge_sq, 16), dtype=torch.float32),
+        "image_grid_thw": torch.tensor([[1, 2, n_pad * 2]], dtype=torch.long),
+    }
+
+
+def _text_sample(n: int, base: int = 100):
+    s = _make_model_input(n, start=base)
+    s["position_ids"] = list(range(1, n + 1))
+    return s
+
+
+def test_inject_appends_zero_loss_dummy_to_shortest_text_sample():
+    import torch
+
+    from llamafactory.v1.core.utils.batching import _inject_dummy_media
+
+    mb = [_text_sample(20), _text_sample(8), _text_sample(15)]
+    frag = _image_fragment(n_pad=4)
+    fl = len(frag["input_ids"])
+
+    _inject_dummy_media(mb, frag, cutoff_len=4096)
+
+    injected = [s for s in mb if "pixel_values" in s]
+    assert len(injected) == 1
+    s = injected[0]
+    assert len(s["input_ids"]) == 8 + fl  # shortest sample received the dummy
+
+    L = len(s["input_ids"])
+    for key in ("attention_mask", "labels", "loss_weights", "position_ids", "mm_token_type_ids"):
+        assert len(s[key]) == L
+
+    # the dummy tail contributes nothing to the loss
+    assert s["labels"][-fl:] == [IGNORE_INDEX] * fl
+    assert s["loss_weights"][-fl:] == [0.0] * fl
+    assert s["mm_token_type_ids"][-fl:] == frag["mm_token_type_ids"]
+    assert s["position_ids"][-fl:] == list(range(9, 9 + fl))  # positions continue monotonically
+    assert torch.equal(s["pixel_values"], frag["pixel_values"])
+    assert torch.equal(s["image_grid_thw"], frag["image_grid_thw"])
+
+
+def test_inject_dummy_survives_cutoff_truncation():
+    """When the chosen sample is near cutoff, the real tail is trimmed so the dummy is kept."""
+    from llamafactory.v1.core.utils.batching import _inject_dummy_media
+
+    cutoff = 16
+    mb = [_text_sample(cutoff), _text_sample(cutoff)]  # both already at cutoff
+    frag = _image_fragment(n_pad=3)
+    fl = len(frag["input_ids"])
+
+    _inject_dummy_media(mb, frag, cutoff_len=cutoff)
+
+    s = next(s for s in mb if "pixel_values" in s)
+    assert len(s["input_ids"]) <= cutoff
+    assert s["input_ids"][-fl:] == frag["input_ids"]
+    assert s["labels"][-fl:] == [IGNORE_INDEX] * fl
+
+
+def test_inject_concatenates_when_chosen_sample_already_has_pixels():
+    """If no text-only sample exists, the dummy merges into a media sample via dim-0 cat."""
+    import torch
+
+    from llamafactory.v1.core.utils.batching import _inject_dummy_media
+
+    real = _text_sample(10)
+    real["pixel_values"] = torch.ones((8, 16), dtype=torch.float32)
+    real["image_grid_thw"] = torch.tensor([[1, 2, 4]], dtype=torch.long)
+    real["mm_token_type_ids"] = [0] * 10
+    mb = [real]
+    frag = _image_fragment(n_pad=4)
+
+    _inject_dummy_media(mb, frag, cutoff_len=4096)
+
+    s = mb[0]
+    assert s["pixel_values"].shape[0] == 8 + frag["pixel_values"].shape[0]
+    assert s["image_grid_thw"].shape[0] == 2

@@ -42,7 +42,7 @@ from ..utils.callbacks import (
     TrainerCallback,
     TrainerState,
 )
-from ..utils.helper import compute_valid_tokens
+from ..utils.helper import compute_valid_tokens, is_tokenizer
 from ..utils.types import BatchInput, HFModel, ModelOutput, Tensor, TorchDataset
 from .utils.batching import BatchGenerator
 from .utils.checkpoint import TrainingCheckpointCoordinator
@@ -180,7 +180,11 @@ class BaseTrainer:
                     "dist_config is None but distributed training is enabled; falling back to DistributedDataParallel."
                 )
                 device_ids = None if self.device.type == "cpu" else [self.device.index]
-                self.model = DDP(self.model, device_ids=device_ids)
+                # Multimodal models invoke the vision tower only when a step carries media; a
+                # globally media-less step leaves vision params unused, which trips DDP's default
+                # all-params-used assertion. (FSDP tolerates a uniform skip; DDP does not.)
+                find_unused = not is_tokenizer(self.renderer.processor)
+                self.model = DDP(self.model, device_ids=device_ids, find_unused_parameters=find_unused)
         else:
             from ..plugins.trainer_plugins.distributed.hub import DistributedPlugin
 

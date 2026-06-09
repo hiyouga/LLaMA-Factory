@@ -31,12 +31,15 @@ from torch.utils.data import default_collate
 from torchdata.stateful_dataloader import StatefulDataLoader
 from torchdata.stateful_dataloader.sampler import StatefulDistributedSampler
 
+from ...accelerator.helper import ReduceOp
 from ...accelerator.interface import Dim, DistributedInterface
 from ...config import BatchingStrategy
 from ...utils import logging
+from ...utils.constants import IGNORE_INDEX
+from ...utils.helper import is_tokenizer
 from ...utils.objects import StatefulBuffer
 from ...utils.types import BatchInfo, BatchInput, ModelInput, TorchDataset
-from .rendering import _MULTIMODAL_PASSTHROUGH_KEYS, Renderer, pad_and_truncate
+from .rendering import _MULTIMODAL_PASSTHROUGH_KEYS, Renderer, _align_multimodal_on_truncation, pad_and_truncate
 
 
 logger = logging.get_logger(__name__)
@@ -44,7 +47,67 @@ logger = logging.get_logger(__name__)
 __all__ = ["BatchGenerator"]
 
 
-def default_collate_fn(buffer: StatefulBuffer, batch_info: BatchInfo) -> list[BatchInput] | None:
+# (modality, pixel key, grid key, mm_token_type_ids marker) for vision-tower alignment.
+_ALIGN_MODALITIES = (
+    ("image", "pixel_values", "image_grid_thw", 1),
+    ("video", "pixel_values_videos", "video_grid_thw", 2),
+)
+
+
+def _inject_dummy_media(micro_batch: list[ModelInput], fragment: dict, cutoff_len: int) -> None:
+    """Append a zero-loss dummy media fragment to one sample of ``micro_batch`` in place.
+
+    The fragment is added at the end of the chosen sample so causal attention keeps every real
+    token's logits unchanged; its placeholder tokens carry ``IGNORE_INDEX`` labels and zero loss
+    weight, so the dummy contributes nothing to the loss while forcing the vision tower to run.
+    """
+    frag_ids = fragment["input_ids"]
+    frag_len = len(frag_ids)
+    frag_mm = fragment["mm_token_type_ids"]
+
+    # Prefer a pure-text sample (no media to orphan when trimming); else the shortest one.
+    def _is_text_only(s: ModelInput) -> bool:
+        return not any(k in s for k in _MULTIMODAL_PASSTHROUGH_KEYS)
+
+    text_only = [j for j, s in enumerate(micro_batch) if _is_text_only(s)]
+    candidates = text_only if text_only else range(len(micro_batch))
+    idx = min(candidates, key=lambda j: len(micro_batch[j]["input_ids"]))
+
+    s = dict(micro_batch[idx])
+    n = len(s["input_ids"])
+
+    # Reserve room so the dummy survives cutoff truncation; trim the real tail if needed.
+    keep = max(0, cutoff_len - frag_len)
+    if n > keep:
+        for key in ("input_ids", "attention_mask", "labels", "loss_weights", "position_ids", "mm_token_type_ids"):
+            if key in s:
+                s[key] = list(s[key])[:keep]
+        # Trimming may orphan this sample's own media; realign before appending the dummy.
+        if any(k in s for k in _MULTIMODAL_PASSTHROUGH_KEYS):
+            s = dict(_align_multimodal_on_truncation(s, keep))
+        n = len(s["input_ids"])
+
+    s["input_ids"] = list(s["input_ids"]) + list(frag_ids)
+    s["attention_mask"] = list(s["attention_mask"]) + [1] * frag_len
+    s["labels"] = list(s["labels"]) + [IGNORE_INDEX] * frag_len
+    s["loss_weights"] = list(s["loss_weights"]) + [0.0] * frag_len
+    s["mm_token_type_ids"] = list(s.get("mm_token_type_ids", [0] * n)) + list(frag_mm)
+    if "position_ids" in s:
+        base_pos = list(s["position_ids"])
+        last = base_pos[-1] if base_pos else 0
+        s["position_ids"] = base_pos + list(range(last + 1, last + 1 + frag_len))
+
+    for key, value in fragment.items():
+        if key in ("input_ids", "mm_token_type_ids"):
+            continue
+        s[key] = torch.cat([s[key], value], dim=0) if key in s else value
+
+    micro_batch[idx] = s
+
+
+def default_collate_fn(
+    buffer: StatefulBuffer, batch_info: BatchInfo, renderer: Renderer | None = None
+) -> list[BatchInput] | None:
     micro_batch_size = batch_info["micro_batch_size"]
     num_micro_batch = batch_info["num_micro_batch"]
     cutoff_len = batch_info["cutoff_len"]
@@ -53,9 +116,31 @@ def default_collate_fn(buffer: StatefulBuffer, batch_info: BatchInfo) -> list[Ba
         return None
 
     samples = buffer.get(batch_size)
+    micro_batches = [samples[i * micro_batch_size : (i + 1) * micro_batch_size] for i in range(num_micro_batch)]
+
+    # Vision-tower alignment: a micro batch with media makes the (FSDP-sharded) vision blocks
+    # fire collectives that a media-less micro batch on a sibling DP rank never issues -> NCCL
+    # hang. Negotiate, per micro batch, which modalities are present *anywhere* in the DP group
+    # (all_reduce MAX over local presence), then inject a dummy into the micro batches that lack
+    # a globally-present modality so every rank invokes the vision tower the same number of times.
+    # NOTE: this all_reduce must run the same number of times on every rank; it is reached only
+    # on the full-batch path (the `len(buffer) < batch_size` early return above is shared by all
+    # ranks thanks to drop_last + equal shards), so the count stays aligned.
+    if renderer is not None and not is_tokenizer(renderer.processor):
+        present = torch.zeros((num_micro_batch, len(_ALIGN_MODALITIES)), dtype=torch.int64)
+        for i, mb in enumerate(micro_batches):
+            for m, (_, pixel_key, _, _) in enumerate(_ALIGN_MODALITIES):
+                present[i, m] = int(any(pixel_key in s for s in mb))
+
+        present = DistributedInterface().all_reduce(present, op=ReduceOp.MAX, dim=Dim.DP)
+
+        for i, mb in enumerate(micro_batches):
+            for m, (modality, pixel_key, _, _) in enumerate(_ALIGN_MODALITIES):
+                if present[i, m] and not any(pixel_key in s for s in mb):
+                    _inject_dummy_media(mb, renderer.get_dummy_media_fragment(modality), cutoff_len)
+
     batch = []
-    for i in range(num_micro_batch):
-        micro_batch = samples[i * micro_batch_size : (i + 1) * micro_batch_size]
+    for micro_batch in micro_batches:
         padded = pad_and_truncate(micro_batch, cutoff_len)
 
         standard_samples = [{k: v for k, v in s.items() if k not in _MULTIMODAL_PASSTHROUGH_KEYS} for s in padded]
@@ -210,8 +295,17 @@ class BatchGenerator(Iterator):
 
     def _generate_batch(self) -> list[BatchInput] | None:
         if self.batching_strategy == BatchingStrategy.NORMAL:
-            return default_collate_fn(self._buffer, self._batch_info)
+            return default_collate_fn(self._buffer, self._batch_info, self.renderer)
         else:
+            # Non-NORMAL strategies (dynamic / padding_free) collate ragged pixel tensors with a
+            # bare default_collate and have no vision-tower alignment, so multimodal data would
+            # crash or hang. Fail loud instead of silently mishandling it.
+            if any(k in s for s in self._buffer.samples for k in _MULTIMODAL_PASSTHROUGH_KEYS):
+                raise NotImplementedError(
+                    f"batching_strategy={self.batching_strategy.value!r} does not support multimodal data; "
+                    "use the NORMAL strategy for image/video training."
+                )
+
             from ...plugins.trainer_plugins.batching import BatchingPlugin
 
             return BatchingPlugin(self.batching_strategy).generate_batch(self._buffer, self._batch_info)
