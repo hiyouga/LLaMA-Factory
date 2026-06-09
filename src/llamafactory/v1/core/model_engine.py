@@ -52,7 +52,11 @@ class ModelEngine:
         is_train: Whether to train the model.
     """
 
-    def __init__(self, model_args: ModelArguments, is_train: bool = False) -> None:
+    def __init__(
+        self,
+        model_args: ModelArguments,
+        is_train: bool = False,
+    ) -> None:
         self.args = model_args
         """Model arguments."""
         self.is_train = is_train
@@ -63,8 +67,26 @@ class ModelEngine:
         """Renderer."""
         self.model_config = self._init_model_config()
         """Model configuration."""
-        self.model = self._init_model()
-        """HF model."""
+        self._dist_config = DistributedInterface().dist_config
+        self._deepspeed_zero3_plugin = None
+        self._deepspeed_zero3_enabled = False
+
+        if self.is_train and self._dist_config is not None and self._dist_config.get("name") == "deepspeed":
+            from ..plugins.model_plugins.deepspeed_utils import (
+                setup_deepspeed_zero3_model_loading,
+                teardown_deepspeed_zero3_model_loading,
+            )
+
+            try:
+                self._deepspeed_zero3_plugin = setup_deepspeed_zero3_model_loading(self.is_train, self._dist_config)
+                self._deepspeed_zero3_enabled = self._deepspeed_zero3_plugin is not None
+                self.model = self._init_model()
+            finally:
+                teardown_deepspeed_zero3_model_loading(self._deepspeed_zero3_plugin)
+                self._deepspeed_zero3_plugin = None
+                self._deepspeed_zero3_enabled = False
+        else:
+            self.model = self._init_model()
 
     def _init_processor(self) -> Processor:
         """Init processor.
@@ -97,7 +119,8 @@ class ModelEngine:
         else:
             init_device = DistributedInterface().current_device
 
-        init_kwargs = {"device_map": init_device}
+        init_kwargs = {} if self._deepspeed_zero3_enabled else {"device_map": init_device}
+        logger.info_rank0(f"Using attention implementation: {self.args.flash_attn}.")
 
         if self.args.quant_config is not None:
             from ..plugins.model_plugins.quantization import QuantizationPlugin
@@ -121,6 +144,12 @@ class ModelEngine:
         elif self.args.model_class == ModelClass.CLS:
             from transformers import AutoModelForTokenClassification
 
+            self.model_config.num_labels = 1
+            self.model_config.classifier_dropout = 0.0
+            text_config = getattr(self.model_config, "text_config", None)
+            if text_config is not None:
+                text_config.num_labels = 1
+                text_config.classifier_dropout = 0.0
             AutoClass = AutoModelForTokenClassification
         else:
             from transformers import AutoModel
@@ -136,6 +165,7 @@ class ModelEngine:
                 self.args.model,
                 config=self.model_config,
                 dtype="auto",
+                attn_implementation=self.args.flash_attn,
                 trust_remote_code=self.args.trust_remote_code,
                 **init_kwargs,
             )
@@ -160,9 +190,12 @@ class ModelEngine:
         if self.args.kernel_config is not None:
             from ..plugins.model_plugins.kernels.interface import KernelPlugin
 
-            model = KernelPlugin(self.args.kernel_config.name)(
-                model, include_kernels=self.args.kernel_config.get("include_kernels")
-            )
+            kernel_config = self.args.kernel_config
+            kernel_kwargs: dict = {"model": model, "include_kernels": kernel_config.get("include_kernels")}
+            if kernel_config.name == "liger_kernel":
+                # Fused linear CE omits logits; SFT stage needs logits for loss_weights.
+                kernel_kwargs["require_logits"] = self.is_train
+            model = KernelPlugin(kernel_config.name)(**kernel_kwargs)
 
         return model
 

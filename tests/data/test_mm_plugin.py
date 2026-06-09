@@ -21,7 +21,7 @@ import torch
 from PIL import Image
 
 from llamafactory.data.mm_plugin import get_mm_plugin
-from llamafactory.extras.packages import is_transformers_version_greater_than
+from llamafactory.extras.packages import is_pyav_available, is_transformers_version_greater_than
 from llamafactory.hparams import get_infer_args
 from llamafactory.model import load_tokenizer
 
@@ -57,7 +57,7 @@ TEXT_MESSAGES = [
 ]
 
 VIDEO_MESSAGES = [
-    {"role": "user", "content": "<video>What is in this viode?"},
+    {"role": "user", "content": "<video>What is in this video?"},
     {"role": "assistant", "content": "A cat."},
 ]
 
@@ -207,6 +207,39 @@ def test_gemma3_plugin():
     check_inputs["expected_mm_inputs"].pop("num_crops")
     check_inputs["expected_mm_inputs"]["token_type_ids"] = [[0] * 1024]
     check_inputs["expected_no_mm_inputs"] = {"token_type_ids": [[0] * 1024]}
+    _check_plugin(**check_inputs)
+
+
+@pytest.mark.runs_on(["cpu", "mps"])
+@pytest.mark.skipif(not is_transformers_version_greater_than("5.6.0"), reason="Requires transformers>=5.6.0")
+def test_gemma4_plugin():
+    tokenizer_module = _load_tokenizer_module(model_name_or_path="google/gemma-4-31B-it")
+    processor = tokenizer_module["processor"]
+    gemma4_plugin = get_mm_plugin(name="gemma4", image_token="<|image|>", video_token="<|video|>")
+    check_inputs = {"plugin": gemma4_plugin, **tokenizer_module}
+    # validate
+    mm_inputs = gemma4_plugin._get_mm_inputs(IMAGES, NO_VIDEOS, NO_AUDIOS, processor)
+    num_image_soft_tokens = 256  # when we use default max_soft_tokens=280
+    image_token = getattr(processor, "image_token")
+    boi_token = getattr(processor, "boi_token")
+    eoi_token = getattr(processor, "eoi_token")
+
+    expected_mm_type_ids = [
+        [int(token_id == getattr(processor, "image_token_id")) for token_id in token_ids] for token_ids in BATCH_IDS
+    ]
+    check_inputs["expected_mm_messages"] = [
+        {
+            "role": "user",
+            "content": f"{boi_token}{image_token * num_image_soft_tokens}{eoi_token}What is in this image?",
+        },
+        {"role": "assistant", "content": "A cat."},
+    ]
+    for key in ("num_soft_tokens_per_image",):
+        mm_inputs.pop(key, None)
+
+    mm_inputs["mm_token_type_ids"] = expected_mm_type_ids
+    check_inputs["expected_mm_inputs"] = mm_inputs
+    check_inputs["expected_no_mm_inputs"] = {"mm_token_type_ids": expected_mm_type_ids}
     _check_plugin(**check_inputs)
 
 
@@ -404,6 +437,40 @@ def test_qwen3_vl_plugin():
         for message in VIDEO_MESSAGES
     ]
     _check_plugin(**check_inputs)
+
+
+@pytest.mark.runs_on(["cpu", "mps"])
+@pytest.mark.skipif(not is_transformers_version_greater_than("4.57.0"), reason="Requires transformers>=4.57.0")
+@pytest.mark.skipif(not is_pyav_available(), reason="Requires pyav")
+def test_qwen3_vl_plugin_video_path():
+    video_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "..", "data", "mllm_demo_data", "1.mp4")
+    video_path = os.path.abspath(video_path)
+    if not os.path.exists(video_path):
+        pytest.skip(f"Video file not found: {video_path}")
+
+    tokenizer_module = _load_tokenizer_module(model_name_or_path="Qwen/Qwen3-VL-30B-A3B-Instruct")
+    processor = tokenizer_module["processor"]
+    qwen3_vl_plugin = get_mm_plugin(name="qwen3_vl", video_token="<|video_pad|>")
+
+    videos = [video_path]
+
+    # fast path: metadata-only, no frame decoding
+    fast_mm_inputs = qwen3_vl_plugin._get_mm_token_metadata([], videos, [], processor)
+    assert fast_mm_inputs is not None, "_get_mm_token_metadata should succeed for a real video file"
+
+    full_mm_inputs = qwen3_vl_plugin._get_mm_inputs([], videos, [], processor)
+
+    # video_grid_thw must be identical between the two paths
+    assert torch.equal(fast_mm_inputs["video_grid_thw"], full_mm_inputs["video_grid_thw"]), (
+        f"video_grid_thw mismatch between fast path and full path: "
+        f"fast={fast_mm_inputs['video_grid_thw']}, full={full_mm_inputs['video_grid_thw']}"
+    )
+    result = qwen3_vl_plugin.process_messages(VIDEO_MESSAGES, [], videos, [], processor)
+    # This demo video duration is 9.72s, with video_fps=2, we extract 19 frames
+    # 19 + 1 => temperoal compress => 10 video_sequence
+    assert result[0]["content"].count("<|vision_start|>") == 10, (
+        f"Expected 10 video tokens, got {result[0]['content'].count('<|vision_start|>')}"
+    )
 
 
 @pytest.mark.runs_on(["cpu", "mps"])

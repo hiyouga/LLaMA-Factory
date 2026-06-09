@@ -128,10 +128,10 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
             verify_fp8_status(self.accelerator, training_args)
 
     @override
-    def create_optimizer(self) -> "torch.optim.Optimizer":
+    def create_optimizer(self, *args, **kwargs) -> "torch.optim.Optimizer":
         if self.optimizer is None:
             self.optimizer = create_custom_optimizer(self.model, self.args, self.finetuning_args)
-        return super().create_optimizer()
+        return super().create_optimizer(*args, **kwargs)
 
     @override
     def create_scheduler(

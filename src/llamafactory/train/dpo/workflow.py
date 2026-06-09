@@ -62,15 +62,7 @@ def run_dpo(
     else:
         ref_model = None
 
-    if model_args.use_kt:
-        from ktransformers.util.globals import GLOBAL_CONFIG  # type: ignore
-
-        from .ktrainer import KDPOTrainer as CustomDPOTrainer
-
-        GLOBAL_CONFIG._config["mod"] = "sft"
-
-    else:
-        from .trainer import CustomDPOTrainer
+    from .trainer import CustomDPOTrainer
 
     # Initialize our Trainer
     trainer = CustomDPOTrainer(

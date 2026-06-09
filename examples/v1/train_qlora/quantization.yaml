@@ -34,7 +34,6 @@ output_dir: outputs/test_quantization
 micro_batch_size: 1
 cutoff_len: 2048
 learning_rate: 1.0e-4
-bf16: false
 max_steps: 10
 
 ### sample

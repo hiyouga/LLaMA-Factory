@@ -20,6 +20,7 @@ from peft import PeftModel
 from transformers import GenerationMixin, PreTrainedModel, PreTrainedTokenizerBase
 from transformers.integrations import is_deepspeed_zero3_enabled
 from transformers.modeling_utils import is_fsdp_enabled
+from transformers.utils import is_torch_cuda_available, is_torch_npu_available
 
 from ..extras import logging
 from ..extras.misc import infer_optim_dtype
@@ -58,6 +59,248 @@ def patch_qwen3_omni_moe_thinker_text_sparse_moe_block():
         )
 
         modeling_qwen3_omni_moe.Qwen3OmniMoeThinkerTextSparseMoeBlock = Qwen3OmniMoeThinkerTextSparseMoeBlock
+
+
+def _check_fla_dependencies() -> None:
+    """Check that the FLA dependencies required for varlen GDN forwarding are available.
+
+    Requires ``flash-linear-attention >= 0.4.1`` (which exposes the varlen
+    ``causal_conv1d`` under ``fla.modules.convolution`` and the
+    ``chunk_gated_delta_rule`` / ``fused_recurrent_gated_delta_rule`` kernels
+    under ``fla.ops.gated_delta_rule``). Raises ``ImportError`` with an
+    actionable message otherwise.
+    """
+    try:
+        from fla.modules.convolution import causal_conv1d  # noqa: F401
+        from fla.ops.gated_delta_rule import (  # noqa: F401
+            chunk_gated_delta_rule,
+            fused_recurrent_gated_delta_rule,
+        )
+    except ImportError as exc:
+        raise ImportError(
+            "Qwen3.5 packing-seq forwarding requires `flash-linear-attention>=0.4.1` "
+            "(provides `fla.modules.convolution.causal_conv1d` and "
+            "`fla.ops.gated_delta_rule.{chunk,fused_recurrent}_gated_delta_rule`). "
+            "Please install/upgrade it."
+        ) from exc
+
+
+def patch_qwen3_5_forward_npu(model: "PreTrainedModel") -> None:
+    """Patch for Qwen3.5 models on NPU by importing torch_npu to enable torch.cuda compatibility.
+
+    On NPU, torch.cuda operations will fail unless torch_npu is imported.
+    torch_npu provides compatibility layer that maps torch.cuda calls to NPU operations.
+
+    Also replaces chunk_gated_delta_rule with NPU-compatible implementation.
+    """
+    import importlib.metadata
+
+    if "Ascend910" not in torch.npu.get_device_name(0):
+        logger.warning_rank0("Currently only 910B series NPUs are supported for the NPU GDN patch.")
+        return
+
+    try:
+        importlib.metadata.version("triton_ascend")
+    except importlib.metadata.PackageNotFoundError:
+        logger.warning_rank0(
+            "triton_ascend not installed, skipping NPU GDN patch. "
+            "To enable it on NPU, reinstall Triton with the Ascend build: "
+            "`pip uninstall -y triton && pip install -r requirements/triton_ascend.txt`. "
+            "Note: triton and triton_ascend cannot coexist — triton must be uninstalled first."
+        )
+        return
+
+    logger.info_rank0("triton_ascend detected for NPU compatibility.")
+
+    from ..third_party.triton.chunk_gated_delta_rule import chunk_gated_delta_rule as npu_chunk_gated_delta_rule
+
+    if model.config.architectures[0] == "Qwen3_5MoeForConditionalGeneration":
+        try:
+            # Qwen3.5-MoE structure: model.model.language_model.layers
+            for layer in model.model.language_model.layers:
+                if hasattr(layer, "linear_attn"):
+                    layer.linear_attn.chunk_gated_delta_rule = npu_chunk_gated_delta_rule
+
+            logger.info_rank0(
+                "Replaced chunk_gated_delta_rule with NPU-compatible implementation for Qwen3.5-MoE model."
+            )
+        except Exception as e:
+            logger.warning_rank0(f"Failed to replace chunk_gated_delta_rule for NPU: {e}")
+    elif model.config.architectures[0] == "Qwen3_5ForConditionalGeneration":
+        try:
+            # Qwen3.5 structure: model.model.layers
+            for layer in model.model.layers:
+                if hasattr(layer, "linear_attn"):
+                    layer.linear_attn.chunk_gated_delta_rule = npu_chunk_gated_delta_rule
+
+            logger.info_rank0("Replaced chunk_gated_delta_rule with NPU-compatible implementation for Qwen3.5 model.")
+        except Exception as e:
+            logger.warning_rank0(f"Failed to replace chunk_gated_delta_rule for NPU: {e}")
+
+
+def patch_qwen3_5_forward_gpu(model: "PreTrainedModel") -> None:
+    """Patch the forward method of Qwen3_5ForConditionalGeneration to support cu_seqlens input only patch when do training.
+
+    Refer to: https://github.com/axolotl-ai-cloud/axolotl/blob/main/src/axolotl/monkeypatch/models/qwen3_5/modeling.py.
+    """
+    if is_transformers_version_greater_than("5.2.0"):
+        from transformers.models.qwen3_5.modeling_qwen3_5 import apply_mask_to_padding_states
+
+    from torch.nn import functional as F
+    from transformers.modeling_flash_attention_utils import prepare_fa_kwargs_from_position_ids
+
+    _check_fla_dependencies()
+    from fla.modules.convolution import causal_conv1d as fla_causal_conv1d
+    from fla.ops.gated_delta_rule import chunk_gated_delta_rule
+
+    def _patched_decoder_forward(
+        self,
+        hidden_states: torch.Tensor,
+        position_embeddings: tuple[torch.Tensor, torch.Tensor],
+        attention_mask: torch.Tensor | None = None,
+        position_ids: torch.LongTensor | None = None,
+        past_key_values=None,
+        cache_position: torch.LongTensor | None = None,
+        **kwargs,
+    ) -> torch.FloatTensor:
+        """Decoder layer forward that passes position_ids through to linear attention."""
+        residual = hidden_states
+        hidden_states = self.input_layernorm(hidden_states)
+
+        if self.layer_type == "linear_attention":
+            hidden_states = self.linear_attn(
+                hidden_states=hidden_states,
+                cache_params=past_key_values,
+                cache_position=cache_position,
+                attention_mask=attention_mask,
+                position_ids=position_ids,  # passing position_ids to linear attention
+            )
+        elif self.layer_type == "full_attention":
+            hidden_states, _ = self.self_attn(
+                hidden_states=hidden_states,
+                attention_mask=attention_mask,
+                position_ids=position_ids[None, 0],  # keep [1, B, L]
+                past_key_values=past_key_values,
+                cache_position=cache_position,
+                position_embeddings=position_embeddings,
+                **kwargs,
+            )
+
+        hidden_states = residual + hidden_states
+
+        residual = hidden_states
+        hidden_states = self.post_attention_layernorm(hidden_states)
+        hidden_states = self.mlp(hidden_states)
+        if isinstance(hidden_states, tuple):  # MoE returns (hidden_states, router_logits)
+            hidden_states, _ = hidden_states
+
+        hidden_states = residual + hidden_states
+
+        return hidden_states
+
+    # gdn forward (training only, cache_params is always None)
+    def _patch_gdn_forward(
+        self,
+        hidden_states: torch.Tensor,
+        cache_params=None,
+        cache_position: torch.LongTensor | None = None,
+        attention_mask: torch.Tensor | None = None,
+        position_ids: torch.LongTensor | None = None,
+    ):
+        # @kuangdd fix: here attention_mask is None
+        hidden_states = apply_mask_to_padding_states(hidden_states, attention_mask)
+
+        batch_size, seq_len, _ = hidden_states.shape
+
+        # Qwen3.5 VL passes 3-D MRoPE position_ids ([axes, B, T]); collapse to [B, T].
+        if position_ids is not None and position_ids.ndim == 3:
+            position_ids = position_ids[0]
+
+        # cu_seqlens for the FLA varlen path is only needed when batch_size == 1:
+        # packing / neat-packing: always folded into a single sequence (bsz == 1) -> varlen
+        # non-packing, bsz == 1: single segment, equivalent to a standard single sequence
+        # non-packing, bsz > 1: not packed, use cu_seqlens=None and standard batched kernels
+        if position_ids is not None and batch_size == 1:
+            cu_seqlens = prepare_fa_kwargs_from_position_ids(position_ids)[0][0]
+        else:
+            cu_seqlens = None
+
+        # FLA varlen kernels expect [B, T, D] layout, not [B, D, T] like the
+        # standard causal-conv1d path that the upstream forward uses.
+        mixed_qkv = self.in_proj_qkv(hidden_states)
+
+        z = self.in_proj_z(hidden_states)
+        z = z.reshape(batch_size, seq_len, -1, self.head_v_dim)
+
+        b = self.in_proj_b(hidden_states)
+        a = self.in_proj_a(hidden_states)
+
+        # FLA's causal_conv1d returns (out, final_state); we don't use the state here.
+        mixed_qkv, _ = fla_causal_conv1d(
+            x=mixed_qkv,
+            weight=self.conv1d.weight.squeeze(1),
+            bias=self.conv1d.bias,
+            activation=self.activation,
+            cu_seqlens=cu_seqlens,
+        )
+
+        query, key, value = torch.split(
+            mixed_qkv,
+            [
+                self.key_dim,
+                self.key_dim,
+                self.value_dim,
+            ],
+            dim=-1,
+        )
+
+        query = query.reshape(batch_size, seq_len, -1, self.head_k_dim)
+        key = key.reshape(batch_size, seq_len, -1, self.head_k_dim)
+        value = value.reshape(batch_size, seq_len, -1, self.head_v_dim)
+
+        beta = b.sigmoid()
+        # If the model is loaded in fp16, without the .float() here, A might be -inf
+        g = -self.A_log.float().exp() * F.softplus(a.float() + self.dt_bias)
+        if self.num_v_heads // self.num_k_heads > 1:
+            query = query.repeat_interleave(self.num_v_heads // self.num_k_heads, dim=2)
+            key = key.repeat_interleave(self.num_v_heads // self.num_k_heads, dim=2)
+
+        core_attn_out, _ = chunk_gated_delta_rule(
+            query,
+            key,
+            value,
+            g=g,
+            beta=beta,
+            initial_state=None,
+            output_final_state=False,
+            use_qk_l2norm_in_kernel=True,
+            **({"cu_seqlens": cu_seqlens} if cu_seqlens is not None else {}),
+        )
+
+        core_attn_out = core_attn_out.reshape(-1, self.head_v_dim)
+        z = z.reshape(-1, self.head_v_dim)
+        core_attn_out = self.norm(core_attn_out, z)
+        core_attn_out = core_attn_out.reshape(batch_size, seq_len, -1)
+
+        output = self.out_proj(core_attn_out)
+
+        return output
+
+    if model.config.architectures[0] == "Qwen3_5ForConditionalGeneration":
+        from transformers.models.qwen3_5.modeling_qwen3_5 import Qwen3_5DecoderLayer, Qwen3_5GatedDeltaNet
+
+        Qwen3_5DecoderLayer.forward = _patched_decoder_forward
+        Qwen3_5GatedDeltaNet.forward = _patch_gdn_forward
+    elif model.config.architectures[0] == "Qwen3_5MoeForConditionalGeneration":
+        from transformers.models.qwen3_5_moe.modeling_qwen3_5_moe import (
+            Qwen3_5MoeDecoderLayer,
+            Qwen3_5MoeGatedDeltaNet,
+        )
+
+        Qwen3_5MoeDecoderLayer.forward = _patched_decoder_forward
+        Qwen3_5MoeGatedDeltaNet.forward = _patch_gdn_forward
+
+    logger.info_rank0("Patched Qwen3.5 decoder forward to support cu_seqlens input only patch when do training.")
 
 
 def patch_youtu_vl_model(model: "PreTrainedModel") -> None:
@@ -214,9 +457,14 @@ def patch_model(
         prepare_valuehead_model(model)
 
     if model_args.resize_vocab:
+        # Pass the explicit list of newly added tokens so their exact embedding rows can be
+        # located and initialized, even when they land in a model's pre-existing padding zone.
+        new_tokens = (model_args.add_tokens or []) + (model_args.add_special_tokens or [])
+
         resize_embedding_layer(
             model,
             tokenizer,
+            new_tokens=new_tokens or None,
             new_special_tokens_config=getattr(model_args, "_special_token_descriptions", None),
             init_special_tokens=model_args.init_special_tokens,
         )
@@ -231,6 +479,13 @@ def patch_model(
         prepare_model_for_training(model, model_args)
         autocast_projector_dtype(model, model_args)
         add_z3_leaf_module(model)
+
+        if getattr(model.config, "model_type", None) in ["qwen3_5", "qwen3_5_moe"]:
+            if is_torch_npu_available():
+                patch_qwen3_5_forward_npu(model)
+            elif is_torch_cuda_available() and model_args.flash_attn == "fa2":
+                # this is the patch for packing/neat_packing for GPU GDN. And when setting packing, flash_attn must be fa2.
+                patch_qwen3_5_forward_gpu(model)
 
     if not model_args.use_unsloth:
         print_attn_implementation(model.config)

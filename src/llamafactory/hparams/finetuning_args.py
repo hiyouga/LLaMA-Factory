@@ -487,7 +487,7 @@ class FinetuningArguments(
         metadata={
             "help": (
                 "Whether or not to use HyperParallel distributed training backend (FSDP/TP). "
-                "Only supported for the 'sft' stage with full fine-tuning."
+                "Only supported for the 'pt' and 'sft' stages with full fine-tuning."
             )
         },
     )

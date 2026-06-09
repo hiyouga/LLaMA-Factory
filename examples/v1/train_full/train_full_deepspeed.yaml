@@ -19,5 +19,4 @@ output_dir: outputs/Qwen3-0.6B-deepspeed
 micro_batch_size: 1
 cutoff_len: 2048
 learning_rate: 1.0e-4
-bf16: true
 max_steps: 10

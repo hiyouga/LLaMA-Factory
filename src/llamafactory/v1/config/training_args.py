@@ -54,7 +54,7 @@ class TrainingArguments:
         metadata={"help": "Maximum gradient norm for training."},
     )
     bf16: bool = field(
-        default=False,
+        default=True,
         metadata={"help": "Use bf16 for training."},
     )
     batching_strategy: BatchingStrategy = field(
@@ -66,7 +66,7 @@ class TrainingArguments:
         metadata={"help": "Number of workers for batching."},
     )
     enable_activation_checkpointing: bool = field(
-        default=False,
+        default=True,
         metadata={"help": "Enable activation checkpointing for training."},
     )
     dist_config: PluginConfig | None = field(
@@ -85,6 +85,32 @@ class TrainingArguments:
         default=42,
         metadata={"help": "Random seed that will be set at the beginning of training."},
     )
+    full_determinism: bool = field(
+        default=False,
+        metadata={"help": "Enable full deterministic mode for reproducible distributed training."},
+    )
+    resume_from_checkpoint: str | None = field(
+        default=None,
+        metadata={"help": "Path to a checkpoint directory to resume training from, or 'auto' to find the latest."},
+    )
+    save_steps: int | None = field(
+        default=None,
+        metadata={"help": "Save a training checkpoint every N global steps."},
+    )
+    save_epochs: float | None = field(
+        default=None,
+        metadata={"help": "Save a training checkpoint every N epochs."},
+    )
+    save_ckpt_as_hf: bool = field(
+        default=False,
+        metadata={
+            "help": "Save intermediate checkpoints in HuggingFace format instead of distributed format. Warning: doubles memory usage."
+        },
+    )
+    save_total_limit: int | None = field(
+        default=None,
+        metadata={"help": "Maximum number of checkpoints to keep. Oldest checkpoints are deleted."},
+    )
     logging_steps: int = field(
         default=1,
         metadata={"help": "Log metrics every N optimizer steps."},
@@ -94,3 +120,9 @@ class TrainingArguments:
         self.dist_config = get_plugin_config(self.dist_config)
         self.optim_config = get_plugin_config(self.optim_config)
         self.lr_scheduler_config = get_plugin_config(self.lr_scheduler_config)
+
+        if str(self.batching_strategy) == str(BatchingStrategy.DYNAMIC_BATCHING):
+            if self.max_steps is None or self.max_steps <= 0:
+                raise ValueError("`dynamic_batching` requires `max_steps` because it is step-driven.")
+            if self.save_epochs is not None:
+                raise ValueError("`save_epochs` is not supported with `dynamic_batching`; use `save_steps` instead.")

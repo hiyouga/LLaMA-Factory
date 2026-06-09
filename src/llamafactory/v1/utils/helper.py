@@ -13,22 +13,46 @@
 # limitations under the License.
 
 
+import random
+
+import numpy as np
 import torch
 from transformers import PreTrainedTokenizer
 from transformers import set_seed as hf_set_seed
 
+from ..accelerator.helper import is_torch_npu_available
 from ..accelerator.interface import DistributedInterface
 from .constants import IGNORE_INDEX
 from .types import BatchInput, ModelInput, Processor, Tensor
 
 
-def set_seed(seed: int) -> None:
+def enable_full_determinism(seed: int) -> None:
+    """Enable full deterministic mode for reproducible distributed training."""
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    torch.use_deterministic_algorithms(True, warn_only=True)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+    torch.backends.cudnn.enabled = False
+    if is_torch_npu_available():
+        torch.npu.manual_seed(seed)
+        torch.npu.manual_seed_all(seed)
+
+
+def set_seed(seed: int, full_determinism: bool = False) -> None:
     """Set seed for reproducibility.
 
     Args:
         seed: Random seed.
+        full_determinism: Whether to enable full deterministic mode.
     """
-    hf_set_seed(seed)
+    if full_determinism:
+        enable_full_determinism(seed)
+    else:
+        hf_set_seed(seed)
 
 
 def is_tokenizer(processor: Processor) -> bool:

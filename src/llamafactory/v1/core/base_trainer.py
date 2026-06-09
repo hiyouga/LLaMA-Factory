@@ -34,7 +34,7 @@ import torch.nn.functional as F
 
 from ..accelerator.helper import ReduceOp
 from ..accelerator.interface import Dim, DistributedInterface
-from ..config import TrainingArguments
+from ..config import BatchingStrategy, TrainingArguments
 from ..utils import logging
 from ..utils.callbacks import (
     CallbackHandler,
@@ -45,6 +45,7 @@ from ..utils.callbacks import (
 from ..utils.helper import compute_valid_tokens
 from ..utils.types import BatchInput, HFModel, ModelOutput, Tensor, TorchDataset
 from .utils.batching import BatchGenerator
+from .utils.checkpoint import TrainingCheckpointCoordinator
 from .utils.rendering import Renderer
 
 
@@ -81,6 +82,10 @@ class BaseTrainer:
         else:
             self.num_training_steps = self.args.num_train_epochs * len(self.train_batch_generator)
 
+        if self.args.save_epochs is not None:
+            steps_per_epoch = len(self.train_batch_generator)
+            self.args.save_steps = max(1, int(steps_per_epoch * self.args.save_epochs))
+
         if self.args.enable_activation_checkpointing:
             self.model.gradient_checkpointing_enable({"use_reentrant": False})
 
@@ -107,13 +112,31 @@ class BaseTrainer:
             self._init_optimizer()
             self._init_lr_scheduler()
 
+        self._resume_epoch = 0
+        self._checkpoint = TrainingCheckpointCoordinator(self)
+        if self.args.resume_from_checkpoint:
+            self._checkpoint.resume(self.args.resume_from_checkpoint)
+
+        if self.args.save_ckpt_as_hf:
+            logger.warning_rank0(
+                "save_ckpt_as_hf is enabled. Intermediate checkpoints will be saved in Hugging Face format. "
+                "Note that this will significantly increase memory consumption during saving."
+            )
+
         # Callbacks
         self.callback_handler = CallbackHandler([LoggingCallback()], trainer=self)
         for cb in callbacks or []:
             self.callback_handler.add_callback(cb)
 
         # Callbacks: TrainerState tracks progress across the full run.
-        self.state = TrainerState(num_training_steps=self.num_training_steps)
+        self.state = TrainerState(
+            num_training_steps=self.num_training_steps,
+            global_step=self.global_step,
+            epoch=self._resume_epoch,
+        )
+        # Keep callback state aligned with checkpoint-resumed trainer counters.
+        self.state.global_step = self.global_step
+        self.state.epoch = self._resume_epoch
 
         if self.args.dist_config is not None and self.args.dist_config.get("cp_size", 1) > 1:
             # qwen3.5 is not supported because of the different attention implementation, which will be supported in the future.
@@ -124,13 +147,19 @@ class BaseTrainer:
             from ..plugins.model_plugins.parallelization.sequence_parallel import SequenceParallelModelPlugin
 
             if model.config._attn_implementation != "flash_attention_2":
-                logger.warning_rank0(
-                    "Sequence parallelism is optimized for flash attention only. Replace the attention implementation to flash_attention_2."
+                raise ValueError(
+                    "Sequence parallelism requires flash attention. Please set `flash_attn: flash_attention_2`."
                 )
-                model.config._attn_implementation = "flash_attention_2"
+
             SequenceParallelModelPlugin(self.args.dist_config.get("cp_mode", "ulysses"))(model, self.args.dist_config)
 
     def _create_batch_generator(self) -> None:
+        if (
+            self.args.batching_strategy == BatchingStrategy.PADDING_FREE
+            and getattr(self.model.config, "_attn_implementation", None) != "flash_attention_2"
+        ):
+            raise ValueError("`padding_free` requires `flash_attn: flash_attention_2`.")
+
         self.train_batch_generator = BatchGenerator(
             dataset=self.train_dataset,
             renderer=self.renderer,
@@ -158,6 +187,7 @@ class BaseTrainer:
             self.model = DistributedPlugin(self.args.dist_config.name)(
                 self.model,
                 self.args.dist_config,
+                bf16=self.args.bf16,
             )
 
     def _init_optimizer(self) -> None:
@@ -206,11 +236,14 @@ class BaseTrainer:
         """Train the model."""
         self.model.train()
         self.callback_handler.on_train_begin(self.args, self.state)
-        for epoch in range(self.args.num_train_epochs):
+
+        epoch = self._resume_epoch
+        while self.global_step < self.num_training_steps:
             self.state.epoch = epoch
             self.train_batch_generator.set_epoch(epoch)
             self.callback_handler.on_epoch_begin(self.args, self.state)
 
+            # BatchGenerator is an iterator; each loop step calls its __next__ to produce one optimizer step.
             for micro_batches in self.train_batch_generator:
                 self.global_step += 1
 
@@ -246,26 +279,13 @@ class BaseTrainer:
                     # deepspeed: engine.step() already ran inside backward at the sync boundary
                     grad_norm = self._deepspeed_engine.get_grad_norm()
                 else:
+                    grad_norm = torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.args.max_grad_norm).item()
+
                     if self.args.dist_config and self.args.dist_config.get("cp_size", 1) > 1:
-                        from torch.nn.utils.clip_grad import _clip_grads_with_norm_, _get_total_norm
+                        grad_norm = grad_norm**2
+                        grad_norm = DistributedInterface().all_reduce(grad_norm, op=ReduceOp.SUM, dim=Dim.CP)
+                        grad_norm = grad_norm**0.5
 
-                        parameters = self.model.parameters()
-                        if isinstance(parameters, torch.Tensor):
-                            parameters = [parameters]
-                        else:
-                            parameters = list(parameters)
-                        grads = [p.grad for p in parameters if p.grad is not None]
-                        grad_norm = _get_total_norm(grads)
-                        grad_norm = grad_norm.to(self.device)
-                        _clip_grads_with_norm_(parameters, self.args.max_grad_norm, grad_norm)
-                        if isinstance(grad_norm, torch.distributed._tensor.DTensor):
-                            grad_norm = grad_norm.full_tensor().item()
-                    else:
-                        grad_norm = torch.nn.utils.clip_grad_norm_(
-                            self.model.parameters(), self.args.max_grad_norm
-                        ).item()
-
-                    # isfinite(): argument 'input' (position 1) must be Tensor, not float
                     if not torch.isfinite(torch.tensor(grad_norm)):  # type: ignore # pyright: ignore [reportUnknownReturnType]
                         logger.warning_rank0(f"Gradient norm is not finite: {grad_norm}")
                     else:
@@ -293,12 +313,15 @@ class BaseTrainer:
                 if self.global_step % self.args.logging_steps == 0:
                     logs = {
                         "epoch": epoch,
-                        "step": self.global_step,
+                        "step": self.state.global_step,
                         "loss": step_loss,
                         "grad_norm": grad_norm,
                         "learning_rate": current_lr,
                     }
                     self.callback_handler.on_log(self.args, self.state, logs)
+
+                if self.args.save_steps and self.global_step % self.args.save_steps == 0:
+                    self._checkpoint.save(epoch)
 
                 # Check if max_steps is reached
                 if self.global_step >= self.num_training_steps:
@@ -308,6 +331,7 @@ class BaseTrainer:
                     return
 
             self.callback_handler.on_epoch_end(self.args, self.state)
+            epoch += 1
 
         self.callback_handler.on_train_end(self.args, self.state)
 
@@ -321,7 +345,9 @@ class BaseTrainer:
             )
         else:
             model_to_save = self.model.module if hasattr(self.model, "module") else self.model
-            model_to_save.save_pretrained(self.args.output_dir, max_shard_size="4GB")
+            model_to_save.save_pretrained(
+                self.args.output_dir, state_dict=model_to_save.state_dict(), max_shard_size="4GB"
+            )
             self.renderer.processor.save_pretrained(self.args.output_dir, max_shard_size="4GB")
             logger.info_rank0(f"Model saved to {self.args.output_dir}")
 

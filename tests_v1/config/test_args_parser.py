@@ -70,13 +70,3 @@ def test_get_args_from_yaml(tmp_path: Path):
         assert training_args.bf16 is False
         assert training_args.dist_config is None
         assert sample_args.sample_backend == "hf"
-
-
-if __name__ == "__main__":
-    """
-    python -m tests_v1.config.test_args_parser
-    """
-    import tempfile
-
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        test_get_args_from_yaml(tmp_path=Path(tmp_dir))

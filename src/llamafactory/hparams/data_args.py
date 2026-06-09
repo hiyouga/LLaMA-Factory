@@ -125,6 +125,10 @@ class DataArguments:
         default=True,
         metadata={"help": "Whether or not to enable thinking mode for reasoning models."},
     )
+    preserve_thinking: bool = field(
+        default=False,
+        metadata={"help": "Whether or not to preserve thinking content in historical turns for reasoning models."},
+    )
     tokenized_path: str | None = field(
         default=None,
         metadata={

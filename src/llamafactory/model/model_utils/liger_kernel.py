@@ -45,7 +45,7 @@ def apply_liger_kernel(
         from liger_kernel.transformers import apply_liger_kernel_to_gemma3 as apply_liger_kernel
     elif model_type == "gemma3_text":
         from liger_kernel.transformers import apply_liger_kernel_to_gemma3_text as apply_liger_kernel
-    elif model_type == "glm4":
+    elif model_type in ["glm", "glm4"]:  # for glm4-9b, glm4-32B respectively
         from liger_kernel.transformers import apply_liger_kernel_to_glm4 as apply_liger_kernel
     elif model_type == "glm4v":
         from liger_kernel.transformers import apply_liger_kernel_to_glm4v as apply_liger_kernel
@@ -81,6 +81,8 @@ def apply_liger_kernel(
         from liger_kernel.transformers import apply_liger_kernel_to_qwen3_next as apply_liger_kernel
     elif model_type == "qwen3_5":
         from liger_kernel.transformers import apply_liger_kernel_to_qwen3_5 as apply_liger_kernel
+    elif model_type == "qwen3_5_moe":
+        from liger_kernel.transformers import apply_liger_kernel_to_qwen3_5_moe as apply_liger_kernel
     elif model_type == "gpt_oss":
         try:
             from liger_kernel.transformers import apply_liger_kernel_to_gpt_oss as apply_liger_kernel
