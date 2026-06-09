@@ -199,6 +199,7 @@ class DPOTrainer(BaseTrainer):
             shift_logits.view(-1, shift_logits.size(-1)),
             shift_labels.view(-1),
             reduction="none",
+            ignore_index=IGNORE_INDEX,
         ).view(shift_labels.size(0), shift_labels.size(1))
 
         loss_mask = shift_labels != IGNORE_INDEX
@@ -244,6 +245,46 @@ class DPOTrainer(BaseTrainer):
         return chosen_logps, rejected_logps, chosen_logps_avg, rejected_logps_avg
 
     # ------------------------------------------------------------------
+    # Model inputs (block-diagonal attention + per-document position_ids)
+    # ------------------------------------------------------------------
+
+    def _prepare_model_inputs(self, input_ids: Tensor, token_type_ids: Tensor) -> dict[str, Tensor]:
+        """Build model inputs with block-diagonal attention and per-document position IDs.
+
+        In the v1 concatenated format each sample is::
+
+            [chosen prompt | chosen response | rejected prompt | rejected response]
+
+        with ``token_type_ids`` 1 / 2 marking the two documents.  A plain causal
+        mask would let the rejected half attend to the chosen half and produce
+        contiguous RoPE positions across the boundary, biasing the DPO objective.
+
+        We instead:
+
+        * pass ``token_type_ids`` as the attention mask so that Transformers v5
+          builds a **block-diagonal** causal mask (each document only attends to
+          itself — see :class:`RMTrainer` for the same pattern).
+        * compute ``position_ids`` that **reset at each document boundary** so
+          that every document gets its own RoPE positions starting from 0.
+        """
+        batch_size, seq_len = token_type_ids.shape
+        arange = torch.arange(seq_len, device=self.device).unsqueeze(0).expand(batch_size, -1)
+
+        chosen_mask = token_type_ids == 1
+        rejected_mask = token_type_ids == 2
+        chosen_lens = chosen_mask.sum(dim=1, keepdim=True)
+
+        position_ids = torch.zeros_like(token_type_ids)
+        position_ids[chosen_mask] = arange[chosen_mask]
+        position_ids[rejected_mask] = (arange - chosen_lens)[rejected_mask]
+
+        return {
+            "input_ids": input_ids,
+            "attention_mask": token_type_ids,  # block-diagonal doc mask (v5)
+            "position_ids": position_ids,
+        }
+
+    # ------------------------------------------------------------------
     # Reference log-probabilities (frozen model, no grad)
     # ------------------------------------------------------------------
 
@@ -255,15 +296,10 @@ class DPOTrainer(BaseTrainer):
         model with adapters disabled instead of maintaining a separate copy.
         """
         input_ids = batch["input_ids"].to(self.device, non_blocking=True)
-        attention_mask = batch.get("attention_mask")
-        if attention_mask is not None:
-            attention_mask = attention_mask.to(self.device, non_blocking=True)
         labels = batch["labels"].to(self.device, non_blocking=True)
         token_type_ids = batch["token_type_ids"].to(self.device, non_blocking=True)
 
-        model_inputs = {"input_ids": input_ids}
-        if attention_mask is not None:
-            model_inputs["attention_mask"] = attention_mask
+        model_inputs = self._prepare_model_inputs(input_ids, token_type_ids)
 
         if self._use_lora_ref:
             unwrapped = self._unwrapped_model
@@ -316,15 +352,11 @@ class DPOTrainer(BaseTrainer):
 
     def compute_loss(self, batch: BatchInput) -> Tensor:
         input_ids = batch["input_ids"].to(self.device, non_blocking=True)
-        attention_mask = batch.get("attention_mask")
-        if attention_mask is not None:
-            attention_mask = attention_mask.to(self.device, non_blocking=True)
         labels = batch["labels"].to(self.device, non_blocking=True)
         token_type_ids = batch["token_type_ids"].to(self.device, non_blocking=True)
 
-        model_inputs = {"input_ids": input_ids}
-        if attention_mask is not None:
-            model_inputs["attention_mask"] = attention_mask
+        # Block-diagonal attention (token_type_ids as doc mask) + per-document position_ids
+        model_inputs = self._prepare_model_inputs(input_ids, token_type_ids)
 
         # --- Policy forward ---
         model_output = self.model(**model_inputs, use_cache=False, return_dict=True)
