@@ -133,24 +133,13 @@ class ModelEngine:
                 is_trainable=self.is_train,
             )
 
-        if self.args.model_class == ModelClass.LLM:
+        if self.args.model_class in (ModelClass.LLM, ModelClass.CLS):
             from transformers import AutoModelForCausalLM, AutoModelForImageTextToText
 
-            if type(self.model_config) in AutoModelForImageTextToText._model_mapping.keys():
+            if type(self.model_config) in AutoModelForImageTextToText._model_mapping:
                 AutoClass = AutoModelForImageTextToText
             else:
                 AutoClass = AutoModelForCausalLM
-
-        elif self.args.model_class == ModelClass.CLS:
-            from transformers import AutoModelForTokenClassification
-
-            self.model_config.num_labels = 1
-            self.model_config.classifier_dropout = 0.0
-            text_config = getattr(self.model_config, "text_config", None)
-            if text_config is not None:
-                text_config.num_labels = 1
-                text_config.classifier_dropout = 0.0
-            AutoClass = AutoModelForTokenClassification
         else:
             from transformers import AutoModel
 
@@ -172,6 +161,23 @@ class ModelEngine:
 
         init_mode = self.args.init_config.name if self.args.init_config is not None else "init_on_default"
         model._init_mode = init_mode
+
+        # Add a score head for classification / reward modeling tasks.
+        # Using AutoModelForCausalLM ensures PEFT / LoRA compatibility (prepare_inputs_for_generation),
+        # while the manually-added ``score`` linear layer provides per-token scalar rewards.
+        if self.args.model_class == ModelClass.CLS and not hasattr(model, "score"):
+            hidden_size = model.config.hidden_size
+            text_config = getattr(model.config, "text_config", None)
+            if text_config is not None:
+                hidden_size = text_config.hidden_size
+
+            if init_device.type == DeviceType.META:
+                with init_empty_weights():
+                    model.score = torch.nn.Linear(hidden_size, 1, bias=False)
+            else:
+                model.score = torch.nn.Linear(hidden_size, 1, bias=False).to(
+                    dtype=model.dtype, device=model.device,
+                )
 
         if self.args.peft_config is None:
             if self.is_train:

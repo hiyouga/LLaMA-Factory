@@ -130,11 +130,15 @@ class RMTrainer(BaseTrainer):
             input_ids=input_ids,
             attention_mask=model_attention_mask,
             position_ids=position_ids,
+            output_hidden_states=True,
             use_cache=False,
             return_dict=True,
         )
 
-        rewards = model_output.logits.float().squeeze(-1)
+        # Apply the score head on the last hidden state to get per-token rewards.
+        # Using self._unwrapped_model.score ensures we go through any PEFT / LoRA wrappers.
+        hidden_states = model_output.hidden_states[-1]
+        rewards = self._unwrapped_model.score(hidden_states).float().squeeze(-1)
 
         chosen_mask = token_type_ids == 1
         rejected_mask = token_type_ids == 2
