@@ -24,7 +24,7 @@ logger = logging.get_logger(__name__)
 
 
 class RenderingPlugin(BasePlugin):
-    """Override hook for the built-in :class:`~llamafactory.v1.core.utils.rendering.Renderer`.
+    """Override hook for the built-in :class:`~llamafactory.v1.core.rendering.Renderer`.
 
     The default rendering path (``render_messages`` / ``parse_message``) lives in the
     core ``Renderer`` and is used as-is when nothing is registered here. To customize a

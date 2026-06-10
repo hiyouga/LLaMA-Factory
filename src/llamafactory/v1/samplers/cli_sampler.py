@@ -21,7 +21,7 @@ from ..config import InputArgument, ModelArguments, SampleArguments, SampleBacke
 from ..core.base_sampler import BaseSampler
 from ..core.data_engine import DataEngine
 from ..core.model_engine import ModelEngine
-from ..core.utils.rendering import Renderer
+from ..core.rendering import Renderer
 from ..utils.types import HFModel, Message, Sample, TorchDataset
 
 

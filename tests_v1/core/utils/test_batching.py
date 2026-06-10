@@ -368,9 +368,6 @@ def test_dynamic_padding_free_fill_buffer_restarts_until_micro_batch_is_complete
     assert len(batch_generator._buffer) == 1
 
 
-# ----------------------------- multimodal vision-tower alignment (dummy injection) -----------------------------
-
-
 def _image_fragment(n_pad: int = 4, merge_sq: int = 4):
     """Hand-crafted image fragment: vision_start + n_pad image_pad + vision_end."""
     import torch
@@ -390,67 +387,77 @@ def _text_sample(n: int, base: int = 100):
     return s
 
 
-def test_inject_appends_zero_loss_dummy_to_shortest_text_sample():
+def test_inject_appends_zero_loss_dummy_into_collated_text_batch():
     import torch
 
-    from llamafactory.v1.core.utils.batching import _inject_dummy_media
+    from llamafactory.v1.core.utils.batching import _collate_micro_batch, _inject_dummy_into_collated
 
-    mb = [_text_sample(20), _text_sample(8), _text_sample(15)]
+    collated = _collate_micro_batch([_text_sample(20), _text_sample(8)], cutoff_len=4096)
+    assert "pixel_values" not in collated
+    bsz, seqlen = collated["input_ids"].shape
+
     frag = _image_fragment(n_pad=4)
     fl = len(frag["input_ids"])
+    _inject_dummy_into_collated(collated, frag, marker=1)
 
-    _inject_dummy_media(mb, frag, cutoff_len=4096)
+    new_len = seqlen + fl
+    # every sequence field grew by the fragment length, batch size unchanged
+    for key in ("input_ids", "attention_mask", "labels", "loss_weights", "position_ids", "mm_token_type_ids"):
+        assert collated[key].shape == (bsz, new_len)
 
-    injected = [s for s in mb if "pixel_values" in s]
-    assert len(injected) == 1
-    s = injected[0]
-    assert len(s["input_ids"]) == 8 + fl  # shortest sample received the dummy
-
-    L = len(s["input_ids"])
-    for key in ("attention_mask", "labels", "loss_weights", "position_ids", "mm_token_type_ids"):
-        assert len(s[key]) == L
-
-    # the dummy tail contributes nothing to the loss
-    assert s["labels"][-fl:] == [IGNORE_INDEX] * fl
-    assert s["loss_weights"][-fl:] == [0.0] * fl
-    assert s["mm_token_type_ids"][-fl:] == frag["mm_token_type_ids"]
-    assert s["position_ids"][-fl:] == list(range(9, 9 + fl))  # positions continue monotonically
-    assert torch.equal(s["pixel_values"], frag["pixel_values"])
-    assert torch.equal(s["image_grid_thw"], frag["image_grid_thw"])
+    # dummy lives only in row 0's tail; other rows are padding (attention 0) there
+    assert collated["input_ids"][0, seqlen:].tolist() == frag["input_ids"]
+    assert collated["attention_mask"][0, seqlen:].tolist() == [1] * fl
+    assert collated["attention_mask"][1, seqlen:].tolist() == [0] * fl
+    # zero loss contribution
+    assert collated["labels"][0, seqlen:].tolist() == [IGNORE_INDEX] * fl
+    assert torch.all(collated["loss_weights"][:, seqlen:] == 0.0)
+    assert collated["mm_token_type_ids"][0, seqlen:].tolist() == frag["mm_token_type_ids"]
+    # pixel features carried verbatim
+    assert torch.equal(collated["pixel_values"], frag["pixel_values"])
+    assert torch.equal(collated["image_grid_thw"], frag["image_grid_thw"])
 
 
-def test_inject_dummy_survives_cutoff_truncation():
-    """When the chosen sample is near cutoff, the real tail is trimmed so the dummy is kept."""
-    from llamafactory.v1.core.utils.batching import _inject_dummy_media
+def test_inject_video_concatenates_alongside_existing_image():
+    """Injecting a missing modality leaves the other modality's features intact (dim-0 cat)."""
+    import torch
 
-    cutoff = 16
-    mb = [_text_sample(cutoff), _text_sample(cutoff)]  # both already at cutoff
+    from llamafactory.v1.core.utils.batching import _collate_micro_batch, _inject_dummy_into_collated
+
+    img = _text_sample(10)
+    img["pixel_values"] = torch.ones((8, 16), dtype=torch.float32)
+    img["image_grid_thw"] = torch.tensor([[1, 2, 4]], dtype=torch.long)
+    img["mm_token_type_ids"] = [0] * 10
+    collated = _collate_micro_batch([img], cutoff_len=4096)
+
+    video_frag = {
+        "input_ids": [8, 6, 6, 7],
+        "mm_token_type_ids": [0, 2, 2, 0],
+        "pixel_values_videos": torch.zeros((8, 16), dtype=torch.float32),
+        "video_grid_thw": torch.tensor([[1, 2, 4]], dtype=torch.long),
+    }
+    _inject_dummy_into_collated(collated, video_frag, marker=2)
+
+    # image features untouched, video features added
+    assert torch.equal(collated["pixel_values"], torch.ones((8, 16)))
+    assert collated["pixel_values_videos"].shape[0] == 8
+    assert collated["video_grid_thw"].shape[0] == 1
+    assert collated["mm_token_type_ids"][0, -4:].tolist() == [0, 2, 2, 0]
+
+
+def test_collate_creates_mm_token_type_ids_for_pure_text_then_inject():
+    """A pure-text micro batch has no mm_token_type_ids; injection must create it."""
+    from llamafactory.v1.core.utils.batching import _collate_micro_batch, _inject_dummy_into_collated
+
+    collated = _collate_micro_batch([_text_sample(12)], cutoff_len=4096)
+    assert "mm_token_type_ids" not in collated
+    seqlen = collated["input_ids"].shape[1]
+
     frag = _image_fragment(n_pad=3)
-    fl = len(frag["input_ids"])
+    _inject_dummy_into_collated(collated, frag, marker=1)
 
-    _inject_dummy_media(mb, frag, cutoff_len=cutoff)
-
-    s = next(s for s in mb if "pixel_values" in s)
-    assert len(s["input_ids"]) <= cutoff
-    assert s["input_ids"][-fl:] == frag["input_ids"]
-    assert s["labels"][-fl:] == [IGNORE_INDEX] * fl
-
-
-def test_inject_concatenates_when_chosen_sample_already_has_pixels():
-    """If no text-only sample exists, the dummy merges into a media sample via dim-0 cat."""
-    import torch
-
-    from llamafactory.v1.core.utils.batching import _inject_dummy_media
-
-    real = _text_sample(10)
-    real["pixel_values"] = torch.ones((8, 16), dtype=torch.float32)
-    real["image_grid_thw"] = torch.tensor([[1, 2, 4]], dtype=torch.long)
-    real["mm_token_type_ids"] = [0] * 10
-    mb = [real]
-    frag = _image_fragment(n_pad=4)
-
-    _inject_dummy_media(mb, frag, cutoff_len=4096)
-
-    s = mb[0]
-    assert s["pixel_values"].shape[0] == 8 + frag["pixel_values"].shape[0]
-    assert s["image_grid_thw"].shape[0] == 2
+    assert "mm_token_type_ids" in collated
+    assert collated["mm_token_type_ids"].shape == collated["input_ids"].shape
+    # original region all zero (text), dummy region carries the markers
+    assert collated["mm_token_type_ids"][0, :seqlen].tolist() == [0] * seqlen
+    assert collated["mm_token_type_ids"][0, seqlen:].tolist() == frag["mm_token_type_ids"]

@@ -44,9 +44,9 @@ from ..utils.callbacks import (
 )
 from ..utils.helper import compute_valid_tokens, is_tokenizer
 from ..utils.types import BatchInput, HFModel, ModelOutput, Tensor, TorchDataset
+from .rendering import Renderer
 from .utils.batching import BatchGenerator
 from .utils.checkpoint import TrainingCheckpointCoordinator
-from .utils.rendering import Renderer
 
 
 logger = logging.get_logger(__name__)

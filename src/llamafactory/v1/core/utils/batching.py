@@ -38,8 +38,9 @@ from ...utils import logging
 from ...utils.constants import IGNORE_INDEX
 from ...utils.helper import is_tokenizer
 from ...utils.objects import StatefulBuffer
-from ...utils.types import BatchInfo, BatchInput, ModelInput, TorchDataset
-from .rendering import _MULTIMODAL_PASSTHROUGH_KEYS, Renderer, _align_multimodal_on_truncation, pad_and_truncate
+from ...utils.types import BatchInfo, BatchInput, ModelInput, Tensor, TorchDataset
+from ..rendering import Renderer
+from .collation import _MULTIMODAL_PASSTHROUGH_KEYS, pad_and_truncate
 
 
 logger = logging.get_logger(__name__)
@@ -54,55 +55,66 @@ _ALIGN_MODALITIES = (
 )
 
 
-def _inject_dummy_media(micro_batch: list[ModelInput], fragment: dict, cutoff_len: int) -> None:
-    """Append a zero-loss dummy media fragment to one sample of ``micro_batch`` in place.
+def _collate_micro_batch(micro_batch: list[ModelInput], cutoff_len: int) -> BatchInput:
+    """Pad/truncate then collate one micro batch (text fields stacked, MM features dim-0 concat)."""
+    padded = pad_and_truncate(micro_batch, cutoff_len)
+    standard_samples = [{k: v for k, v in s.items() if k not in _MULTIMODAL_PASSTHROUGH_KEYS} for s in padded]
+    collated = default_collate(standard_samples)
+    for key in _MULTIMODAL_PASSTHROUGH_KEYS:
+        tensors = [s[key] for s in padded if key in s]
+        if tensors:
+            collated[key] = torch.cat(tensors, dim=0)
+    return collated
 
-    The fragment is added at the end of the chosen sample so causal attention keeps every real
-    token's logits unchanged; its placeholder tokens carry ``IGNORE_INDEX`` labels and zero loss
-    weight, so the dummy contributes nothing to the loss while forcing the vision tower to run.
+
+def _inject_dummy_into_collated(collated: BatchInput, fragment: dict, marker: int) -> None:
+    """Append a zero-loss dummy media fragment to an already-collated micro batch, in place.
+
+    Operates *after* pad_and_truncate so it reflects post-truncation presence: an image whose
+    placeholder tokens were partially cut is deleted by ``_align_multimodal_on_truncation``,
+    turning that sample text-only -- which must be detected here (not before truncation) or the
+    vision-tower call count still desyncs across ranks.
+
+    The dummy tokens are appended (extra columns) into row 0 only; other rows get padding there.
+    Causal attention keeps every real token's logits unchanged; the dummy carries IGNORE_INDEX
+    labels and zero loss weight, so it contributes nothing to the loss while forcing the (FSDP-
+    sharded) vision tower to run.
     """
-    frag_ids = fragment["input_ids"]
-    frag_len = len(frag_ids)
-    frag_mm = fragment["mm_token_type_ids"]
+    bsz, seqlen = collated["input_ids"].shape
+    frag_ids = torch.tensor(fragment["input_ids"], dtype=collated["input_ids"].dtype)
+    frag_len = frag_ids.numel()
+    frag_mm = torch.tensor(fragment["mm_token_type_ids"], dtype=torch.long)
+    new_len = seqlen + frag_len
 
-    # Prefer a pure-text sample (no media to orphan when trimming); else the shortest one.
-    def _is_text_only(s: ModelInput) -> bool:
-        return not any(k in s for k in _MULTIMODAL_PASSTHROUGH_KEYS)
+    def _grow(tensor: Tensor, pad_value, row0_tail=None) -> Tensor:
+        out = torch.full((bsz, new_len), pad_value, dtype=tensor.dtype)
+        out[:, :seqlen] = tensor
+        if row0_tail is not None:
+            out[0, seqlen:] = row0_tail.to(tensor.dtype)
+        return out
 
-    text_only = [j for j, s in enumerate(micro_batch) if _is_text_only(s)]
-    candidates = text_only if text_only else range(len(micro_batch))
-    idx = min(candidates, key=lambda j: len(micro_batch[j]["input_ids"]))
+    collated["input_ids"] = _grow(collated["input_ids"], 0, frag_ids)
+    collated["attention_mask"] = _grow(collated["attention_mask"], 0)
+    collated["attention_mask"][0, seqlen:] = 1
+    collated["labels"] = _grow(collated["labels"], IGNORE_INDEX)  # dummy region stays ignored
+    collated["loss_weights"] = _grow(collated["loss_weights"], 0.0)
+    if "position_ids" in collated:
+        pos = _grow(collated["position_ids"], 0)
+        pos[0, seqlen:] = torch.arange(seqlen + 1, new_len + 1, dtype=pos.dtype)
+        collated["position_ids"] = pos
 
-    s = dict(micro_batch[idx])
-    n = len(s["input_ids"])
-
-    # Reserve room so the dummy survives cutoff truncation; trim the real tail if needed.
-    keep = max(0, cutoff_len - frag_len)
-    if n > keep:
-        for key in ("input_ids", "attention_mask", "labels", "loss_weights", "position_ids", "mm_token_type_ids"):
-            if key in s:
-                s[key] = list(s[key])[:keep]
-        # Trimming may orphan this sample's own media; realign before appending the dummy.
-        if any(k in s for k in _MULTIMODAL_PASSTHROUGH_KEYS):
-            s = dict(_align_multimodal_on_truncation(s, keep))
-        n = len(s["input_ids"])
-
-    s["input_ids"] = list(s["input_ids"]) + list(frag_ids)
-    s["attention_mask"] = list(s["attention_mask"]) + [1] * frag_len
-    s["labels"] = list(s["labels"]) + [IGNORE_INDEX] * frag_len
-    s["loss_weights"] = list(s["loss_weights"]) + [0.0] * frag_len
-    s["mm_token_type_ids"] = list(s.get("mm_token_type_ids", [0] * n)) + list(frag_mm)
-    if "position_ids" in s:
-        base_pos = list(s["position_ids"])
-        last = base_pos[-1] if base_pos else 0
-        s["position_ids"] = base_pos + list(range(last + 1, last + 1 + frag_len))
+    mm = collated.get("mm_token_type_ids")
+    if mm is not None:
+        collated["mm_token_type_ids"] = _grow(mm, 0, frag_mm)
+    else:
+        mm = torch.zeros((bsz, new_len), dtype=torch.long)
+        mm[0, seqlen:] = frag_mm
+        collated["mm_token_type_ids"] = mm
 
     for key, value in fragment.items():
         if key in ("input_ids", "mm_token_type_ids"):
             continue
-        s[key] = torch.cat([s[key], value], dim=0) if key in s else value
-
-    micro_batch[idx] = s
+        collated[key] = torch.cat([collated[key], value], dim=0) if key in collated else value
 
 
 def default_collate_fn(
@@ -118,40 +130,22 @@ def default_collate_fn(
     samples = buffer.get(batch_size)
     micro_batches = [samples[i * micro_batch_size : (i + 1) * micro_batch_size] for i in range(num_micro_batch)]
 
-    # Vision-tower alignment: a micro batch with media makes the (FSDP-sharded) vision blocks
-    # fire collectives that a media-less micro batch on a sibling DP rank never issues -> NCCL
-    # hang. Negotiate, per micro batch, which modalities are present *anywhere* in the DP group
-    # (all_reduce MAX over local presence), then inject a dummy into the micro batches that lack
-    # a globally-present modality so every rank invokes the vision tower the same number of times.
-    # NOTE: this all_reduce must run the same number of times on every rank; it is reached only
-    # on the full-batch path (the `len(buffer) < batch_size` early return above is shared by all
-    # ranks thanks to drop_last + equal shards), so the count stays aligned.
+    # Collate first; presence is judged on the *post-truncation* result, since truncation can
+    # delete a partially-cut image and turn a sample text-only (see _inject_dummy_into_collated).
+    batch = [_collate_micro_batch(mb, cutoff_len) for mb in micro_batches]
+
     if renderer is not None and not is_tokenizer(renderer.processor):
         present = torch.zeros((num_micro_batch, len(_ALIGN_MODALITIES)), dtype=torch.int64)
-        for i, mb in enumerate(micro_batches):
+        for i, collated in enumerate(batch):
             for m, (_, pixel_key, _, _) in enumerate(_ALIGN_MODALITIES):
-                present[i, m] = int(any(pixel_key in s for s in mb))
+                present[i, m] = int(pixel_key in collated)
 
         present = DistributedInterface().all_reduce(present, op=ReduceOp.MAX, dim=Dim.DP)
 
-        for i, mb in enumerate(micro_batches):
-            for m, (modality, pixel_key, _, _) in enumerate(_ALIGN_MODALITIES):
-                if present[i, m] and not any(pixel_key in s for s in mb):
-                    _inject_dummy_media(mb, renderer.get_dummy_media_fragment(modality), cutoff_len)
-
-    batch = []
-    for micro_batch in micro_batches:
-        padded = pad_and_truncate(micro_batch, cutoff_len)
-
-        standard_samples = [{k: v for k, v in s.items() if k not in _MULTIMODAL_PASSTHROUGH_KEYS} for s in padded]
-        collated = default_collate(standard_samples)
-
-        for key in _MULTIMODAL_PASSTHROUGH_KEYS:
-            tensors = [s[key] for s in padded if key in s]
-            if tensors:
-                collated[key] = torch.cat(tensors, dim=0)
-
-        batch.append(collated)
+        for i, collated in enumerate(batch):
+            for m, (modality, pixel_key, _, marker) in enumerate(_ALIGN_MODALITIES):
+                if present[i, m] and pixel_key not in collated:
+                    _inject_dummy_into_collated(collated, renderer.get_dummy_media_fragment(modality), marker)
 
     return batch
 

@@ -39,7 +39,7 @@ from ..config.model_args import ModelArguments, ModelClass
 from ..utils import logging
 from ..utils.helper import get_tokenizer, is_tokenizer
 from ..utils.types import HFConfig, HFModel, Processor
-from .utils.rendering import Renderer
+from .rendering import Renderer
 
 
 logger = logging.get_logger(__name__)

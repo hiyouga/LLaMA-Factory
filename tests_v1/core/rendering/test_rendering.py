@@ -1,4 +1,4 @@
-# Copyright 2025 the LlamaFactory team.
+# Copyright 2026 the LlamaFactory team.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,15 +20,10 @@ from transformers import AutoProcessor, AutoTokenizer
 
 from llamafactory.v1.config import DataArguments
 from llamafactory.v1.core.data_engine import DataEngine
-from llamafactory.v1.core.utils.rendering import (
-    Renderer,
-    _escape_special,
-    _find_subseq,
-    _label_assistant_regions,
-    _rfind_subseq,
-    _special_token_strings,
-    _verify_render,
-)
+from llamafactory.v1.core.rendering import Renderer
+from llamafactory.v1.core.rendering.escape import _escape_special, _special_token_strings
+from llamafactory.v1.core.rendering.format import _find_subseq, _rfind_subseq
+from llamafactory.v1.core.rendering.label import _label_assistant_regions, _verify_render
 from llamafactory.v1.utils.constants import IGNORE_INDEX
 from llamafactory.v1.utils.types import Processor
 
@@ -259,9 +254,6 @@ def test_process_dpo_samples():
     assert model_inputs[0]["_dataset_name"] == "default"
 
 
-# ----------------------------- subsequence / label helpers (no model) -----------------------------
-
-
 def test_find_subseq():
     assert _find_subseq([0, 1, 2, 3], [1, 2]) == 1
     assert _find_subseq([0, 1, 2, 1, 2], [1, 2], start=2) == 3
@@ -319,9 +311,6 @@ def test_escape_special():
     assert not special_ids.intersection(tokenizer(escaped, add_special_tokens=False)["input_ids"])
 
 
-# ----------------------------- injection / weighting (text, tiny model) -----------------------------
-
-
 def test_render_messages_injection_neutralized():
     tokenizer: Processor = AutoTokenizer.from_pretrained("llamafactory/tiny-random-qwen3")
     renderer = Renderer(processor=tokenizer)
@@ -362,8 +351,6 @@ def test_render_messages_loss_weight_zero():
     assert "untrained answer" not in decoded
     assert "trained answer" in decoded
 
-
-# ----------------------------- multimodal (local VL model, slow + env-gated) -----------------------------
 
 _VL_MODEL = os.environ.get("LMF_TEST_VL_MODEL")  # e.g. a local Qwen3-VL / Qwen3.5 dir; tests skip if unset
 
