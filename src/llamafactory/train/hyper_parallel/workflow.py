@@ -51,8 +51,8 @@ def _prepare_hp_args(finetuning_args: "FinetuningArguments", model_args: "ModelA
 
     hp_args = HyperParallelArguments.from_finetuning_args(finetuning_args)
 
-    if getattr(hp_args, "cp_size", None) != finetuning_args.cp_size:
-        setattr(hp_args, "cp_size", finetuning_args.cp_size)
+    if getattr(hp_args, "cp_size", None) != finetuning_args.hyper_parallel_cp_size:
+        setattr(hp_args, "cp_size", finetuning_args.hyper_parallel_cp_size)
 
     if hp_args.activation_mode != "none":
         model_args.disable_gradient_checkpointing = True

@@ -500,7 +500,7 @@ class FinetuningArguments(
             )
         },
     )
-    cp_size: int = field(
+    hyper_parallel_cp_size: int = field(
         default=1,
         metadata={"help": "Context parallel size used when `use_hyper_parallel=True`."},
     )
@@ -580,7 +580,7 @@ class FinetuningArguments(
         assert self.finetuning_type in ["lora", "oft", "freeze", "full"], "Invalid fine-tuning method."
         assert self.ref_model_quantization_bit in [None, 8, 4], "We only accept 4-bit or 8-bit quantization."
         assert self.reward_model_quantization_bit in [None, 8, 4], "We only accept 4-bit or 8-bit quantization."
-        assert self.cp_size > 0, "`cp_size` must be greater than 0."
+        assert self.hyper_parallel_cp_size > 0, "`hyper_parallel_cp_size` must be greater than 0."
 
         if self.stage == "ppo" and self.reward_model is None:
             raise ValueError("`reward_model` is necessary for PPO training.")
