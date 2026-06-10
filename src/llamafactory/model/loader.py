@@ -95,17 +95,18 @@ def load_tokenizer(model_args: "ModelArguments") -> "TokenizerModule":
     patch_tokenizer(tokenizer, model_args)
 
     try:
-        processor = AutoProcessor.from_pretrained(
-            model_args.model_name_or_path,
-            use_fast=model_args.use_fast_tokenizer,
-            **init_kwargs,
-        )
-    except ValueError:  # try another one
-        processor = AutoProcessor.from_pretrained(
-            model_args.model_name_or_path,
-            use_fast=not model_args.use_fast_tokenizer,
-            **init_kwargs,
-        )
+        try:
+            processor = AutoProcessor.from_pretrained(
+                model_args.model_name_or_path,
+                use_fast=model_args.use_fast_tokenizer,
+                **init_kwargs,
+            )
+        except ValueError:  # try another one
+            processor = AutoProcessor.from_pretrained(
+                model_args.model_name_or_path,
+                use_fast=not model_args.use_fast_tokenizer,
+                **init_kwargs,
+            )
     except Exception as e:
         logger.warning_rank0(
             f"Failed to load processor: {e}. "

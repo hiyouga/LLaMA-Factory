@@ -174,7 +174,9 @@ class MMPluginMixin:
                 "This model does not support audio input. Please check whether the correct `template` is used."
             )
 
-        if self.image_token is not None and processor is None:
+        if (
+            self.image_token is not None or self.video_token is not None or self.audio_token is not None
+        ) and processor is None:
             raise ValueError(
                 "Processor was not found. The selected `template` expects a multi-modal processor, "
                 "but none could be loaded for this model. Please verify that the model files are complete "
