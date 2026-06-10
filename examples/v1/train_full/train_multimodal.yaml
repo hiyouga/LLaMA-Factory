@@ -1,4 +1,4 @@
-model: /home/lichengxin/Qwen3.5-0.8B
+model: Qwen/Qwen3.5-0.8B
 model_class: llm
 
 
