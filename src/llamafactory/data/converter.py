@@ -165,7 +165,8 @@ class SharegptDatasetConverter(DatasetConverter):
         i = 0
         while i < len(messages):
             role = messages[i][self.dataset_attr.role_tag]
-            content = messages[i][self.dataset_attr.content_tag]
+            # Content may be None/missing in some tool-call SFT datasets; fall back to "" to avoid TypeError on join.
+            content = messages[i][self.dataset_attr.content_tag] or ""
 
             # Issue B: merge consecutive observations
             if role == self.dataset_attr.observation_tag:
@@ -175,11 +176,14 @@ class SharegptDatasetConverter(DatasetConverter):
                     and messages[i + 1][self.dataset_attr.role_tag] == self.dataset_attr.observation_tag
                 ):
                     i += 1
-                    obs_parts.append(messages[i][self.dataset_attr.content_tag])
+                    obs_parts.append(messages[i][self.dataset_attr.content_tag] or "")
                 if len(obs_parts) > 1:
                     merged_obs = "\n</tool_response>\n<tool_response>\n".join(obs_parts)
                     preprocessed.append(
-                        {self.dataset_attr.role_tag: self.dataset_attr.observation_tag, self.dataset_attr.content_tag: merged_obs}
+                        {
+                            self.dataset_attr.role_tag: self.dataset_attr.observation_tag,
+                            self.dataset_attr.content_tag: merged_obs,
+                        }
                     )
                 else:
                     preprocessed.append(messages[i])

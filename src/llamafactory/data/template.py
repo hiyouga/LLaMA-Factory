@@ -468,7 +468,7 @@ class ReasoningTemplate(Template):
             # to assistant turns after the last real user question.
             last_query_index = 0
             for i in range(0, len(messages), 2):
-                if messages[i]["role"] == Role.USER.value:
+                if messages[i]["role"] == Role.USER:
                     last_query_index = i
             turn_indices = [i for i in range(0, len(messages), 2) if i >= last_query_index]
 
@@ -637,6 +637,7 @@ def parse_template(tokenizer: "PreTrainedTokenizer") -> "Template":
         enable_thinking=True,
         preserve_thinking=False,
         mm_plugin=get_mm_plugin(name="base"),
+        tools_before_system=False,
     )
 
 
