@@ -200,7 +200,6 @@ class HyperParallelTrainer(CustomSeq2SeqTrainer):
         self._orig_fsdp2_prepare_model = acc_module.fsdp2_prepare_model
 
         def _hp_fsdp2_prepare_model(accelerator, model):
-            del accelerator
             return self._prepare_model_for_hyper_parallel(model)
 
         acc_module.fsdp2_prepare_model = _hp_fsdp2_prepare_model
