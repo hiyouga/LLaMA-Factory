@@ -259,11 +259,11 @@ class SharegptDatasetConverter(DatasetConverter):
             prompt = aligned_messages
             response = [
                 {
-                    "role": tag_mapping[chosen[self.dataset_attr.role_tag]],
+                    "role": tag_mapping[_get_role(chosen)],
                     "content": _get_content(chosen),
                 },
                 {
-                    "role": tag_mapping[rejected[self.dataset_attr.role_tag]],
+                    "role": tag_mapping[_get_role(rejected)],
                     "content": _get_content(rejected),
                 },
             ]

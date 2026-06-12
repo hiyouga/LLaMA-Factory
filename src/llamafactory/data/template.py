@@ -464,9 +464,10 @@ class ReasoningTemplate(Template):
             turn_indices = [len(messages) - 2]
         else:
             last_query_index = 0
-            for i in range(0, len(messages), 2):
+            for i in range(len(messages) - 2, -1, -2):
                 if messages[i]["role"] == Role.USER:
                     last_query_index = i
+                    break
 
             turn_indices = [i for i in range(0, len(messages), 2) if i >= last_query_index]
 
