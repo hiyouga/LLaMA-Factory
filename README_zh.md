@@ -55,7 +55,7 @@ https://github.com/user-attachments/assets/43b700c6-a178-41db-b1f8-8190a5d3fcfc
 - **入门教程**：https://zhuanlan.zhihu.com/p/695287607
 - **微调视频教程**：https://www.bilibili.com/video/BV1djgRzxEts/
 - **框架文档**：https://llamafactory.readthedocs.io/zh-cn/latest/
-- **框架文档（昇腾 NPU）**：https://ascend.github.io/docs/sources/llamafactory/
+- **框架文档（昇腾 NPU）**：https://llamafactory.readthedocs.io/zh-cn/latest/multibackend/npu/index.html
 - **官方博客**：https://blog.llamafactory.net/
 
 > [!NOTE]
