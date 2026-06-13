@@ -54,6 +54,7 @@ Start cloud training:
 Read technical notes:
 - **Documentation (WIP)**: https://llamafactory.readthedocs.io/en/latest/
 - **Documentation (AMD GPU)**: https://rocm.docs.amd.com/projects/ai-developer-hub/en/latest/notebooks/fine_tune/llama_factory_llama3.html
+- **Documentation (ASCEND NPU)**: https://llamafactory.readthedocs.io/en/latest/multibackend/npu/index.html
 - **Official Blog**: https://blog.llamafactory.net/en/
 
 > [!NOTE]
