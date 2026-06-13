@@ -64,9 +64,9 @@ def test_sft_features_stabilize_mixed_modality_batches():
     def preprocess_dataset(examples):
         batch_size = len(examples["_prompt"])
         return {
-            "input_ids": [[1]] * batch_size,
-            "attention_mask": [[1]] * batch_size,
-            "labels": [[1]] * batch_size,
+            "input_ids": [[1] for _ in range(batch_size)],
+            "attention_mask": [[1] for _ in range(batch_size)],
+            "labels": [[1] for _ in range(batch_size)],
             "images": examples["_images"],
             "videos": examples["_videos"],
             "audios": examples["_audios"],
