@@ -57,6 +57,13 @@ class Template:
     preserve_thinking: bool
     mm_plugin: "BasePlugin"
 
+    def _format_system_content(self, system: str, tool_text: str) -> str:
+        if tool_text and self.format_tools.tool_format == "qwen3_5":
+            tool_text = tool_text.lstrip("\n")
+            return tool_text + ("\n\n" + system if system else "")
+
+        return system + tool_text
+
     def encode_oneturn(
         self,
         tokenizer: "PreTrainedTokenizer",
@@ -150,7 +157,7 @@ class Template:
                 elements += self.format_prefix.apply()
                 if system or tools:
                     tool_text = self.format_tools.apply(content=tools)[0] if tools else ""
-                    elements += self.format_system.apply(content=(system + tool_text))
+                    elements += self.format_system.apply(content=self._format_system_content(system, tool_text))
 
             if message["role"] == Role.USER:
                 elements += self.format_user.apply(content=message["content"], idx=str(i // 2))
