@@ -137,6 +137,45 @@ def test_multimodal_collator():
         assert batch_input[k].eq(torch.tensor(expected_input[k])).all()
 
 
+def test_mrope_non_packed_multimodal_slice_uses_batch_index():
+    data_collator = object.__new__(MultiModalDataCollatorForSeq2Seq)
+    captured_mm_inputs = []
+
+    def fake_compute_rope_position_ids(features, mm_inputs):
+        captured_mm_inputs.append(mm_inputs)
+        seq_len = features["attention_mask"].size(1)
+        features["position_ids"] = torch.arange(seq_len).unsqueeze(0)
+        features["rope_deltas"] = torch.zeros(1)
+
+    data_collator._compute_rope_position_ids = fake_compute_rope_position_ids
+    features = {
+        "input_ids": torch.tensor([[1, 2, 3], [4, 5, 6]]),
+        "attention_mask": torch.tensor([[1, 1, 1], [1, 1, 1]]),
+    }
+    mm_inputs = {
+        "image_grid_thw": torch.tensor([[1, 1, 1], [2, 2, 2], [3, 3, 3]]),
+        "video_grid_thw": torch.tensor([[4, 4, 4]]),
+        "second_per_grid_ts": torch.tensor([0.5]),
+    }
+
+    data_collator._compute_rope_position_ids_with_packing(
+        features,
+        mm_inputs,
+        packing_params_list=[None, None],
+        batch_imglens=[1, 2],
+        batch_vidlens=[0, 1],
+        batch_audlens=[0, 0],
+        has_dummy_image=False,
+    )
+
+    assert torch.equal(captured_mm_inputs[0]["image_grid_thw"], mm_inputs["image_grid_thw"][:1])
+    assert captured_mm_inputs[0]["video_grid_thw"] is None
+    assert torch.equal(captured_mm_inputs[1]["image_grid_thw"], mm_inputs["image_grid_thw"][1:])
+    assert torch.equal(captured_mm_inputs[1]["video_grid_thw"], mm_inputs["video_grid_thw"])
+    assert torch.equal(captured_mm_inputs[1]["second_per_grid_ts"], mm_inputs["second_per_grid_ts"])
+    assert features["position_ids"].shape == (2, 3)
+
+
 def _make_packed_feature(
     *,
     packing_params: dict,
