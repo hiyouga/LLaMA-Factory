@@ -92,6 +92,8 @@ Regarding the above dataset, the *dataset description* in `dataset_info.json` sh
 > If the model has reasoning capabilities (e.g. Qwen3) but the dataset does not contain chain-of-thought (CoT), LLaMA-Factory will automatically add empty CoT to the data. When `enable_thinking` is `True` (slow thinking, by default), the empty CoT will be added to the model responses and loss computation will be considered; otherwise (fast thinking), it will be added to the user prompts and loss computation will be ignored. Please keep the `enable_thinking` parameter consistent during training and inference.
 >
 > If you want to train data containing CoT with slow thinking and data without CoT with fast thinking, you can set `enable_thinking` to `None`. However, this feature is relatively complicated and should be used with caution.
+>
+> Use a `_nothink` template only when the target model family provides a separate non-reasoning template, such as `qwen3_vl_nothink`. For reasoning-only families such as `qwen3_6`, keep the reasoning template (for example, `template: qwen3_6`) and set `enable_thinking: false` when you want the same non-thinking behavior as inference.
 
 ### Pre-training Dataset
 
