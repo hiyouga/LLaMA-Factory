@@ -22,7 +22,6 @@ from functools import partial
 from typing import Any, Optional
 
 import torch
-import torch.distributed as dist
 from hyper_parallel.integration.llamafactory import (
     HSDPModule,
     HyperParallelArguments,
@@ -39,8 +38,6 @@ from hyper_parallel.integration.llamafactory import (
 )
 from hyper_parallel.integration.llamafactory.context_parallel import (
     cp_prepare_model,
-    get_cp_group,
-    get_cp_group_ranks,
     get_cp_rank,
     get_dp_rank,
     shard_inputs_for_cp,
@@ -57,17 +54,61 @@ logger = logging.getLogger(__name__)
 class _CPBatchRepeatedBatchSampler(torch.utils.data.BatchSampler):
     """Repeat logical batches so Accelerate shards CP peers onto the same samples."""
 
-    def __init__(self, sampler, batch_size: int, drop_last: bool, repeat_factor: int):
+    def __init__(self, sampler, batch_size: int, drop_last: bool, repeat_factor: int, logical_group_size: int):
         super().__init__(sampler, batch_size, drop_last)
         self.repeat_factor = repeat_factor
+        self.logical_group_size = logical_group_size
 
     def __len__(self):
-        return super().__len__() * self.repeat_factor
+        logical_length = super().__len__()
+        if not self.drop_last and logical_length > 0:
+            logical_length = _ceil_div(logical_length, self.logical_group_size) * self.logical_group_size
+        return logical_length * self.repeat_factor
 
     def __iter__(self):
-        for batch in super().__iter__():
+        initial_data = []
+        logical_count = 0
+        pad_cursor = 0
+        max_initial_data = self.batch_size * self.logical_group_size
+
+        def collect_initial_data(batch):
+            if len(initial_data) < max_initial_data:
+                initial_data.extend(batch[: max_initial_data - len(initial_data)])
+
+        def get_padding_item():
+            nonlocal pad_cursor
+            item = initial_data[pad_cursor % len(initial_data)]
+            pad_cursor += 1
+            return item
+
+        def pad_batch(batch):
+            batch = list(batch)
+            if self.drop_last or len(batch) == self.batch_size:
+                return batch
+
+            while len(batch) < self.batch_size:
+                batch.append(get_padding_item())
+            return batch
+
+        def make_padding_batch():
+            return [get_padding_item() for _ in range(self.batch_size)]
+
+        def repeat_batch(batch):
             for _ in range(self.repeat_factor):
                 yield list(batch)
+
+        for batch in super().__iter__():
+            collect_initial_data(batch)
+            batch = pad_batch(batch)
+            logical_count += 1
+            yield from repeat_batch(batch)
+
+        if self.drop_last or logical_count == 0:
+            return
+
+        while logical_count % self.logical_group_size != 0:
+            logical_count += 1
+            yield from repeat_batch(make_padding_batch())
 
 
 class _CPDataLoaderLengthProxy:
@@ -89,54 +130,6 @@ class _CPDataLoaderLengthProxy:
 
 def _ceil_div(numerator: int, denominator: int) -> int:
     return (numerator + denominator - 1) // denominator
-
-
-def _broadcast_input_value(value, src_rank: int, group, default_device: torch.device):
-    """Broadcast one nested input value from the CP source rank to all peers."""
-    current_rank = get_platform().get_rank()
-    if isinstance(value, torch.Tensor):
-        metadata = [(tuple(value.shape), value.dtype, value.device.type)] if current_rank == src_rank else [None]
-        dist.broadcast_object_list(metadata, src=src_rank, group=group)
-        shape, dtype, device_type = metadata[0]
-        if current_rank != src_rank:
-            device = torch.device("cpu") if device_type == "cpu" else default_device
-            value = torch.empty(shape, dtype=dtype, device=device)
-        dist.broadcast(value, src=src_rank, group=group)
-        return value
-
-    if isinstance(value, dict):
-        keys = [list(value.keys())] if current_rank == src_rank else [None]
-        dist.broadcast_object_list(keys, src=src_rank, group=group)
-        source_dict = value if current_rank == src_rank else {}
-        return {key: _broadcast_input_value(source_dict.get(key), src_rank, group, default_device) for key in keys[0]}
-
-    if isinstance(value, list):
-        length = [len(value)] if current_rank == src_rank else [None]
-        dist.broadcast_object_list(length, src=src_rank, group=group)
-        source_list = value if current_rank == src_rank else [None] * length[0]
-        return [_broadcast_input_value(source_list[idx], src_rank, group, default_device) for idx in range(length[0])]
-
-    if isinstance(value, tuple):
-        length = [len(value)] if current_rank == src_rank else [None]
-        dist.broadcast_object_list(length, src=src_rank, group=group)
-        source_tuple = value if current_rank == src_rank else (None,) * length[0]
-        return tuple(_broadcast_input_value(source_tuple[idx], src_rank, group, default_device) for idx in range(length[0]))
-
-    payload = [value] if current_rank == src_rank else [None]
-    dist.broadcast_object_list(payload, src=src_rank, group=group)
-    return payload[0]
-
-
-def _synchronize_inputs_across_cp_group(
-    inputs: dict[str, Any],
-    cp_group,
-    cp_group_ranks: Optional[tuple[int, ...]],
-    default_device: torch.device,
-) -> dict[str, Any]:
-    """Force all ranks in one CP group to consume the same prepared inputs."""
-    if cp_group is None or not cp_group_ranks or not dist.is_available() or not dist.is_initialized():
-        return inputs
-    return _broadcast_input_value(inputs, cp_group_ranks[0], cp_group, default_device)
 
 
 class HyperParallelTrainer(CustomSeq2SeqTrainer):
@@ -172,8 +165,6 @@ class HyperParallelTrainer(CustomSeq2SeqTrainer):
         self._cp_size = hp_args.cp_size
         self._cp_rank = get_cp_rank(hp_args) if self._cp_size > 1 else 0
         self._dp_rank = get_dp_rank(hp_args) if self._cp_size > 1 else get_platform().get_rank()
-        self._cp_group = get_cp_group(hp_args) if self._cp_size > 1 else None
-        self._cp_group_ranks = get_cp_group_ranks(hp_args) if self._cp_size > 1 else None
 
         # Prepare ref_model with the same CP + HSDP path as the train model.
         self.ref_model = ref_model
@@ -257,17 +248,15 @@ class HyperParallelTrainer(CustomSeq2SeqTrainer):
             batch_size=batch_size,
             drop_last=drop_last,
             repeat_factor=self._cp_size,
+            logical_group_size=max(1, get_platform().get_world_size() // self._cp_size),
         )
 
     def _get_cp_dataloader(self, dataset, batch_size: int, shuffle: bool):
         """Create a train dataloader whose logical batches are shared within each CP group."""
         if isinstance(dataset, torch.utils.data.IterableDataset):
-            return super()._get_dataloader(
-                dataset=dataset,
-                description="Training",
-                batch_size=batch_size,
-                sampler_fn=None,
-                is_training=True,
+            raise ValueError(
+                "HyperParallel CP training requires a map-style dataset because iterable datasets cannot "
+                "repeat logical batches across CP ranks."
             )
 
         try:
@@ -353,12 +342,6 @@ class HyperParallelTrainer(CustomSeq2SeqTrainer):
         inputs = self._prepare_inputs(inputs)
 
         if self._cp_size > 1:
-            inputs = _synchronize_inputs_across_cp_group(
-                inputs,
-                self._cp_group,
-                self._cp_group_ranks,
-                self.accelerator.device,
-            )
             inputs = shard_inputs_for_cp(inputs, self._cp_rank, self._cp_size)
 
         sync_gradients = getattr(self.accelerator, "sync_gradients", True)
