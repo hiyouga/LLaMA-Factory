@@ -254,7 +254,7 @@ class HyperParallelTrainer(CustomSeq2SeqTrainer):
     def _get_cp_dataloader(self, dataset, batch_size: int, shuffle: bool):
         """Create a train dataloader whose logical batches are shared within each CP group."""
         if isinstance(dataset, torch.utils.data.IterableDataset):
-            raise ValueError(
+            raise NotImplementedError(
                 "HyperParallel CP training requires a map-style dataset because iterable datasets cannot "
                 "repeat logical batches across CP ranks."
             )
