@@ -22,8 +22,8 @@ sibling modules:
   - ``markers``           -- per-model assistant role markers (explicit whitelist)
   - ``collation``         -- batch padding/truncation/MM alignment (consumed by the batch generators)
 
-Per-template steps can be customized by registering an override via ``RenderingPlugin``
-(see ``plugins/model_plugins/rendering.py``) and constructing ``Renderer(processor, name=...)``.
+To support a new model, add its assistant-role markers to ``markers._ASSISTANT_MARKERS``; the
+built-in ``_render_messages`` / ``_parse_message`` then handle it via the model's own chat template.
 """
 
 import json
@@ -179,9 +179,8 @@ def _parse_message(generated_text: str) -> Message:
 
 
 class Renderer:
-    def __init__(self, processor: Processor, config=None, name: str | None = None):
+    def __init__(self, processor: Processor, config=None):
         self.processor = processor
-        self.name = name
 
         # Resolve the assistant role markers from the explicit per-model whitelist (no probing),
         # then encode them with this model's tokenizer to get the token-id forms used for labeling.
@@ -193,18 +192,6 @@ class Renderer:
         self._assistant_end_ids = tokenizer(end_marker, add_special_tokens=False)["input_ids"]
         if not self._assistant_start_ids or not self._assistant_end_ids:
             raise ValueError(f"Empty assistant marker ids for model_type {model_type!r}.")
-
-    def _override(self, method_name: str):
-        """Return a registered plugin override for ``method_name``, or ``None``.
-
-        Imported lazily to avoid a core->plugins import cycle at module load.
-        """
-        if self.name is None:
-            return None
-
-        from ...plugins.model_plugins.rendering import RenderingPlugin
-
-        return RenderingPlugin(self.name).get(method_name)
 
     def render_messages(
         self,
@@ -224,16 +211,6 @@ class Renderer:
         Returns:
             ModelInput with input_ids, attention_mask, labels, and loss_weights.
         """
-        override = self._override("render_messages")
-        if override is not None:
-            return override(
-                self.processor,
-                messages,
-                tools=tools,
-                is_generate=is_generate,
-                enable_thinking=enable_thinking,
-            )
-
         return _render_messages(
             self.processor,
             messages,
@@ -253,10 +230,6 @@ class Renderer:
         Returns:
             Parsed Message with typed content blocks.
         """
-        override = self._override("parse_message")
-        if override is not None:
-            return override(generated_text)
-
         return _parse_message(generated_text)
 
     def get_dummy_media_fragment(self, modality: str) -> dict:
