@@ -94,3 +94,15 @@ def compute_valid_tokens(batches: list[BatchInput]) -> int:
         for batch in batches
         if "labels" in batch
     )
+
+
+def model_uses_mrope(config) -> bool:
+    """Whether the model uses multimodal RoPE (3D position ids built from grid_thw).
+
+    Detected from the (text) config's rope settings carrying an ``mrope_section`` (Qwen2.5-VL /
+    Qwen3-VL / Qwen3.5 family). Such models compute their own multimodal position ids inside
+    ``forward`` when ``position_ids`` is not provided.
+    """
+    text_config = getattr(config, "text_config", config)
+    rope = getattr(text_config, "rope_scaling", None) or getattr(text_config, "rope_parameters", None)
+    return isinstance(rope, dict) and "mrope_section" in rope
