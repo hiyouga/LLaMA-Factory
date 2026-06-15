@@ -285,7 +285,9 @@ class HyperParallelTrainer(CustomSeq2SeqTrainer):
             "collate_fn": data_collator,
             "num_workers": self.args.dataloader_num_workers,
             "pin_memory": self.args.dataloader_pin_memory,
-            "persistent_workers": self.args.dataloader_persistent_workers,
+            "persistent_workers": self.args.dataloader_persistent_workers
+            if self.args.dataloader_num_workers > 0
+            else False,
         }
         if self.args.dataloader_num_workers > 0:
             dataloader_params["prefetch_factor"] = self.args.dataloader_prefetch_factor
