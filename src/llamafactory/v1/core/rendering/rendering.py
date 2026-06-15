@@ -1,4 +1,4 @@
-# Copyright 2026 the LlamaFactory team.
+# Copyright 2025 the LlamaFactory team.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,9 +16,10 @@
 
 This module is the orchestration + public API (``Renderer``). The mechanical pieces live in
 sibling modules:
-  - ``rendering_format``  -- v1<->HF message conversion, media extraction, marker detection, subseq search
+  - ``rendering_format``  -- v1<->HF message conversion, media extraction, subseq search
   - ``rendering_escape``  -- special-token escaping (prompt-injection hardening)
   - ``rendering_label``   -- assistant-region labeling + structural verification
+  - ``markers``           -- per-model assistant role markers (explicit whitelist)
   - ``collation``         -- batch padding/truncation/MM alignment (consumed by the batch generators)
 
 Per-template steps can be customized by registering an override via ``RenderingPlugin``
@@ -38,12 +39,11 @@ from .escape import _escape_special, _escape_special_in_messages, _special_token
 from .format import (
     _FALLBACK_CHATML_JINJA,
     _count_media_in_messages,
-    _detect_assistant_marker_ids,
-    _detect_assistant_markers,
     _extract_media_from_messages,
     _to_hf_messages,
 )
 from .label import _check_placeholder_counts, _label_assistant_regions, _verify_render
+from .markers import resolve_assistant_markers
 
 
 def _render_messages(
@@ -51,8 +51,6 @@ def _render_messages(
     messages: list[Message],
     tools: str | None = None,
     is_generate: bool = False,
-    assistant_start_marker: str | None = None,
-    assistant_end_marker: str | None = None,
     assistant_start_ids: list[int] | None = None,
     assistant_end_ids: list[int] | None = None,
     enable_thinking: bool = False,
@@ -118,7 +116,7 @@ def _render_messages(
 
     # 2. Label assistant regions by scanning marker token-id subsequences in the expanded stream.
     if assistant_start_ids is None or assistant_end_ids is None:
-        assistant_start_ids, assistant_end_ids = _detect_assistant_marker_ids(template_caller)
+        raise ValueError("assistant marker ids were not resolved; construct Renderer with a supported model.")
 
     assistant_messages = [m for m in messages if m["role"] == "assistant"]
     labels, loss_weights, regions_count = _label_assistant_regions(
@@ -181,24 +179,20 @@ def _parse_message(generated_text: str) -> Message:
 
 
 class Renderer:
-    def __init__(self, processor: Processor, name: str | None = None):
+    def __init__(self, processor: Processor, config=None, name: str | None = None):
         self.processor = processor
         self.name = name
-        self._assistant_start_marker = None
-        self._assistant_end_marker = None
-        self._assistant_start_ids = None
-        self._assistant_end_ids = None
 
-        template_caller = processor if not is_tokenizer(processor) else get_tokenizer(processor)
-        if getattr(template_caller, "chat_template", None):
-            try:
-                self._assistant_start_marker, self._assistant_end_marker = _detect_assistant_markers(template_caller)
-            except (ValueError, Exception):
-                pass
-            try:
-                self._assistant_start_ids, self._assistant_end_ids = _detect_assistant_marker_ids(template_caller)
-            except (ValueError, Exception):
-                pass
+        # Resolve the assistant role markers from the explicit per-model whitelist (no probing),
+        # then encode them with this model's tokenizer to get the token-id forms used for labeling.
+        # For supported models the marker strings tokenize identically standalone and in-context.
+        model_type = getattr(config, "model_type", None)
+        start_marker, end_marker = resolve_assistant_markers(model_type)
+        tokenizer = get_tokenizer(processor)
+        self._assistant_start_ids = tokenizer(start_marker, add_special_tokens=False)["input_ids"]
+        self._assistant_end_ids = tokenizer(end_marker, add_special_tokens=False)["input_ids"]
+        if not self._assistant_start_ids or not self._assistant_end_ids:
+            raise ValueError(f"Empty assistant marker ids for model_type {model_type!r}.")
 
     def _override(self, method_name: str):
         """Return a registered plugin override for ``method_name``, or ``None``.
@@ -245,8 +239,6 @@ class Renderer:
             messages,
             tools,
             is_generate,
-            self._assistant_start_marker,
-            self._assistant_end_marker,
             self._assistant_start_ids,
             self._assistant_end_ids,
             enable_thinking=enable_thinking,

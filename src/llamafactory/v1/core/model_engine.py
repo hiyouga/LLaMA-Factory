@@ -65,10 +65,10 @@ class ModelEngine:
         self.processor = self._init_processor()
         """Tokenizer or multi-modal processor."""
         self._sync_chat_template()
-        self.renderer = Renderer(self.processor)
-        """Renderer."""
         self.model_config = self._init_model_config()
         """Model configuration."""
+        self.renderer = Renderer(self.processor, config=self.model_config)
+        """Renderer."""
         self._dist_config = DistributedInterface().dist_config
         self._deepspeed_zero3_plugin = None
         self._deepspeed_zero3_enabled = False
