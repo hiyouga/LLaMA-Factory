@@ -461,3 +461,93 @@ def test_collate_creates_mm_token_type_ids_for_pure_text_then_inject():
     # original region all zero (text), dummy region carries the markers
     assert collated["mm_token_type_ids"][0, :seqlen].tolist() == [0] * seqlen
     assert collated["mm_token_type_ids"][0, seqlen:].tolist() == frag["mm_token_type_ids"]
+
+
+def _audio_fragment(n_tok: int = 2, n_frames: int = 3000):
+    """Hand-crafted audio fragment: audio_bos + n_tok AUDIO + audio_eos, with feature rows."""
+    import torch
+
+    aud, bos, eos = 50, 51, 52
+    return {
+        "input_ids": [bos] + [aud] * n_tok + [eos],
+        "mm_token_type_ids": [0] + [3] * n_tok + [0],
+        "input_features": torch.zeros((1, 128, n_frames), dtype=torch.float32),
+        "feature_attention_mask": torch.ones((1, n_frames), dtype=torch.long),
+    }
+
+
+def test_inject_audio_dummy_into_text_batch():
+    """A pure-text micro batch gets an audio dummy appended so the audio tower fires on every rank."""
+    import torch
+
+    from llamafactory.v1.core.utils.batching import _collate_micro_batch, _inject_dummy_into_collated
+
+    collated = _collate_micro_batch([_text_sample(12)], cutoff_len=4096)
+    assert "input_features" not in collated
+    seqlen = collated["input_ids"].shape[1]
+
+    frag = _audio_fragment(n_tok=2)
+    fl = len(frag["input_ids"])
+    _inject_dummy_into_collated(collated, frag, marker=3)
+
+    # audio feature tensors carried verbatim; placeholder tokens marked 3 in the dummy tail
+    assert torch.equal(collated["input_features"], frag["input_features"])
+    assert torch.equal(collated["feature_attention_mask"], frag["feature_attention_mask"])
+    assert collated["mm_token_type_ids"][0, seqlen:].tolist() == frag["mm_token_type_ids"]
+    # zero loss contribution from the dummy
+    assert collated["labels"][0, seqlen:].tolist() == [IGNORE_INDEX] * fl
+    assert torch.all(collated["loss_weights"][:, seqlen:] == 0.0)
+
+
+def test_audio_truncation_drops_orphaned_item_and_zeros_tokens():
+    """Truncating mid-audio trims the orphaned feature row and zeros its in-window tokens."""
+    import torch
+
+    from llamafactory.v1.core.utils.collation import _align_multimodal_on_truncation
+
+    aud = 50
+    # text(2) + [audio#0: 4 tok] + text(1) + [audio#1: 4 tok] + text(1)
+    input_ids = [1, 2] + [aud] * 4 + [3] + [aud] * 4 + [4]
+    mm = [0, 0] + [3] * 4 + [0] + [3] * 4 + [0]
+    sample = {
+        "input_ids": input_ids,
+        "labels": input_ids.copy(),
+        "loss_weights": [1.0] * len(input_ids),
+        "mm_token_type_ids": mm,
+        "input_features": torch.zeros((2, 128, 10), dtype=torch.float32),
+        "feature_attention_mask": torch.ones((2, 10), dtype=torch.long),
+    }
+    # audio#1 occupies positions 7..10; cut at 9 so its last token (10) is orphaned, audio#0 intact
+    out = _align_multimodal_on_truncation(dict(sample), max_length=9)
+
+    assert out["input_features"].shape[0] == 1  # only the complete audio#0 survives
+    assert out["feature_attention_mask"].shape[0] == 1
+    # audio#0 tokens (positions 2..5) untouched
+    assert all(out["input_ids"][i] == aud and out["mm_token_type_ids"][i] == 3 for i in range(2, 6))
+    # audio#1's in-window tokens (positions 7,8) zeroed + delabeled (positions >= 9 cut by truncation)
+    for i in (7, 8):
+        assert out["input_ids"][i] == 0
+        assert out["mm_token_type_ids"][i] == 0
+        assert out["labels"][i] == IGNORE_INDEX
+        assert out["loss_weights"][i] == 0.0
+
+
+def test_audio_truncation_keeps_all_when_complete():
+    """No trimming when the cut falls after every audio's last token."""
+    import torch
+
+    from llamafactory.v1.core.utils.collation import _align_multimodal_on_truncation
+
+    aud = 50
+    input_ids = [1] + [aud] * 4 + [2]
+    sample = {
+        "input_ids": input_ids,
+        "labels": input_ids.copy(),
+        "loss_weights": [1.0] * len(input_ids),
+        "mm_token_type_ids": [0] + [3] * 4 + [0],
+        "input_features": torch.zeros((1, 128, 10), dtype=torch.float32),
+        "feature_attention_mask": torch.ones((1, 10), dtype=torch.long),
+    }
+    out = _align_multimodal_on_truncation(dict(sample), max_length=6)
+    assert out["input_features"].shape[0] == 1
+    assert out["input_ids"] == input_ids

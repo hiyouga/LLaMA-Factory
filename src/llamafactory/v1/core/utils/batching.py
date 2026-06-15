@@ -48,10 +48,14 @@ logger = logging.get_logger(__name__)
 __all__ = ["BatchGenerator"]
 
 
-# (modality, pixel key, grid key, mm_token_type_ids marker) for vision-tower alignment.
+# (modality, presence/feature key, grid key, mm_token_type_ids marker) for encoder-tower alignment.
+# The presence key is what survives collation when the modality is present; the grid key is unused
+# here (kept for parity with the collation specs). Audio carries no grid -- feature_attention_mask
+# rides along as a passthrough feature.
 _ALIGN_MODALITIES = (
     ("image", "pixel_values", "image_grid_thw", 1),
     ("video", "pixel_values_videos", "video_grid_thw", 2),
+    ("audio", "input_features", "feature_attention_mask", 3),
 )
 
 

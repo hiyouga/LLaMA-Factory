@@ -54,7 +54,7 @@ def _pad_and_truncate(tensor: Tensor, max_seqlen: int, pad_value: int = 0) -> Te
     return torch.cat([tensor, pad_tensor], dim=-1)
 
 
-def _align_modality(
+def _align_grid_media(
     sample: ModelInput,
     mm_type_ids: list[int],
     max_length: int,
@@ -138,12 +138,85 @@ def _align_modality(
     return mm_type_ids
 
 
+def _align_audio(sample: ModelInput, mm_type_ids: list[int], max_length: int, *, target: int = 3) -> list[int]:
+    """Trim and zero orphaned audio tokens for a single sample on truncation.
+
+    Returns the (possibly updated) ``mm_token_type_ids``.
+    """
+    if "input_features" not in sample or "feature_attention_mask" not in sample:
+        return mm_type_ids
+
+    n_items = sample["input_features"].shape[0]
+    if n_items == 0:
+        return mm_type_ids
+
+    positions = [i for i, t in enumerate(mm_type_ids) if t == target]
+    if not positions:
+        return mm_type_ids
+
+    # Group the marked positions into maximal contiguous runs; each run is one audio's token span.
+    runs: list[tuple[int, int]] = []
+    run_start = prev = positions[0]
+    for pos in positions[1:]:
+        if pos != prev + 1:
+            runs.append((run_start, prev))
+            run_start = pos
+        prev = pos
+    runs.append((run_start, prev))
+
+    # Layout must match the feature rows one-to-one, else bail rather than corrupt the mapping.
+    if len(runs) != n_items:
+        return mm_type_ids
+
+    # An audio is complete iff its last placeholder token lands inside the kept window.
+    n_complete = 0
+    for _start, end in runs:
+        if end < max_length:
+            n_complete += 1
+        else:
+            break
+
+    if n_complete >= n_items:
+        return mm_type_ids
+
+    # Trim feature rows to the complete prefix.
+    sample["input_features"] = sample["input_features"][:n_complete]
+    sample["feature_attention_mask"] = sample["feature_attention_mask"][:n_complete]
+
+    # Zero out orphaned placeholder tokens that fall inside the kept window; tokens beyond
+    # max_length are removed by truncation anyway.
+    input_ids = list(sample["input_ids"])
+    mm_type_ids = list(mm_type_ids)
+    labels = list(sample["labels"]) if "labels" in sample else None
+    loss_weights = list(sample["loss_weights"]) if "loss_weights" in sample else None
+
+    for start, end in runs[n_complete:]:
+        for pos in range(start, end + 1):
+            if pos >= max_length:
+                break
+            input_ids[pos] = 0
+            mm_type_ids[pos] = 0
+            if labels is not None:
+                labels[pos] = IGNORE_INDEX
+            if loss_weights is not None:
+                loss_weights[pos] = 0.0
+
+    sample["input_ids"] = input_ids
+    sample["mm_token_type_ids"] = mm_type_ids
+    if labels is not None:
+        sample["labels"] = labels
+    if loss_weights is not None:
+        sample["loss_weights"] = loss_weights
+    return mm_type_ids
+
+
 def _align_multimodal_on_truncation(sample: ModelInput, max_length: int) -> ModelInput:
     """Remove orphaned multimodal data when the sequence will be truncated.
 
     When cutoff_len truncates input_ids, media whose placeholder tokens are partially cut lose
-    their token<->pixel correspondence. Trims pixel_values/grid_thw to the complete items and
-    zeros out orphaned vision tokens so the model ignores them.
+    their token<->feature correspondence. Trims pixel_values/grid_thw (vision) and
+    input_features/feature_attention_mask (audio) to the complete items and zeros out orphaned
+    placeholder tokens so the model ignores them.
     """
     mm_type_ids = sample.get("mm_token_type_ids")
     if mm_type_ids is None:
@@ -151,12 +224,13 @@ def _align_multimodal_on_truncation(sample: ModelInput, max_length: int) -> Mode
 
     sample = dict(sample)
 
-    mm_type_ids = _align_modality(
+    mm_type_ids = _align_grid_media(
         sample, mm_type_ids, max_length, target=1, grid_key="image_grid_thw", pixel_key="pixel_values"
     )
-    mm_type_ids = _align_modality(
+    mm_type_ids = _align_grid_media(
         sample, mm_type_ids, max_length, target=2, grid_key="video_grid_thw", pixel_key="pixel_values_videos"
     )
+    mm_type_ids = _align_audio(sample, mm_type_ids, max_length, target=3)
 
     # Remove empty multimodal fields entirely
     if "image_grid_thw" in sample and len(sample["image_grid_thw"]) == 0:
@@ -165,6 +239,9 @@ def _align_multimodal_on_truncation(sample: ModelInput, max_length: int) -> Mode
     if "video_grid_thw" in sample and len(sample["video_grid_thw"]) == 0:
         del sample["pixel_values_videos"]
         del sample["video_grid_thw"]
+    if "input_features" in sample and sample["input_features"].shape[0] == 0:
+        del sample["input_features"]
+        del sample["feature_attention_mask"]
 
     return sample
 

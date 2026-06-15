@@ -167,7 +167,7 @@ class ModelInput(TypedDict, total=False):
     feature_attention_mask: NotRequired[Any]
     """Attention mask over the audio input features."""
     mm_token_type_ids: NotRequired[list[int]]
-    """Multimodal token type ids: 0=text, 1=image, 2=video."""
+    """Multimodal token type ids: 0=text, 1=image, 2=video, 3=audio."""
 
 
 class BatchInput(TypedDict, total=False):
@@ -196,7 +196,7 @@ class BatchInput(TypedDict, total=False):
     feature_attention_mask: NotRequired[Tensor]
     """Attention mask over the audio input features."""
     mm_token_type_ids: NotRequired[Tensor]
-    """Multimodal token type ids: 0=text, 1=image, 2=video."""
+    """Multimodal token type ids: 0=text, 1=image, 2=video, 3=audio."""
 
 
 class BatchInfo(TypedDict):

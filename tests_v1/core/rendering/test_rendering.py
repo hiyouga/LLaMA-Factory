@@ -542,6 +542,43 @@ def test_render_audio_emits_features_and_expands_tokens(audio_renderer):
     )
 
 
+@pytest.mark.slow
+def test_render_audio_synthesizes_mm_token_type_ids(audio_renderer):
+    """Qwen2-Audio emits no mm_token_type_ids; the renderer must synthesize one marking audio=3."""
+    import numpy as np
+
+    processor, renderer = audio_renderer
+    messages = [
+        {"role": "user", "content": [{"type": "audio_url", "value": np.zeros(16000, dtype=np.float32)}]},
+        {"role": "assistant", "content": [{"type": "text", "value": "ok"}]},
+    ]
+    model_input = renderer.render_messages(messages)
+    mm = model_input["mm_token_type_ids"]
+    ids = model_input["input_ids"]
+    assert len(mm) == len(ids)
+    # exactly the audio_token_id positions are marked 3, everything else 0
+    assert all((m == 3) == (t == processor.audio_token_id) for m, t in zip(mm, ids))
+    assert mm.count(3) == ids.count(processor.audio_token_id) > 1
+
+
+@pytest.mark.slow
+def test_dummy_audio_fragment_is_self_consistent(audio_renderer):
+    """The injected audio dummy must keep placeholder-token count and one feature row consistent."""
+    _, renderer = audio_renderer
+    frag = renderer.get_dummy_media_fragment("audio")
+
+    assert "input_features" in frag and "feature_attention_mask" in frag
+    assert len(frag["mm_token_type_ids"]) == len(frag["input_ids"])
+
+    n_tok = sum(1 for t in frag["mm_token_type_ids"] if t == 3)
+    assert n_tok > 0
+    assert frag["input_features"].shape[0] == 1  # one synthetic audio
+    assert frag["feature_attention_mask"].shape[0] == 1
+
+    # cached: repeated calls return the same object
+    assert renderer.get_dummy_media_fragment("audio") is frag
+
+
 if __name__ == "__main__":
     """
     python -m tests_v1.core.utils.test_rendering

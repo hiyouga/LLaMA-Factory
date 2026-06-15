@@ -139,8 +139,19 @@ def _render_messages(
         for key in _MULTIMODAL_PASSTHROUGH_KEYS:
             if key in outputs:
                 result[key] = outputs[key]
-        if "mm_token_type_ids" in outputs:
-            result["mm_token_type_ids"] = outputs["mm_token_type_ids"][0].tolist()
+        mm_type_ids = outputs["mm_token_type_ids"][0].tolist() if "mm_token_type_ids" in outputs else None
+
+        # Audio processors (e.g. Qwen2-Audio) do not emit mm_token_type_ids. Synthesize one marking
+        # audio placeholder tokens as 3 so the downstream batching machinery (truncation alignment +
+        # FSDP dummy injection), which locates media by mm_token_type_ids, treats audio uniformly.
+        audio_token_id = getattr(processor, "audio_token_id", None)
+        if audio_token_id is not None and audio_token_id in input_ids:
+            if mm_type_ids is None:
+                mm_type_ids = [0] * len(input_ids)
+            mm_type_ids = [3 if tid == audio_token_id else t for t, tid in zip(mm_type_ids, input_ids)]
+
+        if mm_type_ids is not None:
+            result["mm_token_type_ids"] = mm_type_ids
 
     return result
 
@@ -237,20 +248,21 @@ class Renderer:
         return _parse_message(generated_text)
 
     def get_dummy_media_fragment(self, modality: str) -> dict:
-        """Build (and cache) a minimal valid media fragment for ``modality`` ("image"|"video").
+        """Build (and cache) a minimal valid media fragment for ``modality`` ("image"|"video"|"audio").
 
-        Renders one tiny synthetic image/video through the model's own processor and extracts
-        the contiguous token span it emits for that media (the ``vision_start … vision_end``
-        block, delimiters included) together with its pixel features. The collator appends this
-        zero-loss fragment to a micro batch that lacks the modality so that every data-parallel
-        rank invokes the vision tower the same number of times per step -- otherwise FSDP/DDP
-        collectives over the (sharded) vision blocks desync and hang (NCCL timeout).
+        Renders one tiny synthetic image/video/audio through the model's own processor and extracts
+        the token span it emits for that media (the ``vision_start … vision_end`` block for vision,
+        the ``audio_bos … audio_eos`` block for audio, delimiters included) together with its
+        feature tensors. The collator appends this zero-loss fragment to a micro batch that lacks
+        the modality so that every data-parallel rank invokes the vision/audio tower the same number
+        of times per step -- otherwise FSDP/DDP collectives over the (sharded) encoder blocks desync
+        and hang (NCCL timeout).
 
         The fragment is self-consistent by construction: the placeholder-token count matches the
-        patch count, because both come from the same processor call.
+        feature length, because both come from the same processor call.
         """
-        if modality not in ("image", "video"):
-            raise ValueError(f"Unsupported dummy media modality: {modality!r} (expected 'image' or 'video').")
+        if modality not in ("image", "video", "audio"):
+            raise ValueError(f"Unsupported dummy media modality: {modality!r} (expected image/video/audio).")
         if is_tokenizer(self.processor):
             raise RuntimeError("Cannot build a dummy media fragment for a text-only processor.")
 
@@ -263,11 +275,16 @@ class Renderer:
 
         if modality == "image":
             media_block = {"type": "image_url", "value": _PILImage.new("RGB", (64, 64))}
-            target, pixel_key, grid_key = 1, "pixel_values", "image_grid_thw"
-        else:
+            target, presence_key, feature_keys = 1, "pixel_values", ("pixel_values", "image_grid_thw")
+        elif modality == "video":
             # A minimal clip: the temporal patch size is typically 2, so provide two frames.
             media_block = {"type": "video_url", "value": np.zeros((2, 64, 64, 3), dtype=np.uint8)}
-            target, pixel_key, grid_key = 2, "pixel_values_videos", "video_grid_thw"
+            target, presence_key, feature_keys = 2, "pixel_values_videos", ("pixel_values_videos", "video_grid_thw")
+        else:
+            # A short synthetic waveform at the model's sampling rate; the feature extractor pads it.
+            sr = self.processor.feature_extractor.sampling_rate
+            media_block = {"type": "audio_url", "value": np.zeros(sr // 10, dtype=np.float32)}
+            target, presence_key, feature_keys = 3, "input_features", ("input_features", "feature_attention_mask")
 
         messages: list[Message] = [
             {"role": "user", "content": [media_block]},
@@ -276,21 +293,21 @@ class Renderer:
         rendered = self.render_messages(messages)
 
         mm_type_ids = rendered.get("mm_token_type_ids")
-        if not mm_type_ids or target not in mm_type_ids or pixel_key not in rendered:
+        if not mm_type_ids or target not in mm_type_ids or presence_key not in rendered:
             raise RuntimeError(f"Processor did not emit {modality} placeholder tokens for the dummy sample.")
 
         positions = [i for i, t in enumerate(mm_type_ids) if t == target]
-        # Include the surrounding vision_start/vision_end delimiters so the fragment matches
-        # exactly what the template emits around real media.
+        # Include the surrounding start/end delimiters (vision_start/end or audio_bos/eos) so the
+        # fragment matches exactly what the template emits around real media.
         lo = max(positions[0] - 1, 0)
         hi = min(positions[-1] + 2, len(rendered["input_ids"]))
 
         fragment: dict = {
             "input_ids": list(rendered["input_ids"][lo:hi]),
             "mm_token_type_ids": list(mm_type_ids[lo:hi]),
-            pixel_key: rendered[pixel_key],
-            grid_key: rendered[grid_key],
         }
+        for key in feature_keys:
+            fragment[key] = rendered[key]
         if modality == "video" and "second_per_grid_ts" in rendered:
             fragment["second_per_grid_ts"] = rendered["second_per_grid_ts"]
 
