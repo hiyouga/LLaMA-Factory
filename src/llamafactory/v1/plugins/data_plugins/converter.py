@@ -67,14 +67,14 @@ class PairSample(TypedDict, total=False):
     audios: NotRequired[list[str] | str]
 
 
+# Inline media tag -> v1 content block type, and the raw-sample column holding the paths.
 _MEDIA_SPECS: tuple[tuple[str, str, str], ...] = (
     (IMAGE_PLACEHOLDER, "image_url", "images"),
     (VIDEO_PLACEHOLDER, "video_url", "videos"),
+    (AUDIO_PLACEHOLDER, "audio_url", "audios"),
 )
 _TAG_TO_BLOCK = {tag: block_type for tag, block_type, _col in _MEDIA_SPECS}
-_TAG_PATTERN = re.compile(
-    "(" + "|".join(re.escape(tag) for tag, _b, _c in (*_MEDIA_SPECS, (AUDIO_PLACEHOLDER, "", ""))) + ")"
-)
+_TAG_PATTERN = re.compile("(" + "|".join(re.escape(tag) for tag, _b, _c in _MEDIA_SPECS) + ")")
 
 
 def _as_media_list(value: Any) -> list:
@@ -87,12 +87,7 @@ def _as_media_list(value: Any) -> list:
 
 
 def _build_media_iters(raw_sample: dict[str, Any]) -> dict[str, Any]:
-    """Build per-modality path iterators from a raw sample's media columns.
-
-    Raises if audio media is present, which the v1 renderer does not support yet.
-    """
-    if _as_media_list(raw_sample.get("audios")):
-        raise ValueError("Audio inputs are not yet supported by the v1 data converter.")
+    """Build per-modality path iterators from a raw sample's media columns."""
     return {tag: iter(_as_media_list(raw_sample.get(col))) for tag, _block_type, col in _MEDIA_SPECS}
 
 
@@ -101,15 +96,13 @@ def _to_content_blocks(text: str, media_iters: dict[str, Any]) -> list[Content]:
 
     Each placeholder consumes the next path from its modality iterator (in document order). Plain
     text with no placeholders yields a single text block (byte-identical to the legacy behavior).
-    Raises on an unmatched placeholder (more tags than media files) or any audio placeholder.
+    Raises on an unmatched placeholder (more tags than media files).
     """
     if not _TAG_PATTERN.search(text):
         return [{"type": "text", "value": text}]
 
     blocks: list[Content] = []
     for segment in _TAG_PATTERN.split(text):
-        if segment == AUDIO_PLACEHOLDER:
-            raise ValueError("Audio placeholders are not yet supported by the v1 data converter.")
         block_type = _TAG_TO_BLOCK.get(segment)
         if block_type is not None:
             try:

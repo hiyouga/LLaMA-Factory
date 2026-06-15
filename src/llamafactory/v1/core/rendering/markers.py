@@ -32,6 +32,7 @@ _ASSISTANT_MARKERS: dict[str, tuple[str, str]] = {
     "qwen3_vl": _CHATML,
     "qwen3_vl_moe": _CHATML,
     "qwen3_5": _CHATML,
+    "qwen2_audio": _CHATML,
 }
 
 

@@ -1,4 +1,4 @@
-# Copyright 2026 the LlamaFactory team.
+# Copyright 2025 the LlamaFactory team.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -28,9 +28,9 @@ from ...utils.types import BatchInput, ModelInput, Tensor
 
 
 # Multimodal feature keys the processor emits per sample. They are NOT padded/stacked like text
-# fields: pixel tensors are ragged (variable patch counts), so the collators concatenate them
-# along dim 0 instead. Shared by rendering (which copies them verbatim from the processor) and
-# the collators (which merge them across a micro batch).
+# fields: pixel/audio-feature tensors are ragged (variable patch / frame counts), so the collators
+# concatenate them along dim 0 instead. Shared by rendering (which copies them verbatim from the
+# processor) and the collators (which merge them across a micro batch).
 _MULTIMODAL_PASSTHROUGH_KEYS = frozenset(
     {
         "pixel_values",
@@ -38,6 +38,8 @@ _MULTIMODAL_PASSTHROUGH_KEYS = frozenset(
         "pixel_values_videos",
         "video_grid_thw",
         "second_per_grid_ts",
+        "input_features",
+        "feature_attention_mask",
     }
 )
 

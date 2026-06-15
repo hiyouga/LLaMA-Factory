@@ -279,7 +279,7 @@ def test_find_subseq():
 
 def test_resolve_assistant_markers_whitelist():
     # supported model types resolve to the ChatML markers
-    for model_type in ("qwen3", "qwen3_moe", "qwen3_vl", "qwen3_vl_moe", "qwen3_5"):
+    for model_type in ("qwen3", "qwen3_moe", "qwen3_vl", "qwen3_vl_moe", "qwen3_5", "qwen2_audio"):
         start, end = resolve_assistant_markers(model_type)
         assert start == "<|im_start|>assistant\n"
         assert end == "<|im_end|>"
@@ -495,6 +495,51 @@ def test_dummy_media_fragment_is_self_consistent(vl_renderer, modality, pixel_ke
 
     # cached: repeated calls return the same object
     assert renderer.get_dummy_media_fragment(modality) is frag
+
+
+# ----------------------------- audio (local Qwen2-Audio model, slow + env-gated) -----------------------------
+
+_AUDIO_MODEL = os.environ.get("LMF_TEST_AUDIO_MODEL")  # e.g. a local Qwen2-Audio dir; tests skip if unset
+
+
+@pytest.fixture(scope="module")
+def audio_renderer():
+    if not _AUDIO_MODEL:
+        pytest.skip("set LMF_TEST_AUDIO_MODEL to a local Qwen2-Audio model dir to run audio rendering tests")
+    processor = AutoProcessor.from_pretrained(_AUDIO_MODEL)
+    return processor, _make_renderer(_AUDIO_MODEL, processor=processor)
+
+
+@pytest.mark.slow
+def test_render_audio_emits_features_and_expands_tokens(audio_renderer):
+    import numpy as np
+
+    processor, renderer = audio_renderer
+    audio = np.zeros(16000, dtype=np.float32)  # 1s of silence at the model's sampling rate
+    messages = [
+        {
+            "role": "user",
+            "content": [{"type": "audio_url", "value": audio}, {"type": "text", "value": "What is this sound?"}],
+            "loss_weight": 0.0,
+        },
+        {"role": "assistant", "content": [{"type": "text", "value": "It is silence."}], "loss_weight": 1.0},
+    ]
+    model_input = renderer.render_messages(messages)
+
+    # audio feature tensors are carried through verbatim from the processor
+    assert "input_features" in model_input and "feature_attention_mask" in model_input
+
+    # the single <|AUDIO|> placeholder is expanded by the processor into many audio tokens
+    n_audio_tokens = model_input["input_ids"].count(processor.audio_token_id)
+    assert n_audio_tokens > 1
+
+    # exactly one assistant loss region; the audio span carries no loss
+    assert _count_loss_regions(model_input) == 1
+    assert all(
+        model_input["labels"][i] == IGNORE_INDEX
+        for i, t in enumerate(model_input["input_ids"])
+        if t == processor.audio_token_id
+    )
 
 
 if __name__ == "__main__":

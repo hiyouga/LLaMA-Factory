@@ -25,15 +25,25 @@ from ...utils.types import Message, Processor
 from .format import _find_subseq
 
 
-def _check_placeholder_counts(processor: Processor, full_text: str, n_images: int, n_videos: int) -> None:
+def _check_placeholder_counts(
+    processor: Processor, full_text: str, n_images: int, n_videos: int, n_audios: int = 0
+) -> None:
     """Guard: every media placeholder in the rendered text must originate from a media block.
 
     After escaping, literal placeholder strings in user text are broken, so any remaining
-    placeholder must come from an image_url/video_url block. A mismatch means the data encodes
-    media some other way (e.g. inline tags) -- raise rather than crash inside the processor.
+    placeholder must come from an image_url/video_url/audio_url block. A mismatch means the data
+    encodes media some other way (e.g. inline tags) -- raise rather than crash inside the processor.
+
+    Note: the count is taken on the pre-expansion text, where each media item contributes exactly
+    one placeholder token (e.g. Qwen2-Audio emits a single ``<|AUDIO|>`` per audio that the
+    processor later expands to many).
     """
     tokenizer = get_tokenizer(processor)
-    for attr, count, kind in (("image_token_id", n_images, "image"), ("video_token_id", n_videos, "video")):
+    for attr, count, kind in (
+        ("image_token_id", n_images, "image"),
+        ("video_token_id", n_videos, "video"),
+        ("audio_token_id", n_audios, "audio"),
+    ):
         tid = getattr(processor, attr, None)
         if tid is None:
             tid = getattr(tokenizer, attr, None)

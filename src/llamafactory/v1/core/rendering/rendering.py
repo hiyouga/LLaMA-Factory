@@ -40,6 +40,7 @@ from .format import (
     _FALLBACK_CHATML_JINJA,
     _count_media_in_messages,
     _extract_media_from_messages,
+    _load_audios,
     _to_hf_messages,
 )
 from .label import _check_placeholder_counts, _label_assistant_regions, _verify_render
@@ -70,7 +71,7 @@ def _render_messages(
     """
     tokenizer = get_tokenizer(processor)
     is_multimodal = not is_tokenizer(processor)
-    has_media = is_multimodal and _count_media_in_messages(messages) != (0, 0)
+    has_media = is_multimodal and _count_media_in_messages(messages) != (0, 0, 0)
 
     template_caller = processor if is_multimodal else tokenizer
     if not getattr(template_caller, "chat_template", None):
@@ -100,14 +101,17 @@ def _render_messages(
     )
 
     if has_media:
-        images, videos = _extract_media_from_messages(messages)
+        images, videos, audios = _extract_media_from_messages(messages)
         # Every placeholder must come from a media block (escaping broke any literal ones).
-        _check_placeholder_counts(processor, full_text, len(images), len(videos))
+        _check_placeholder_counts(processor, full_text, len(images), len(videos), len(audios))
         proc_kwargs = {"return_tensors": "pt"}
         if images:
             proc_kwargs["images"] = images
         if videos:
             proc_kwargs["videos"] = videos
+        if audios:
+            # Audio processors want decoded waveforms at the model's sampling rate, not paths.
+            proc_kwargs["audio"] = _load_audios(audios, processor.feature_extractor.sampling_rate)
         outputs = processor(text=full_text, **proc_kwargs)
         input_ids = outputs["input_ids"][0].tolist()
     else:

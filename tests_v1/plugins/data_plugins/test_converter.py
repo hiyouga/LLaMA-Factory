@@ -177,19 +177,39 @@ def test_converter_media_count_mismatch():
         )
 
 
-def test_converter_audio_not_supported():
-    # audio column present
-    with pytest.raises(ValueError, match="[Aa]udio"):
+def test_converter_audio_column_and_tag():
+    # an <audio> tag consumes the next path from the audios column, lifted into an audio_url block
+    example = {
+        "conversations": [
+            {"from": "human", "value": "hear <audio>What is this?"},
+            {"from": "gpt", "value": "A bell."},
+        ],
+        "audios": ["/p/a.wav"],
+    }
+    user = DataConverterPlugin("sharegpt")(example)["messages"][0]
+    assert user["content"] == [
+        {"type": "text", "value": "hear "},
+        {"type": "audio_url", "value": "/p/a.wav"},
+        {"type": "text", "value": "What is this?"},
+    ]
+
+
+def test_converter_audio_count_mismatch():
+    # more audio tags than files
+    with pytest.raises(ValueError, match="More <audio> tags"):
         DataConverterPlugin("sharegpt")(
             {
-                "conversations": [{"from": "human", "value": "<audio>"}, {"from": "gpt", "value": "x"}],
+                "conversations": [{"from": "human", "value": "<audio><audio>"}, {"from": "gpt", "value": "x"}],
                 "audios": ["/p/a.wav"],
             }
         )
-    # audio tag present without a column
-    with pytest.raises(ValueError, match="[Aa]udio"):
+    # fewer audio tags than files
+    with pytest.raises(ValueError, match="Fewer <audio> tags"):
         DataConverterPlugin("sharegpt")(
-            {"conversations": [{"from": "human", "value": "hear <audio>"}, {"from": "gpt", "value": "x"}]}
+            {
+                "conversations": [{"from": "human", "value": "<audio>"}, {"from": "gpt", "value": "x"}],
+                "audios": ["/p/a.wav", "/p/b.wav"],
+            }
         )
 
 

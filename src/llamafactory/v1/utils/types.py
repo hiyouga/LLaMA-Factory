@@ -162,6 +162,10 @@ class ModelInput(TypedDict, total=False):
     """Pixel values for video inputs."""
     video_grid_thw: NotRequired[Any]
     """Video grid (temporal, height, width) for video models."""
+    input_features: NotRequired[Any]
+    """Audio input features (e.g. mel spectrogram) for audio models."""
+    feature_attention_mask: NotRequired[Any]
+    """Attention mask over the audio input features."""
     mm_token_type_ids: NotRequired[list[int]]
     """Multimodal token type ids: 0=text, 1=image, 2=video."""
 
@@ -187,6 +191,10 @@ class BatchInput(TypedDict, total=False):
     """Pixel values for video inputs."""
     video_grid_thw: NotRequired[Tensor]
     """Video grid (temporal, height, width) for video models."""
+    input_features: NotRequired[Tensor]
+    """Audio input features (e.g. mel spectrogram) for audio models."""
+    feature_attention_mask: NotRequired[Tensor]
+    """Attention mask over the audio input features."""
     mm_token_type_ids: NotRequired[Tensor]
     """Multimodal token type ids: 0=text, 1=image, 2=video."""
 

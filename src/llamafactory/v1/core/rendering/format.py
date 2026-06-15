@@ -84,28 +84,58 @@ def _to_hf_messages(messages: list[Message], is_multimodal: bool = False) -> lis
     return hf_messages
 
 
-def _extract_media_from_messages(messages: list[Message]) -> tuple[list, list]:
-    """Extract image paths and video paths from messages in order."""
-    images, videos = [], []
+def _extract_media_from_messages(messages: list[Message]) -> tuple[list, list, list]:
+    """Extract image, video and audio paths/values from messages in order."""
+    images, videos, audios = [], [], []
     for message in messages:
         for content in message["content"]:
             if content["type"] == "image_url":
                 images.append(content["value"])
             elif content["type"] == "video_url":
                 videos.append(content["value"])
-    return images, videos
+            elif content["type"] == "audio_url":
+                audios.append(content["value"])
+    return images, videos, audios
 
 
-def _count_media_in_messages(messages: list[Message]) -> tuple[int, int]:
-    """Count total images and videos in messages."""
-    n_images, n_videos = 0, 0
+def _count_media_in_messages(messages: list[Message]) -> tuple[int, int, int]:
+    """Count total images, videos and audios in messages."""
+    n_images, n_videos, n_audios = 0, 0, 0
     for message in messages:
         for content in message["content"]:
             if content["type"] == "image_url":
                 n_images += 1
             elif content["type"] == "video_url":
                 n_videos += 1
-    return n_images, n_videos
+            elif content["type"] == "audio_url":
+                n_audios += 1
+    return n_images, n_videos, n_audios
+
+
+def _load_audios(values: list, sampling_rate: int) -> list:
+    """Load audio inputs into mono waveforms resampled to ``sampling_rate``.
+
+    Audio processors (e.g. Qwen2-Audio's Whisper feature extractor) expect raw waveforms at the
+    model's sampling rate, not file paths -- so unlike images/videos we decode here, before the
+    processor call. ``np.ndarray`` values are passed through untouched; str/path-like values are
+    read and resampled. Mirrors v0 ``mm_plugin._regularize_audios``.
+    """
+    import numpy as np
+    import torchaudio
+
+    results = []
+    for value in values:
+        if isinstance(value, np.ndarray):
+            results.append(value)
+            continue
+
+        waveform, sr = torchaudio.load(value)
+        if waveform.shape[0] > 1:  # downmix to mono
+            waveform = waveform.mean(dim=0, keepdim=True)
+        if sr != sampling_rate:
+            waveform = torchaudio.functional.resample(waveform, sr, sampling_rate)
+        results.append(waveform.squeeze(0).numpy())
+    return results
 
 
 def _find_subseq(haystack: list[int], needle: list[int], start: int = 0) -> int:
