@@ -76,14 +76,13 @@ def _make_safetensor_loader(checkpoint_file: str, tensor_key: str):
 def get_transformer_layer_classes(model: HFModel) -> set[type[nn.Module]]:
     # Return the set of Transformer layer classes that should each be wrapped by FSDP2.
 
-    for candidate in (
-        getattr(getattr(model, "model", None), "language_model", None),
-        getattr(model, "language_model", None),
-        getattr(model, "model", None),
-        model,
-    ):
-        if candidate is not None and hasattr(candidate, "layers") and len(candidate.layers) > 0:
-            return {type(candidate.layers[0])}
+    classes: set[type[nn.Module]] = set()
+    for module in model.modules():
+        layers = getattr(module, "layers", None)
+        if isinstance(layers, nn.ModuleList) and len(layers) > 0:
+            classes.add(type(layers[0]))
+    if classes:
+        return classes
 
     # Fallback for unusual architectures without a discoverable .layers attribute.
     no_split_modules = getattr(model, "_no_split_modules", None)

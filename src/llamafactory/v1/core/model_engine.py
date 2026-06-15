@@ -149,10 +149,14 @@ class ModelEngine:
             )
 
         if self.args.model_class == ModelClass.LLM:
-            from transformers import AutoModelForCausalLM, AutoModelForImageTextToText
+            from transformers import AutoModelForCausalLM, AutoModelForImageTextToText, AutoModelForMultimodalLM
 
-            if type(self.model_config) in AutoModelForImageTextToText._model_mapping.keys():
+            cfg_type = type(self.model_config)
+            if cfg_type in AutoModelForImageTextToText._model_mapping.keys():
                 AutoClass = AutoModelForImageTextToText
+            elif cfg_type in AutoModelForMultimodalLM._model_mapping.keys():
+                # Audio / other multimodal LMs (e.g. Qwen2-Audio) live here, not in CausalLM.
+                AutoClass = AutoModelForMultimodalLM
             else:
                 AutoClass = AutoModelForCausalLM
 

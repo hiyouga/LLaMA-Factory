@@ -16,9 +16,9 @@
 
 This module is the orchestration + public API (``Renderer``). The mechanical pieces live in
 sibling modules:
-  - ``rendering_format``  -- v1<->HF message conversion, media extraction, subseq search
-  - ``rendering_escape``  -- special-token escaping (prompt-injection hardening)
-  - ``rendering_label``   -- assistant-region labeling + structural verification
+  - ``format``  -- v1<->HF message conversion, media extraction, subseq search
+  - ``escape``  -- special-token escaping (prompt-injection hardening)
+  - ``label``   -- assistant-region labeling + structural verification
   - ``markers``           -- per-model assistant role markers (explicit whitelist)
   - ``collation``         -- batch padding/truncation/MM alignment (consumed by the batch generators)
 
