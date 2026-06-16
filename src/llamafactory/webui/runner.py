@@ -375,7 +375,16 @@ class Runner:
                 env["FORCE_TORCHRUN"] = "1"
 
             # NOTE: DO NOT USE shell=True to avoid security risk
-            self.trainer = Popen(["llamafactory-cli", "train", save_cmd(args)], env=env, stderr=PIPE, text=True)
+            webui_log_path = os.path.join(args["output_dir"], "webui_subprocess.log")
+            webui_log = open(webui_log_path, "a", encoding="utf-8")
+            self.trainer = Popen(
+                ["llamafactory-cli", "train", save_cmd(args)],
+                env=env,
+                stdout=webui_log,
+                stderr=webui_log,
+                text=True,
+            )
+            webui_log.close()
             yield from self.monitor()
 
     def _build_config_dict(self, data: dict["Component", Any]) -> dict[str, Any]:
