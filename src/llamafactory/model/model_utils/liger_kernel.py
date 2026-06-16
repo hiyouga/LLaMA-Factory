@@ -16,6 +16,7 @@ import inspect
 from typing import TYPE_CHECKING
 
 from ...extras import logging
+from ...extras.misc import get_device_name
 
 
 if TYPE_CHECKING:
@@ -98,6 +99,13 @@ def apply_liger_kernel(
         kwargs = {"fused_linear_cross_entropy": False, "cross_entropy": True}
     else:
         kwargs = {}
+
+    if get_device_name() == "npu":
+        import torch
+
+        if "Ascend910" not in torch.npu.get_device_name(0):
+            kwargs["swiglu"] = False
+            kwargs["fused_linear_cross_entropy"] = False
 
     apply_liger_kernel(**kwargs)
     logger.info_rank0("Liger kernel has been applied to the model.")
