@@ -14,9 +14,11 @@
 
 import json
 import os
+import tempfile
+import time
 from collections.abc import Generator
 from copy import deepcopy
-from subprocess import PIPE, Popen, TimeoutExpired
+from subprocess import Popen
 from typing import TYPE_CHECKING, Any
 
 from transformers.utils import is_torch_npu_available
@@ -65,6 +67,8 @@ class Runner:
         """ State """
         self.aborted = False
         self.running = False
+        """ Stderr handling """
+        self._stderr_file: tempfile.NamedTemporaryFile | None = None
 
     def set_abort(self) -> None:
         self.aborted = True
@@ -121,7 +125,38 @@ class Runner:
         self.aborted = False
         self.running = False
         self.running_data = None
+        self._cleanup_stderr_file()
         torch_gc()
+
+    def _read_stderr(self) -> str:
+        r"""Read the stderr content from the temporary file.
+
+        Only reads the last 64KB to prevent memory exhaustion from verbose subprocess output.
+        """
+        if self._stderr_file is None:
+            return ""
+
+        try:
+            self._stderr_file.flush()
+            self._stderr_file.seek(0, os.SEEK_END)
+            size = self._stderr_file.tell()
+            self._stderr_file.seek(max(0, size - 65536))
+            return self._stderr_file.read()
+        except Exception:
+            return ""
+
+    def _cleanup_stderr_file(self) -> None:
+        r"""Close and remove the temporary stderr file."""
+        if self._stderr_file is not None:
+            try:
+                stderr_path = self._stderr_file.name
+                self._stderr_file.close()
+                if os.path.exists(stderr_path):
+                    os.unlink(stderr_path)
+            except Exception:
+                pass
+            finally:
+                self._stderr_file = None
 
     def _parse_train_args(self, data: dict["Component", Any]) -> dict[str, Any]:
         r"""Build and validate the training arguments."""
@@ -355,7 +390,13 @@ class Runner:
             yield {output_box: gen_cmd(args)}
 
     def _launch(self, data: dict["Component", Any], do_train: bool) -> Generator[dict["Component", Any], None, None]:
-        r"""Start the training process."""
+        r"""Start the training process.
+
+        Stderr is written to a temporary file instead of being piped. This prevents the subprocess
+        from blocking when the WebUI client disconnects and the generator stops being consumed,
+        which would otherwise cause the stderr pipe buffer to fill up and hang the training process.
+        See: https://github.com/hiyouga/LlamaFactory/issues/10180
+        """
         output_box = self.manager.get_elem_by_id("{}.output_box".format("train" if do_train else "eval"))
         error = self._initialize(data, do_train, from_preview=False)
         if error:
@@ -374,8 +415,18 @@ class Runner:
             if args.get("deepspeed", None) is not None:
                 env["FORCE_TORCHRUN"] = "1"
 
+            # Use a temporary file for stderr instead of PIPE to prevent the subprocess from
+            # hanging when the WebUI client disconnects. With PIPE, the generator-based monitor
+            # stops draining the pipe when Gradio stops consuming the generator, causing the pipe
+            # buffer to fill up and the subprocess to block on stderr writes.
+            self._stderr_file = tempfile.NamedTemporaryFile(
+                mode="w+", prefix="llamafactory_stderr_", suffix=".log", delete=False
+            )
+
             # NOTE: DO NOT USE shell=True to avoid security risk
-            self.trainer = Popen(["llamafactory-cli", "train", save_cmd(args)], env=env, stderr=PIPE, text=True)
+            self.trainer = Popen(
+                ["llamafactory-cli", "train", save_cmd(args)], env=env, stderr=self._stderr_file, text=True
+            )
             yield from self.monitor()
 
     def _build_config_dict(self, data: dict["Component", Any]) -> dict[str, Any]:
@@ -402,7 +453,13 @@ class Runner:
         yield from self._launch(data, do_train=False)
 
     def monitor(self):
-        r"""Monitorgit the training progress and logs."""
+        r"""Monitor the training progress and logs.
+
+        Uses poll() instead of communicate() to check subprocess status. This avoids the hang
+        that occurred when the WebUI disconnected and the generator stopped being consumed:
+        with communicate() + PIPE, the pipe buffer would fill up and block the subprocess.
+        Now stderr goes to a file, so the subprocess never blocks on writes.
+        """
         self.aborted = False
         self.running = True
 
@@ -417,8 +474,9 @@ class Runner:
         swanlab_link = self.manager.get_elem_by_id("train.swanlab_link") if self.do_train else None
 
         running_log = ""
-        return_code = -1
-        while return_code == -1:
+        while True:
+            return_code = self.trainer.poll()
+
             if self.aborted:
                 yield {
                     output_box: ALERTS["info_aborting"][lang],
@@ -438,11 +496,10 @@ class Runner:
 
                 yield return_dict
 
-            try:
-                stderr = self.trainer.communicate(timeout=2)[1]
-                return_code = self.trainer.returncode
-            except TimeoutExpired:
-                continue
+            if return_code is not None:
+                break
+
+            time.sleep(2)
 
         if return_code == 0 or self.aborted:
             finish_info = ALERTS["info_finished"][lang]
@@ -451,6 +508,7 @@ class Runner:
             else:
                 finish_log = load_eval_results(os.path.join(output_path, "all_results.json")) + "\n\n" + running_log
         else:
+            stderr = self._read_stderr()
             print(stderr)
             finish_info = ALERTS["err_failed"][lang]
             finish_log = ALERTS["err_failed"][lang] + f" Exit code: {return_code}\n\n```\n{stderr}\n```\n"
