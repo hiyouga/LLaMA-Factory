@@ -16,7 +16,7 @@ import json
 import os
 from collections.abc import Generator
 from copy import deepcopy
-from subprocess import PIPE, Popen, TimeoutExpired
+from subprocess import Popen, TimeoutExpired
 from typing import TYPE_CHECKING, Any
 
 from transformers.utils import is_torch_npu_available
@@ -460,6 +460,16 @@ class Runner:
             else:
                 finish_log = load_eval_results(os.path.join(output_path, "all_results.json")) + "\n\n" + running_log
         else:
+            if stderr is None:
+                webui_log_path = os.path.join(output_path, "webui_subprocess.log")
+                if os.path.exists(webui_log_path):
+                    with open(webui_log_path, "rb") as f:
+                        f.seek(0, os.SEEK_END)
+                        f.seek(max(f.tell() - 20000, 0))
+                        stderr = f.read().decode("utf-8", errors="replace")
+                else:
+                    stderr = "No subprocess log file found."
+
             print(stderr)
             finish_info = ALERTS["err_failed"][lang]
             finish_log = ALERTS["err_failed"][lang] + f" Exit code: {return_code}\n\n```\n{stderr}\n```\n"
