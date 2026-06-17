@@ -221,14 +221,11 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
     def _fallback_rope_position_ids(input_ids: "torch.Tensor", attention_mask: "torch.Tensor"):
         r"""Flat positional fallback: every non-pad token gets a monotonic position; all 3 mrope axes identical."""
         bsz, seq_len = input_ids.shape
-        position_ids = torch.zeros(3, bsz, seq_len, dtype=input_ids.dtype, device=input_ids.device)
-        rope_deltas = torch.zeros(bsz, dtype=input_ids.dtype, device=input_ids.device)
-        for batch_idx in range(bsz):
-            valid_len = int(attention_mask[batch_idx].bool().sum().item())
-            positions = torch.arange(seq_len, device=input_ids.device)
-            position_ids[:, batch_idx] = positions.view(1, -1).expand(3, -1)
-            rope_deltas[batch_idx] = positions.max() + 1 - valid_len if valid_len > 0 else 0
-        return position_ids, rope_deltas
+        positions = torch.arange(seq_len, device=input_ids.device, dtype=input_ids.dtype)
+        position_ids = positions.view(1, 1, seq_len).expand(3, bsz, seq_len).contiguous()
+        valid_len = attention_mask.bool().sum(dim=-1)
+        rope_deltas = torch.where(valid_len > 0, seq_len - valid_len, torch.zeros_like(valid_len))
+        return position_ids, rope_deltas.to(dtype=input_ids.dtype)
 
     def _log_rope_mismatch(self, err: Exception, features: dict[str, "torch.Tensor"], mm_inputs: dict[str, Any]) -> None:
         r"""Print a one-line diagnostic when the mrope fallback path is taken."""
