@@ -177,16 +177,13 @@ class SharegptDatasetConverter(DatasetConverter):
                 ):
                     i += 1
                     obs_parts.append(messages[i][self.dataset_attr.content_tag] or "")
-                if len(obs_parts) > 1:
-                    merged_obs = "\n</tool_response>\n<tool_response>\n".join(obs_parts)
-                    preprocessed.append(
-                        {
-                            self.dataset_attr.role_tag: self.dataset_attr.observation_tag,
-                            self.dataset_attr.content_tag: merged_obs,
-                        }
-                    )
-                else:
-                    preprocessed.append(messages[i])
+                merged_obs = "\n</tool_response>\n<tool_response>\n".join(obs_parts)
+                preprocessed.append(
+                    {
+                        self.dataset_attr.role_tag: self.dataset_attr.observation_tag,
+                        self.dataset_attr.content_tag: merged_obs,
+                    }
+                )
                 i += 1
                 continue
 
