@@ -177,6 +177,7 @@ class DPOTrainer(BaseTrainer):
         logits: Tensor,
         labels: Tensor,
         token_type_ids: Tensor,
+        use_ld: bool = True,
     ) -> tuple[Tensor, Tensor, Tensor, Tensor]:
         """Extract chosen / rejected log-probabilities (sum and average) from logits.
 
@@ -184,6 +185,9 @@ class DPOTrainer(BaseTrainer):
             logits: (batch_size, seq_len, vocab_size)
             labels: (batch_size, seq_len)
             token_type_ids: (batch_size, seq_len) – 1=chosen, 2=rejected
+            use_ld: Whether to apply LD-DPO length-dependent weighting. Should be
+                ``False`` for the reference model to match the v0 behaviour where
+                ``ld_alpha`` is only applied to the policy log-probs.
 
         Returns:
             chosen_logps:   (batch_size,) sum of per-token log-probs for chosen
@@ -209,7 +213,7 @@ class DPOTrainer(BaseTrainer):
         chosen_valid_len = chosen_mask.sum(dim=-1)
         rejected_valid_len = rejected_mask.sum(dim=-1)
 
-        ld_alpha = self.ld_alpha
+        ld_alpha = self.ld_alpha if use_ld else None
         if ld_alpha is not None:
             min_lengths = torch.min(chosen_valid_len, rejected_valid_len)
             chosen_starts = torch.argmax(chosen_mask.int(), dim=1)
@@ -308,7 +312,7 @@ class DPOTrainer(BaseTrainer):
         else:
             ref_logits = self.ref_model(**model_inputs, use_cache=False, return_dict=True).logits.float()
 
-        return self._extract_chosen_rejected_logps(ref_logits, labels, token_type_ids)
+        return self._extract_chosen_rejected_logps(ref_logits, labels, token_type_ids, use_ld=False)
 
     # ------------------------------------------------------------------
     # Loss functions
@@ -365,9 +369,8 @@ class DPOTrainer(BaseTrainer):
         # Split logits into chosen / rejected for metrics
         shift_logits = logits[..., :-1, :].contiguous()
         shift_token_type_ids = token_type_ids[..., 1:]
-        loss_mask = (labels[..., 1:] != IGNORE_INDEX).to(self.device)
-        chosen_logit_mask = ((shift_token_type_ids == 1) & loss_mask).float()
-        rejected_logit_mask = ((shift_token_type_ids == 2) & loss_mask).float()
+        chosen_logit_mask = (shift_token_type_ids == 1).float()
+        rejected_logit_mask = (shift_token_type_ids == 2).float()
 
         policy_chosen_logps, policy_rejected_logps, chosen_logps_avg, rejected_logps_avg = (
             self._extract_chosen_rejected_logps(logits, labels, token_type_ids)
@@ -396,12 +399,12 @@ class DPOTrainer(BaseTrainer):
             rejected_rewards = (self.pref_beta * (policy_rejected_logps - ref_rejected_logps)).detach()
         elif self.pref_loss == "orpo":
             losses = self._odds_ratio_loss(chosen_logps_avg, rejected_logps_avg)
-            chosen_rewards = (self.pref_beta * policy_chosen_logps).detach()
-            rejected_rewards = (self.pref_beta * policy_rejected_logps).detach()
+            chosen_rewards = (self.pref_beta * chosen_logps_avg).detach()
+            rejected_rewards = (self.pref_beta * rejected_logps_avg).detach()
         elif self.pref_loss == "simpo":
             losses = self._simpo_loss(chosen_logps_avg, rejected_logps_avg)
-            chosen_rewards = (self.pref_beta * policy_chosen_logps).detach()
-            rejected_rewards = (self.pref_beta * policy_rejected_logps).detach()
+            chosen_rewards = (self.pref_beta * chosen_logps_avg).detach()
+            rejected_rewards = (self.pref_beta * rejected_logps_avg).detach()
         else:
             raise ValueError(f"Unknown pref_loss: {self.pref_loss}")
 
