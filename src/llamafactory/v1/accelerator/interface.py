@@ -94,16 +94,6 @@ class DistributedStrategy:
                 f"got {self.dp_size} * {self.cp_size} != {helper.get_world_size()}."
             )
 
-        # The CP sequence group must fit entirely inside one FSDP shard group; otherwise it spans multiple
-        # shard groups and corrupts gradients / hangs NCCL. With both products pinned to world_size above,
-        # this is the only remaining cross-mesh constraint -- it already implies
-        # dp == mp_replicate * (mp_shard / cp), i.e. the model and data meshes describe the same split.
-        if helper.is_distributed() and self.mp_shard_size % self.cp_size != 0:
-            raise ValueError(
-                f"mp_shard_size ({self.mp_shard_size}) must be divisible by cp_size ({self.cp_size}); "
-                f"otherwise the CP sequence group spans multiple FSDP shard groups."
-            )
-
     @property
     def model_mesh_shape(self) -> tuple[int, int]:
         """Model parallel mesh shape."""

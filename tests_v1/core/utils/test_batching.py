@@ -32,6 +32,7 @@ def _make_model_input(length: int, start: int = 0):
         "attention_mask": [1] * length,
         "labels": input_ids.copy(),
         "loss_weights": [1.0] * length,
+        "position_ids": list(range(1, length + 1)),
     }
 
 
@@ -115,6 +116,8 @@ def test_dynamic_batching():
     assert len(batch) == 1
     assert batch[0]["input_ids"].shape == (3, 6)
     assert batch[0]["input_ids"].tolist()[0] == [0, 1, 2, 0, 0, 0]
+    assert batch[0]["position_ids"].shape == (3, 6)
+    assert batch[0]["position_ids"].tolist()[0] == [1, 2, 3, 0, 0, 0]
     assert len(buffer) == 3
 
 
@@ -201,6 +204,7 @@ def test_normal_batching():
     batch = next(iter(batch_generator))
     assert len(batch) == 2
     assert batch[0]["input_ids"].shape == (4, 10)
+    assert batch[0]["position_ids"].shape == (4, 10)
 
 
 def test_dynamic_padding_free():
