@@ -37,7 +37,7 @@ from ...utils import logging
 from ...utils.helper import pad_and_truncate
 from ...utils.objects import StatefulBuffer
 from ...utils.types import BatchInfo, BatchInput, ModelInput, TorchDataset
-from .rendering import Renderer
+from ..rendering import Renderer
 
 
 logger = logging.get_logger(__name__)
