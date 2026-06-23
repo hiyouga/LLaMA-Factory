@@ -490,7 +490,7 @@ class MiniMaxM1ToolUtils(ToolUtils):
             except json.JSONDecodeError:
                 continue
 
-        return results
+        return results if results else content
 
 
 class MiniMaxM2ToolUtils(ToolUtils):
@@ -548,7 +548,7 @@ class MiniMaxM2ToolUtils(ToolUtils):
 
             results.append(FunctionCall(func_name.strip(), json.dumps(args_dict, ensure_ascii=False)))
 
-        return results
+        return results if results else content
 
 
 class MistralToolUtils(ToolUtils):
