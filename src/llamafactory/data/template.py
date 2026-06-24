@@ -1279,7 +1279,7 @@ register_template(
 register_template(
     name="hy_dense_1_8b",
     format_user=StringFormatter(slots=["<｜hy_User｜>{{content}}"]),
-    format_assistant=StringFormatter(slots=["<｜hy_Assistant｜>{{content}}", {"eos_token"}]),
+    format_assistant=StringFormatter(slots=["<｜hy_Assistant｜>{{content}}"]),
     format_system=StringFormatter(slots=["{{content}}<｜hy_place▁holder▁no▁3｜>"]),
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
     stop_words=["<｜hy_place▁holder▁no▁2｜>"],
@@ -1290,7 +1290,7 @@ register_template(
 register_template(
     name="hy_dense_7b",
     format_user=StringFormatter(slots=["{{content}}<|extra_0|>"]),
-    format_assistant=StringFormatter(slots=["{{content}}", {"eos_token"}]),
+    format_assistant=StringFormatter(slots=["{{content}}"]),
     format_system=StringFormatter(slots=["{{content}}<|extra_4|>"]),
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
     stop_words=["<|eos|>"],
