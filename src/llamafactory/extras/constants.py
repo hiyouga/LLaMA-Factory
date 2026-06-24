@@ -1250,6 +1250,28 @@ register_model_group(
 
 register_model_group(
     models={
+        "Hy-MT2-1.8B-Instruct": {
+            DownloadSource.DEFAULT: "tencent/Hy-MT2-1.8B",
+            DownloadSource.MODELSCOPE: "Tencent-Hunyuan/Hy-MT2-1.8B",
+        },
+    },
+    template="hy_dense_1_8b",
+)
+
+
+register_model_group(
+    models={
+        "Hy-MT2-7B-Instruct": {
+            DownloadSource.DEFAULT: "tencent/Hy-MT2-7B",
+            DownloadSource.MODELSCOPE: "Tencent-Hunyuan/Hy-MT2-7B",
+        },
+    },
+    template="hy_dense_7b",
+)
+
+
+register_model_group(
+    models={
         "HY-MT1.5-1.8B-Instruct": {
             DownloadSource.DEFAULT: "tencent/HY-MT1.5-1.8B",
             DownloadSource.MODELSCOPE: "Tencent-Hunyuan/HY-MT1.5-1.8B",
