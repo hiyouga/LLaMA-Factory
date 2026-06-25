@@ -380,3 +380,26 @@ def test_lfm2_tool_round_trip():
     assert len(extracted) == 1
     assert extracted[0][0] == original["name"]
     assert json.loads(extracted[0][1]) == original["arguments"]
+
+
+@pytest.mark.runs_on(["cpu", "mps"])
+def test_minimax2_function_formatter():
+    formatter = FunctionFormatter(slots=["{{content}}"], tool_format="minimax2")
+    result = formatter.apply(content=json.dumps(FUNCTION))[0]
+    # the assistant tool call must be wrapped in <minimax:tool_call>, matching the
+    # format the model is instructed to use in MINIMAX_M2_TOOL_PROMPT
+    assert result.startswith("<minimax:tool_call>")
+    assert result.endswith("</minimax:tool_call>")
+    assert '<invoke name="tool_name">' in result
+
+
+@pytest.mark.runs_on(["cpu", "mps"])
+def test_minimax2_tool_round_trip():
+    formatter = FunctionFormatter(slots=["{{content}}"], tool_format="minimax2")
+    tool_formatter = ToolFormatter(tool_format="minimax2")
+    original = {"name": "my_func", "arguments": {"arg1": "hello", "arg2": 42, "arg3": True}}
+    formatted = formatter.apply(content=json.dumps(original))
+    extracted = tool_formatter.extract(formatted[0])
+    assert len(extracted) == 1
+    assert extracted[0][0] == original["name"]
+    assert json.loads(extracted[0][1]) == original["arguments"]
