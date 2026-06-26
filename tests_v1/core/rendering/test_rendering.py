@@ -20,7 +20,11 @@ from transformers import AutoConfig, AutoTokenizer
 from llamafactory.v1.config import DataArguments
 from llamafactory.v1.core.data_engine import DataEngine
 from llamafactory.v1.core.rendering import Renderer
-from llamafactory.v1.core.rendering.escape import _escape_special, _special_token_strings
+from llamafactory.v1.core.rendering.escape import (
+    _escape_special,
+    _escape_special_in_messages,
+    _special_token_strings,
+)
 from llamafactory.v1.utils.constants import IGNORE_INDEX
 from llamafactory.v1.utils.types import Processor
 
@@ -222,8 +226,41 @@ def test_process_dpo_samples():
     assert len(model_inputs) == 1
     assert model_inputs[0]["input_ids"] == hf_inputs * 2
     assert model_inputs[0]["token_type_ids"] == [1] * len(hf_inputs) + [2] * len(hf_inputs)
+    # position ids restart at 1 for each sequence (chosen then rejected), not one continuous range
+    assert model_inputs[0]["position_ids"] == list(range(1, len(hf_inputs) + 1)) * 2
     assert model_inputs[0]["extra_info"] == "test"
     assert model_inputs[0]["_dataset_name"] == "default"
+
+
+def test_tool_call_validation_fails_loud():
+    """Malformed/under-specified tool_call data raises a descriptive ValueError, not a raw crash."""
+    tokenizer: Processor = AutoTokenizer.from_pretrained(_TINY_QWEN3)
+    renderer = _make_renderer(_TINY_QWEN3, processor=tokenizer)
+
+    not_json = [
+        {"role": "user", "content": [{"type": "text", "value": "hi"}]},
+        {"role": "assistant", "content": [{"type": "tool_call", "value": "{not json"}]},
+    ]
+    with pytest.raises(ValueError, match="not valid JSON"):
+        renderer.render_messages(not_json)
+
+    missing_keys = [
+        {"role": "user", "content": [{"type": "text", "value": "hi"}]},
+        {"role": "assistant", "content": [{"type": "tool_call", "value": json.dumps({"foo": 1})}]},
+    ]
+    with pytest.raises(ValueError, match="tool_call must be a JSON object"):
+        renderer.render_messages(missing_keys)
+
+
+def test_escape_tool_call_non_dict_passthrough():
+    """A tool_call whose JSON is a non-dict (list/str/int) is passed through, not crashed on."""
+    tokenizer: Processor = AutoTokenizer.from_pretrained(_TINY_QWEN3)
+    specials = _special_token_strings(tokenizer)
+    special_ids = {tid for tid, t in tokenizer.added_tokens_decoder.items() if getattr(t, "special", False)}
+
+    messages = [{"role": "assistant", "content": [{"type": "tool_call", "value": "[1, 2, 3]"}]}]
+    out = _escape_special_in_messages(messages, specials, special_ids, tokenizer)
+    assert out[0]["content"][0]["value"] == "[1, 2, 3]"
 
 
 # ----------------------------- diff-based labeling (no marker table) -----------------------------
@@ -350,5 +387,7 @@ if __name__ == "__main__":
     test_render_messages_with_tools()
     test_process_sft_samples()
     test_process_dpo_samples()
+    test_tool_call_validation_fails_loud()
+    test_escape_tool_call_non_dict_passthrough()
     test_diff_labeling_matches_canonical()
     test_process_samples_splits_multiturn()

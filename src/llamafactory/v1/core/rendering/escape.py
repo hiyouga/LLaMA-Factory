@@ -79,6 +79,12 @@ def _escape_special_in_messages(
             elif content["type"] == "tool_call":
                 try:
                     tc = json.loads(content["value"])
+                except (json.JSONDecodeError, TypeError):
+                    new_content.append(content)
+                    continue
+                # A tool_call value that is valid JSON but not an object (list/str/int) carries no
+                # escapable argument strings -- pass it through untouched rather than crash on .get().
+                if isinstance(tc, dict):
                     args = tc.get("arguments")
                     if isinstance(args, dict):
                         tc["arguments"] = {
@@ -86,7 +92,7 @@ def _escape_special_in_messages(
                             for k, v in args.items()
                         }
                     new_content.append({**content, "value": json.dumps(tc)})
-                except (json.JSONDecodeError, TypeError):
+                else:
                     new_content.append(content)
             else:
                 new_content.append(content)

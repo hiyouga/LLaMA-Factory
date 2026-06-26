@@ -219,7 +219,11 @@ class Renderer:
                     loss_weights=chosen_input["loss_weights"] + rejected_input["loss_weights"],
                     token_type_ids=chosen_input["token_type_ids"] + rejected_input["token_type_ids"],
                 )
-                model_input["position_ids"] = list(range(1, len(model_input["input_ids"]) + 1))
+                # chosen and rejected are independent sequences; position ids must restart at 1 for
+                # each (a single continuous range would offset rejected's positional embeddings).
+                model_input["position_ids"] = list(range(1, len(chosen_input["input_ids"]) + 1)) + list(
+                    range(1, len(rejected_input["input_ids"]) + 1)
+                )
                 rendered.append(model_input)
             else:
                 raise ValueError("No valid messages or chosen_messages/rejected_messages found in sample.")

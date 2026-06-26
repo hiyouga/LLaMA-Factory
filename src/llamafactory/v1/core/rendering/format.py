@@ -47,7 +47,14 @@ def _to_hf_messages(messages: list[Message]) -> list[dict]:
             elif content["type"] == "reasoning":
                 reasoning_content += content["value"]
             elif content["type"] == "tool_call":
-                tc = json.loads(content["value"])
+                try:
+                    tc = json.loads(content["value"])
+                except json.JSONDecodeError as e:
+                    raise ValueError(f"tool_call value is not valid JSON: {content['value']!r}") from e
+                if not isinstance(tc, dict) or "name" not in tc or "arguments" not in tc:
+                    raise ValueError(
+                        f"tool_call must be a JSON object with 'name' and 'arguments' keys, got {tc!r}"
+                    )
                 tool_calls.append(
                     {"type": "function", "function": {"name": tc["name"], "arguments": tc["arguments"]}}
                 )
