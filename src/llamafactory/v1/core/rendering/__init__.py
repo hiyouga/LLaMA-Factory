@@ -11,3 +11,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+"""Rendering: turn a v1 ``Sample`` into a tokenized ``ModelInput``.
+
+Public entry point is :class:`Renderer`. Internals are split by concern:
+``format`` (message<->HF conversion, media extraction, marker detection, subseq search),
+``escape`` (special-token escaping), ``label`` (assistant-region labeling + verification).
+Batch padding/truncation/MM alignment lives separately in ``core/utils/collation.py``.
+"""
+
+from .rendering import Renderer
+
+
+__all__ = ["Renderer"]

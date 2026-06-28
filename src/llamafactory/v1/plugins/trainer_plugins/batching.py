@@ -19,8 +19,8 @@ from typing import Any
 import torch
 from torch.utils.data import default_collate
 
+from ...core.utils.collation import pad_and_truncate
 from ...utils.constants import IGNORE_INDEX
-from ...utils.helper import pad_and_truncate
 from ...utils.objects import StatefulBuffer
 from ...utils.plugin import BasePlugin
 from ...utils.types import BatchInfo, BatchInput, DataLoader, ModelInput
