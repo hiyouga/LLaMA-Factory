@@ -27,7 +27,9 @@ from llamafactory.v1.utils.env import find_available_port
 from llamafactory.v1.utils.pytest import dist_env
 
 
-def _test_sequence_parallel_loss(local_rank: int, world_size: int, master_port: int, cp_size: int, dp_size: int):
+def _test_sequence_parallel_loss(
+    local_rank: int, world_size: int, master_port: int, cp_size: int, dp_size: int, batch_size: int
+):
     with dist_env(local_rank, world_size, master_port):
         model_args = ModelArguments(model="llamafactory/tiny-random-qwen3")
 
@@ -41,12 +43,13 @@ def _test_sequence_parallel_loss(local_rank: int, world_size: int, master_port: 
         # Apply sequence parallel plugin
         SequenceParallelModelPlugin(dist_config.get("cp_mode", "ulysses"))(model_engine.model, dist_config)
 
+        input_ids = torch.arange(1, batch_size * 5 + 1, dtype=torch.long).view(batch_size, 5)
         model_inputs = {
-            "input_ids": torch.tensor([[1, 2, 3, 4, 5]]),
-            "labels": torch.tensor([[1, 2, 3, 4, 5]]),
-            "attention_mask": torch.tensor([[1, 1, 1, 1, 1]]),
-            "position_ids": torch.tensor([[1, 2, 3, 4, 5]]),
-            "loss_weights": torch.tensor([[1.0, 1.0, 1.0, 1.0, 1.0]]),
+            "input_ids": input_ids,
+            "labels": input_ids.clone(),
+            "attention_mask": torch.ones_like(input_ids),
+            "position_ids": torch.arange(1, 6, dtype=torch.long).repeat(batch_size, 1),
+            "loss_weights": torch.ones(batch_size, 5),
         }
 
         loss = sequence_parallel_loss(model_engine.model, model_inputs)
@@ -55,8 +58,10 @@ def _test_sequence_parallel_loss(local_rank: int, world_size: int, master_port: 
 
 @pytest.mark.runs_on(["cuda", "npu"])
 @pytest.mark.require_distributed(2)
-@pytest.mark.parametrize("cp_size, dp_size", [(2, 1)])
-def test_sequence_parallel_loss(cp_size, dp_size):
+@pytest.mark.parametrize(("cp_size", "dp_size", "batch_size"), [(2, 1, 1), (2, 1, 2)])
+def test_sequence_parallel_loss(cp_size, dp_size, batch_size):
     master_port = find_available_port()
     world_size = cp_size * dp_size
-    mp.spawn(_test_sequence_parallel_loss, args=(world_size, master_port, cp_size, dp_size), nprocs=world_size)
+    mp.spawn(
+        _test_sequence_parallel_loss, args=(world_size, master_port, cp_size, dp_size, batch_size), nprocs=world_size
+    )

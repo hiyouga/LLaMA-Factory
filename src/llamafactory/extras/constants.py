@@ -139,7 +139,6 @@ class EngineName(StrEnum):
     HF = "huggingface"
     VLLM = "vllm"
     SGLANG = "sglang"
-    KT = "ktransformers"
 
 
 class DownloadSource(StrEnum):
@@ -887,6 +886,9 @@ register_model_group(
         "Gemma-4-E4B-Thinking": {
             DownloadSource.DEFAULT: "google/gemma-4-E4B-it",
         },
+        "Gemma-4-12B-Thinking": {
+            DownloadSource.DEFAULT: "google/gemma-4-12B-it",
+        },
     },
     template="gemma4n",
     multimodal=True,
@@ -1248,12 +1250,45 @@ register_model_group(
 
 register_model_group(
     models={
+        "Hy-MT2-1.8B-Instruct": {
+            DownloadSource.DEFAULT: "tencent/Hy-MT2-1.8B",
+            DownloadSource.MODELSCOPE: "Tencent-Hunyuan/Hy-MT2-1.8B",
+        },
+    },
+    template="hy_dense_1_8b",
+)
+
+
+register_model_group(
+    models={
+        "Hy-MT2-7B-Instruct": {
+            DownloadSource.DEFAULT: "tencent/Hy-MT2-7B",
+            DownloadSource.MODELSCOPE: "Tencent-Hunyuan/Hy-MT2-7B",
+        },
+    },
+    template="hy_dense_7b",
+)
+
+
+register_model_group(
+    models={
         "HY-MT1.5-1.8B-Instruct": {
             DownloadSource.DEFAULT: "tencent/HY-MT1.5-1.8B",
             DownloadSource.MODELSCOPE: "Tencent-Hunyuan/HY-MT1.5-1.8B",
         },
     },
     template="hunyuan_small",
+)
+
+
+register_model_group(
+    models={
+        "Hy3-Preview": {
+            DownloadSource.DEFAULT: "tencent/Hy3-preview",
+            DownloadSource.MODELSCOPE: "tencent/Hy3-preview",
+        },
+    },
+    template="hy3",
 )
 
 
@@ -1904,6 +1939,17 @@ register_model_group(
 
 register_model_group(
     models={
+        "MiniCPM5-1B-Chat": {
+            DownloadSource.DEFAULT: "openbmb/MiniCPM5-1B",
+            DownloadSource.MODELSCOPE: "OpenBMB/MiniCPM5-1B",
+        },
+    },
+    template="empty",
+)
+
+
+register_model_group(
+    models={
         "MiniCPM-o-2.6": {
             DownloadSource.DEFAULT: "openbmb/MiniCPM-o-2_6",
             DownloadSource.MODELSCOPE: "OpenBMB/MiniCPM-o-2_6",
@@ -1934,6 +1980,18 @@ register_model_group(
         },
     },
     template="minicpm_v",
+    multimodal=True,
+)
+
+
+register_model_group(
+    models={
+        "MiniCPM-V-4.6": {
+            DownloadSource.DEFAULT: "openbmb/MiniCPM-V-4_6",
+            DownloadSource.MODELSCOPE: "OpenBMB/MiniCPM-V-4_6",
+        },
+    },
+    template="minicpm_v_4_6",
     multimodal=True,
 )
 

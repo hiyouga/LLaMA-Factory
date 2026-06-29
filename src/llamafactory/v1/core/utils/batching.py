@@ -42,6 +42,8 @@ from .rendering import Renderer
 
 logger = logging.get_logger(__name__)
 
+__all__ = ["BatchGenerator"]
+
 
 def default_collate_fn(buffer: StatefulBuffer, batch_info: BatchInfo) -> list[BatchInput] | None:
     micro_batch_size = batch_info["micro_batch_size"]
@@ -102,18 +104,17 @@ class BatchGenerator(Iterator):
         if not self.drop_last:
             raise ValueError("Drop last must be True.")
 
+        self._batch_info: BatchInfo = {
+            "micro_batch_size": self.micro_batch_size,
+            "num_micro_batch": self.num_micro_batch,
+            "cutoff_len": self.cutoff_len,
+        }
+
         self._init_data_provider()
 
         self._is_resuming: bool = False
         self._data_iter = iter(self._data_provider)
         self._buffer = StatefulBuffer()
-
-        self._batch_info: BatchInfo = {
-            "micro_batch_size": self.micro_batch_size,
-            "num_micro_batch": self.num_micro_batch,
-            "cutoff_len": self.cutoff_len,
-            "data_iter": self._data_iter,
-        }
 
         logger.info_rank0(
             f"Init unified data loader with global batch size {self.global_batch_size}, "
@@ -137,27 +138,33 @@ class BatchGenerator(Iterator):
         else:
             raise NotImplementedError("Iterable dataset is not supported yet.")
 
-        generato_seed = torch.Generator()
-        generato_seed.manual_seed(self.seed)
+        if self.batching_strategy == BatchingStrategy.NORMAL:
+            batch_size = self.micro_batch_size * self.num_micro_batch
+        else:
+            from ...plugins.trainer_plugins.batching import BatchingPlugin
+
+            batch_size = BatchingPlugin(self.batching_strategy).get_data_provider_batch_size(self._batch_info)
+
+        generator_seed = torch.Generator()
+        generator_seed.manual_seed(self.seed)
 
         self._data_provider = StatefulDataLoader(
             self.dataset,
-            batch_size=self.micro_batch_size * self.num_micro_batch,
+            batch_size=batch_size,
             sampler=sampler,
             num_workers=self.batching_workers,
             collate_fn=self.renderer.process_samples,
             pin_memory=self.pin_memory,
             pin_memory_device=DistributedInterface().current_device.type,
             drop_last=self.drop_last,
-            generator=generato_seed,
+            generator=generator_seed,
         )
         if self.batching_strategy == BatchingStrategy.NORMAL:
             self._length = len(self._data_provider)
         else:
             from ...plugins.trainer_plugins.batching import BatchingPlugin
 
-            self._length = BatchingPlugin(self.batching_strategy).compute_length(self._data_provider)
-            raise NotImplementedError("Batching strategy other than NORMAL is not supported yet.")
+            self._length = BatchingPlugin(self.batching_strategy).compute_length(self._data_provider, self._batch_info)
 
     def __len__(self) -> int:
         return self._length
@@ -190,7 +197,7 @@ class BatchGenerator(Iterator):
         else:
             from ...plugins.trainer_plugins.batching import BatchingPlugin
 
-            BatchingPlugin(self.batching_strategy).fill_buffer(self._buffer, self._batch_info)
+            BatchingPlugin(self.batching_strategy).fill_buffer(self._buffer, self._batch_info, self._next_samples)
 
     def _generate_batch(self) -> list[BatchInput] | None:
         if self.batching_strategy == BatchingStrategy.NORMAL:
@@ -199,6 +206,20 @@ class BatchGenerator(Iterator):
             from ...plugins.trainer_plugins.batching import BatchingPlugin
 
             return BatchingPlugin(self.batching_strategy).generate_batch(self._buffer, self._batch_info)
+
+    def _next_samples(self, restart: bool) -> list[ModelInput] | None:
+        try:
+            return next(self._data_iter)
+        except StopIteration:
+            if not restart:
+                return None
+
+            # Dynamic batching may restart the provider to fill one token-budgeted batch.
+            self._data_iter = iter(self._data_provider)
+            try:
+                return next(self._data_iter)
+            except StopIteration:
+                return None
 
     def state_dict(self) -> dict[str, Any]:
         return {

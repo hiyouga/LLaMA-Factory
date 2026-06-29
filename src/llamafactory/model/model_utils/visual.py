@@ -322,6 +322,14 @@ _register_composite_model(
 
 
 _register_composite_model(
+    model_type="minicpmv4_6",
+    projector_keys=["model.merger"],
+    vision_model_keys=["model.vision_tower"],
+    language_model_keys=["model.language_model", "lm_head"],
+)
+
+
+_register_composite_model(
     model_type="minicpmo",
     projector_keys=["resampler"],
     vision_model_keys=["vpm", "apm", "audio_avg_pooler", "audio_projection_layer", "tts"],
