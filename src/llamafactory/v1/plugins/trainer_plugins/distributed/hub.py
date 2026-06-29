@@ -61,6 +61,9 @@ def load_checkpoint_fsdp2(model: HFModel, optimizer: torch.optim.Optimizer, ckpt
 
 @DistributedPlugin("deepspeed").register()
 def shard_model_deepspeed(model: HFModel, dist_config: PluginConfig, **kwargs) -> HFModel:
+    if dist_config.get("cp_size", 1) > 1:
+        raise ValueError("CP currently requires `dist_config.name: fsdp2`.")
+
     from .deepspeed import DeepSpeedEngine
 
     return DeepSpeedEngine(
@@ -78,14 +81,14 @@ def save_model_deepspeed(model: HFModel, output_dir: str, processor: Processor) 
 
 
 @DistributedPlugin("deepspeed").register("save_checkpoint")
-def save_checkpoint_deepspeed(model: HFModel, optimizer: torch.optim.Optimizer, ckpt_dir: str) -> None:
+def save_checkpoint_deepspeed(model: HFModel, optimizer: torch.optim.Optimizer, ckpt_dir: str, **kwargs) -> None:
     from .deepspeed import save_checkpoint
 
-    return save_checkpoint(model, optimizer, ckpt_dir)
+    return save_checkpoint(model, optimizer, ckpt_dir, **kwargs)
 
 
 @DistributedPlugin("deepspeed").register("load_checkpoint")
-def load_checkpoint_deepspeed(model: HFModel, optimizer: torch.optim.Optimizer, ckpt_dir: str) -> None:
+def load_checkpoint_deepspeed(model: HFModel, optimizer: torch.optim.Optimizer, ckpt_dir: str, **kwargs) -> None:
     from .deepspeed import load_checkpoint
 
-    return load_checkpoint(model, optimizer, ckpt_dir)
+    return load_checkpoint(model, optimizer, ckpt_dir, **kwargs)

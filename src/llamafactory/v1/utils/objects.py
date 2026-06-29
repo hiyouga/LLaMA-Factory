@@ -33,6 +33,10 @@ class StatefulBuffer:
     def size(self) -> int:
         return self._buffer_size
 
+    @property
+    def samples(self) -> list[ModelInput]:
+        return self._buffer
+
     def put(self, samples: list[ModelInput]) -> None:
         """Add samples to the buffer."""
         num_tokens = sum(len(sample["input_ids"]) for sample in samples)

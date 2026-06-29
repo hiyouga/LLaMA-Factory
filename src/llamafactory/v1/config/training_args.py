@@ -14,6 +14,7 @@
 
 import os
 from dataclasses import dataclass, field
+from typing import Literal
 from uuid import uuid4
 
 from .arg_utils import BatchingStrategy, PluginConfig, get_plugin_config
@@ -85,6 +86,10 @@ class TrainingArguments:
         default=42,
         metadata={"help": "Random seed that will be set at the beginning of training."},
     )
+    full_determinism: bool = field(
+        default=False,
+        metadata={"help": "Enable full deterministic mode for reproducible distributed training."},
+    )
     resume_from_checkpoint: str | None = field(
         default=None,
         metadata={"help": "Path to a checkpoint directory to resume training from, or 'auto' to find the latest."},
@@ -111,8 +116,38 @@ class TrainingArguments:
         default=1,
         metadata={"help": "Log metrics every N optimizer steps."},
     )
+    pref_loss: Literal["sigmoid", "orpo", "simpo"] = field(
+        default="sigmoid",
+        metadata={"help": "The type of DPO loss to use."},
+    )
+    pref_beta: float = field(
+        default=0.1,
+        metadata={"help": "The beta parameter in the preference loss."},
+    )
+    pref_ftx: float = field(
+        default=0.0,
+        metadata={"help": "The supervised fine-tuning loss coefficient in DPO training."},
+    )
+    simpo_gamma: float = field(
+        default=0.5,
+        metadata={"help": "The target reward margin term in SimPO loss."},
+    )
+    dpo_label_smoothing: float = field(
+        default=0.0,
+        metadata={"help": "The robust DPO label smoothing parameter in cDPO that should be between 0 and 0.5."},
+    )
+    ld_alpha: float | None = field(
+        default=None,
+        metadata={"help": "Alpha parameter from LD-DPO, controls weighting of verbose token log-probabilities."},
+    )
 
     def __post_init__(self) -> None:
         self.dist_config = get_plugin_config(self.dist_config)
         self.optim_config = get_plugin_config(self.optim_config)
         self.lr_scheduler_config = get_plugin_config(self.lr_scheduler_config)
+
+        if str(self.batching_strategy) == str(BatchingStrategy.DYNAMIC_BATCHING):
+            if self.max_steps is None or self.max_steps <= 0:
+                raise ValueError("`dynamic_batching` requires `max_steps` because it is step-driven.")
+            if self.save_epochs is not None:
+                raise ValueError("`save_epochs` is not supported with `dynamic_batching`; use `save_steps` instead.")

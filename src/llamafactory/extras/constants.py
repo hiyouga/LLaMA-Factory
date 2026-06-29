@@ -886,6 +886,9 @@ register_model_group(
         "Gemma-4-E4B-Thinking": {
             DownloadSource.DEFAULT: "google/gemma-4-E4B-it",
         },
+        "Gemma-4-12B-Thinking": {
+            DownloadSource.DEFAULT: "google/gemma-4-12B-it",
+        },
     },
     template="gemma4n",
     multimodal=True,
@@ -1242,6 +1245,28 @@ register_model_group(
         },
     },
     template="hunyuan",
+)
+
+
+register_model_group(
+    models={
+        "Hy-MT2-1.8B-Instruct": {
+            DownloadSource.DEFAULT: "tencent/Hy-MT2-1.8B",
+            DownloadSource.MODELSCOPE: "Tencent-Hunyuan/Hy-MT2-1.8B",
+        },
+    },
+    template="hy_dense_1_8b",
+)
+
+
+register_model_group(
+    models={
+        "Hy-MT2-7B-Instruct": {
+            DownloadSource.DEFAULT: "tencent/Hy-MT2-7B",
+            DownloadSource.MODELSCOPE: "Tencent-Hunyuan/Hy-MT2-7B",
+        },
+    },
+    template="hy_dense_7b",
 )
 
 
@@ -1909,6 +1934,17 @@ register_model_group(
         },
     },
     template="cpm4",
+)
+
+
+register_model_group(
+    models={
+        "MiniCPM5-1B-Chat": {
+            DownloadSource.DEFAULT: "openbmb/MiniCPM5-1B",
+            DownloadSource.MODELSCOPE: "OpenBMB/MiniCPM5-1B",
+        },
+    },
+    template="empty",
 )
 
 

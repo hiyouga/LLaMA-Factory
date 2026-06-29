@@ -58,7 +58,7 @@ class Registry:
         device = kernel_cls.get_device()
 
         # The device type of the current accelerator does not match the device type required by the kernel, skip registration
-        if device != get_current_accelerator().type:
+        if get_current_accelerator().type not in device:
             return
 
         if not kernel_id:

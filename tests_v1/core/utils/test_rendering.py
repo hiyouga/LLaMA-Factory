@@ -227,17 +227,3 @@ def test_process_dpo_samples():
     assert model_inputs[0]["token_type_ids"] == [1] * len(hf_inputs) + [2] * len(hf_inputs)
     assert model_inputs[0]["extra_info"] == "test"
     assert model_inputs[0]["_dataset_name"] == "default"
-
-
-if __name__ == "__main__":
-    """
-    python -m tests_v1.core.utils.test_rendering
-    """
-    test_chatml_rendering()
-    test_chatml_parse()
-    test_chatml_rendering_remote(16)
-    test_qwen3_nothink_rendering()
-    test_qwen3_nothink_parse()
-    test_qwen3_nothink_rendering_remote(16)
-    test_process_sft_samples()
-    test_process_dpo_samples()

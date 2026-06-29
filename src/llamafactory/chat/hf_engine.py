@@ -205,9 +205,6 @@ class HuggingfaceEngine(BaseEngine):
 
             gen_kwargs.pop("image_sizes", None)
 
-        if getattr(model.config, "model_type", None) == "minicpmv4_6":
-            gen_kwargs["downsample_mode"] = os.getenv("DOWNSAMPLE_MODE", "16x")
-
         return gen_kwargs, prompt_length
 
     @staticmethod

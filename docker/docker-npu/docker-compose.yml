@@ -33,7 +33,7 @@ services:
       dockerfile: ./docker/docker-npu/Dockerfile
       context: ../..
       args:
-        BASE_IMAGE: quay.io/ascend/cann:8.5.1-a3-ubuntu22.04-py3.11
+        BASE_IMAGE: quay.io/ascend/cann:9.0.0-a3-ubuntu22.04-py3.11
         PIP_INDEX: https://pypi.org/simple
     container_name: llamafactory-a3
     image: llamafactory:npu-a3

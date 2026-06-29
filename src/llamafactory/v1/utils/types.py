@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from collections.abc import Iterator
+from enum import StrEnum, unique
 from typing import TYPE_CHECKING, Any, Literal, NamedTuple, NotRequired, TypedDict, Union
 
 
@@ -52,6 +52,13 @@ else:
     Optimizer = None
     Scheduler = None
     ProcessGroup = None
+
+
+@unique
+class AttentionFunction(StrEnum):
+    EAGER = "eager"
+    SDPA = "sdpa"
+    FLASH_ATTENTION_2 = "flash_attention_2"
 
 
 class DatasetInfo(TypedDict, total=False):
@@ -171,8 +178,6 @@ class BatchInfo(TypedDict):
     """Number of micro batches."""
     cutoff_len: int
     """Cutoff length."""
-    data_iter: Iterator[list[ModelInput]]
-    """Data iterator."""
 
 
 class ModelOutput(NamedTuple):

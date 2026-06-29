@@ -79,7 +79,7 @@ class PeftPlugin(BasePlugin):
 
 def _find_all_linear_modules(model: HFModel) -> list[str]:
     r"""Find all available modules to apply LoRA."""
-    forbidden_modules = {"lm_head", "output_layer", "output"}
+    forbidden_modules = {"lm_head", "output_layer", "output", "score", "classifier"}
     module_names = set()
     for name, module in model.named_modules():
         if any(forbidden_module in name for forbidden_module in forbidden_modules):
@@ -167,8 +167,16 @@ def get_lora_model(model: HFModel, config: LoraConfigDict, is_train: bool = Fals
 
     logger.info_rank0(f"LoRA target modules: {target_modules}")
 
+    cls_name = model.__class__.__name__
+    if cls_name.endswith("ForTokenClassification"):
+        task_type = TaskType.TOKEN_CLS
+    elif cls_name.endswith("ForSequenceClassification"):
+        task_type = TaskType.SEQ_CLS
+    else:
+        task_type = TaskType.CAUSAL_LM
+
     peft_config = LoraConfig(
-        task_type=TaskType.CAUSAL_LM,
+        task_type=task_type,
         inference_mode=not is_train,
         r=config.get("r", 8),
         lora_alpha=config.get("lora_alpha", 16),
