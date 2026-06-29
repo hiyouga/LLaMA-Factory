@@ -286,8 +286,8 @@ def test_diff_labeling_matches_canonical():
     assert "LLM stands for Large Language Model." in labeled
 
 
-def test_process_samples_splits_multiturn():
-    """A multi-turn conversation is split into one ModelInput per supervised assistant turn."""
+def test_process_samples_renders_last_turn():
+    """Splitting moved to the data layer; process_samples renders once, supervising only the last turn."""
     tokenizer: Processor = AutoTokenizer.from_pretrained(_TINY_QWEN3)
     renderer = _make_renderer(_TINY_QWEN3, processor=tokenizer)
 
@@ -298,22 +298,38 @@ def test_process_samples_splits_multiturn():
         {"role": "assistant", "content": [{"type": "text", "value": "answer two"}]},
     ]
     outs = renderer.process_samples([{"messages": messages}])
-    assert len(outs) == 2  # one sample per supervised turn
+    assert len(outs) == 1  # one ModelInput per (already-split) sample
+    assert _count_loss_regions(outs[0]) == 1
+    labeled = tokenizer.decode([t for t, lbl in zip(outs[0]["input_ids"], outs[0]["labels"]) if lbl != IGNORE_INDEX])
+    assert "answer two" in labeled and "answer one" not in labeled  # only the last turn is supervised
 
-    # each split sample's input_ids equal the canonical encoding of its own prefix
-    for k, end in enumerate((2, 4)):
-        hf_prefix = [{"role": m["role"], "content": m["content"][0]["value"]} for m in messages[:end]]
-        canonical = _get_input_ids(tokenizer.apply_chat_template(hf_prefix, add_generation_prompt=False))
-        assert outs[k]["input_ids"] == canonical
-        assert _count_loss_regions(outs[k]) == 1
 
-    # sample 1 supervises only "answer one"; sample 2 only "answer two"
-    def _labeled_text(mi):
-        return tokenizer.decode([t for t, lbl in zip(mi["input_ids"], mi["labels"]) if lbl != IGNORE_INDEX])
+def test_data_engine_prefix_cuts():
+    """DataEngine prefix-expands multi-turn SFT: one cut per supervised assistant turn."""
+    multiturn = {
+        "messages": [
+            {"role": "user", "content": [{"type": "text", "value": "q1"}]},
+            {"role": "assistant", "content": [{"type": "text", "value": "a1"}]},
+            {"role": "user", "content": [{"type": "text", "value": "q2"}]},
+            {"role": "assistant", "content": [{"type": "text", "value": "a2"}]},
+        ]
+    }
+    assert DataEngine._prefix_cuts(multiturn) == [2, 4]  # messages[:2] -> a1, messages[:4] -> a2
+    assert DataEngine._prefix_cuts({"messages": multiturn["messages"][:2]}) == [2]
 
-    t0, t1 = _labeled_text(outs[0]), _labeled_text(outs[1])
-    assert "answer one" in t0 and "answer two" not in t0
-    assert "answer two" in t1 and "answer one" not in t1
+    # an unsupervised (weight 0) assistant turn is not given its own cut
+    weighted = {
+        "messages": [
+            {"role": "user", "content": [{"type": "text", "value": "q"}]},
+            {"role": "assistant", "content": [{"type": "text", "value": "ctx"}], "loss_weight": 0.0},
+            {"role": "user", "content": [{"type": "text", "value": "q2"}]},
+            {"role": "assistant", "content": [{"type": "text", "value": "ans"}]},
+        ]
+    }
+    assert DataEngine._prefix_cuts(weighted) == [4]
+
+    # non-SFT samples (e.g. DPO with no `messages`) are kept whole
+    assert DataEngine._prefix_cuts({"chosen_messages": [], "rejected_messages": []}) == [None]
 
 
 # ----------------------------- escaping -----------------------------
@@ -390,4 +406,5 @@ if __name__ == "__main__":
     test_tool_call_validation_fails_loud()
     test_escape_tool_call_non_dict_passthrough()
     test_diff_labeling_matches_canonical()
-    test_process_samples_splits_multiturn()
+    test_process_samples_renders_last_turn()
+    test_data_engine_prefix_cuts()

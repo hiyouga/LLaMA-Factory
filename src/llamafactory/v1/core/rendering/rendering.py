@@ -174,24 +174,12 @@ class Renderer:
             enable_thinking=enable_thinking,
         )
 
-    def _split_supervised_turns(self, messages: list[Message]) -> list[list[Message]]:
-        """Split a conversation into one sub-conversation per supervised assistant turn.
-
-        Each sub-conversation is the prefix up to and including a single supervised assistant turn
-        (``loss_weight`` > 0); earlier assistant turns remain as context. Turns with zero weight
-        are not given their own sample (they still appear as history in later sub-conversations).
-        """
-        subs: list[list[Message]] = []
-        for k, m in enumerate(messages):
-            if m["role"] == "assistant" and m.get("loss_weight", 1.0) > 1e-6:
-                subs.append(messages[: k + 1])
-        return subs
-
     def process_samples(self, samples: list[Sample]) -> list[ModelInput]:
         """Process samples to model input.
 
-        Multi-turn conversations are split into one ModelInput per supervised assistant turn, so a
-        single conversation can yield several model inputs.
+        Multi-turn SFT conversations are already prefix-split in the data layer (DataEngine), so each
+        ``messages`` sample is rendered once -- the diff-based renderer supervises only its last
+        assistant turn.
 
         Args:
             samples: The samples to process.
@@ -203,10 +191,9 @@ class Renderer:
         for sample in samples:
             rendered: list[ModelInput] = []
             if "messages" in sample:
-                for sub in self._split_supervised_turns(sample["messages"]):
-                    model_input = self.render_messages(sub, sample.get("tools"))
-                    model_input["position_ids"] = list(range(1, len(model_input["input_ids"]) + 1))
-                    rendered.append(model_input)
+                model_input = self.render_messages(sample["messages"], sample.get("tools"))
+                model_input["position_ids"] = list(range(1, len(model_input["input_ids"]) + 1))
+                rendered.append(model_input)
             elif "chosen_messages" in sample and "rejected_messages" in sample:
                 chosen_input = self.render_messages(sample["chosen_messages"], sample.get("tools"))
                 rejected_input = self.render_messages(sample["rejected_messages"], sample.get("tools"))
