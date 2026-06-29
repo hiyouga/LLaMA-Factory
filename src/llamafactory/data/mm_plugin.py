@@ -2355,6 +2355,26 @@ class Qwen3VLPlugin(Qwen2VLPlugin):
         return mm_inputs
 
     @override
+    def get_mm_inputs(
+        self,
+        images: list["ImageInput"],
+        videos: list["VideoInput"],
+        audios: list["AudioInput"],
+        imglens: list[int],
+        vidlens: list[int],
+        audlens: list[int],
+        batch_ids: list[list[int]],
+        processor: Optional["MMProcessor"],
+    ) -> dict[str, Union[list[int], "torch.Tensor"]]:
+        self._validate_input(processor, images, videos, audios)
+        mm_inputs = self._get_mm_inputs(images, videos, audios, processor)
+
+        # Used by processor / prompt expansion, not by model.forward or model.generate.
+        mm_inputs.pop("video_metadata", None)
+
+        return mm_inputs
+
+    @override
     def process_messages(
         self,
         messages: list[dict[str, str]],

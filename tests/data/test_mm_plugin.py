@@ -422,8 +422,11 @@ def test_qwen2_vl_plugin():
 def test_qwen3_vl_plugin():
     frame_seqlen = 1
     tokenizer_module = _load_tokenizer_module(model_name_or_path="Qwen/Qwen3-VL-30B-A3B-Instruct")
+    processor = tokenizer_module["processor"]
     qwen3_vl_plugin = get_mm_plugin(name="qwen3_vl", video_token="<|video_pad|>")
     check_inputs = {"plugin": qwen3_vl_plugin, **tokenizer_module}
+    mm_inputs = qwen3_vl_plugin._get_mm_inputs(NO_IMAGES, VIDEOS, NO_AUDIOS, processor)
+    mm_inputs.pop("video_metadata", None)
     check_inputs["expected_mm_messages"] = [
         {
             key: value.replace(
@@ -437,6 +440,12 @@ def test_qwen3_vl_plugin():
         for message in VIDEO_MESSAGES
     ]
     _check_plugin(**check_inputs)
+    _is_close(
+        qwen3_vl_plugin.get_mm_inputs(
+            NO_IMAGES, VIDEOS, NO_AUDIOS, NO_IMGLENS, [len(VIDEOS)], NO_AUDLENS, BATCH_IDS, processor
+        ),
+        mm_inputs,
+    )
 
 
 @pytest.mark.runs_on(["cpu", "mps"])
