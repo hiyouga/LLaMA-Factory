@@ -3372,6 +3372,19 @@ register_model_group(
 )
 
 
+# Qwen-AgentWorld: language world model based on Qwen3.5-35B-A3B (MoE).
+# Reference: https://github.com/QwenLM/Qwen-AgentWorld
+register_model_group(
+    models={
+        "Qwen-AgentWorld-35B-A3B-Thinking": {
+            DownloadSource.DEFAULT: "Qwen/Qwen-AgentWorld-35B-A3B",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen-AgentWorld-35B-A3B",
+        },
+    },
+    template="qwen3",
+)
+
+
 register_model_group(
     models={
         "Vicuna-v1.5-7B-Chat": {
