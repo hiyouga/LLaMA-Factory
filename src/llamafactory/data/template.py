@@ -655,8 +655,10 @@ def get_template_and_fix_tokenizer(tokenizer: "PreTrainedTokenizer", data_args: 
 
     if isinstance(template, ReasoningTemplate):
         logger.warning_rank0(
-            "You are using reasoning template, "
-            "please add `_nothink` suffix if the model is not a reasoning model. "
+            "You are using reasoning template. "
+            "If the base model is NOT a reasoning model (i.e., it has a separate Instruct variant), "
+            "please add `_nothink` suffix to disable thinking. "
+            "For reasoning-only model families (e.g., Qwen3.6), the suffix is not needed. "
             "e.g., qwen3_vl_nothink"
         )
         template.enable_thinking = data_args.enable_thinking
