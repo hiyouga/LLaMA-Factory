@@ -7,6 +7,10 @@ kernel_config: null
 
 quant_config: null
 
+# Muon 的 Newton-Schulz 在 FSDP2 的 DTensor 分片上做会发散 -> NaN，
+# 因此 Muon step 已做 DTensor 感知（v2）：all-gather 全量梯度 -> 完整矩阵 NS ->
+# scatter 回本地分片。可在 fsdp2 下使用，代价是每步多一次 all-gather+scatter，
+# 且 momentum buffer 按全量存（显存翻倍）。
 dist_config:
   name: fsdp2
 

@@ -39,6 +39,21 @@ def _dtensor_cls():
     return DTensor
 
 
+def _is_dtensor(t) -> bool:
+    """True if ``t`` is a DTensor (i.e. sharded by FSDP2)."""
+    DT = _dtensor_cls()
+    return DT is not None and isinstance(t, DT)
+
+
+def _distribute(tensor, mesh, placements):
+    """Scatter a full (replicated) tensor into a DTensor with the given mesh/placements."""
+    try:
+        from torch.distributed.tensor import distribute_tensor
+    except ImportError:  # pragma: no cover
+        from torch.distributed._tensor import distribute_tensor  # type: ignore[no-redef]
+    return distribute_tensor(tensor, mesh, placements)
+
+
 def _is_rank0() -> bool:
     """True on rank 0 (or when not distributed)."""
     return not (dist.is_available() and dist.is_initialized()) or dist.get_rank() == 0
@@ -202,30 +217,47 @@ class Muon(torch.optim.Optimizer):
                     continue
                 if not self._diag_done:
                     self._v2_diag(p)
-                if g.ndim > 2:
-                    g = g.view(g.size(0), -1)
-                assert g is not None
 
-                # calc update
                 state = self.state[p]
-                if "momentum_buffer" not in state:
-                    state["momentum_buffer"] = torch.zeros_like(g)
-                buf = state["momentum_buffer"]
-                buf.mul_(momentum).add_(g)
-                if group["nesterov"]:
-                    g = g.add(buf, alpha=momentum)
-                else:
-                    g = buf
-                u = zeropower_via_newtonschulz5(g, steps=group["ns_steps"])
 
-                # scale update
+                # v2: under FSDP2, p.grad is a sharded DTensor. Newton-Schulz must run on
+                # the FULL 2D matrix (running it on the local shard computes a partial Gram
+                # matrix and the NS iteration diverges -> NaN), so all-gather the gradient,
+                # orthogonalize on the full matrix, then scatter the update back to the local
+                # shard before applying it to p.data.
+                sharded = _is_dtensor(g)
+                if sharded:
+                    g_full = g.full_tensor()
+                    p_mesh, p_placements = p.device_mesh, p.placements
+                else:
+                    g_full = g
+                    p_mesh = p_placements = None
+                if g_full.ndim > 2:
+                    g_full = g_full.view(g_full.size(0), -1)
+
+                # calc update (momentum + Newton-Schulz on the full matrix)
+                if "momentum_buffer" not in state:
+                    state["momentum_buffer"] = torch.zeros_like(g_full)
+                buf = state["momentum_buffer"]
+                buf.mul_(momentum).add_(g_full)
+                if group["nesterov"]:
+                    g_use = g_full.add(buf, alpha=momentum)
+                else:
+                    g_use = buf
+                u_full = zeropower_via_newtonschulz5(g_use, steps=group["ns_steps"])
+
+                # scale update (p.shape is the DTensor global shape -> correct A, B)
                 adjusted_lr = self.adjust_lr_for_muon(lr, p.shape)
 
-                # apply weight decay
+                # apply weight decay (in-place on the local shard; elementwise -> correct)
                 p.data.mul_(1 - lr * wd)
 
-                # apply update
-                p.data.add_(u, alpha=-adjusted_lr)
+                # apply update; scatter the full update back to the local shard under FSDP2
+                if sharded:
+                    u_dt = _distribute(u_full, p_mesh, p_placements)
+                    p.data.add_(u_dt, alpha=-adjusted_lr)
+                else:
+                    p.data.add_(u_full, alpha=-adjusted_lr)
 
             # Adam backup
             params = [p for p in group["params"] if not self.state[p]["use_muon"]]
