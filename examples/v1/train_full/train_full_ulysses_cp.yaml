@@ -3,6 +3,7 @@ trust_remote_code: true
 model_class: llm
 
 template: qwen3_nothink
+flash_attn: flash_attention_2
 
 # FSDP Config
 dist_config:
