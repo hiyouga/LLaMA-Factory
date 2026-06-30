@@ -12,8 +12,78 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+from ...utils import logging
 from ...utils.plugin import BasePlugin
+
+if TYPE_CHECKING:
+    from ...config.arg_utils import PluginConfig
+    from ...utils.types import HFModel
+
+
+logger = logging.get_logger(__name__)
 
 
 class OptimizerPlugin(BasePlugin):
     pass
+
+
+def _is_dtensor(param) -> bool:
+    """Return True if ``param`` is a DTensor (i.e. sharded by FSDP2)."""
+    try:
+        from torch.distributed.tensor import DTensor
+    except ImportError:  # pragma: no cover
+        try:
+            from torch.distributed._tensor import DTensor  # type: ignore[no-redef]
+        except ImportError:
+            return False
+    return isinstance(param, DTensor)
+
+
+@OptimizerPlugin("muon").register()
+def create_muon_optimizer(model: HFModel, optim_config: PluginConfig):
+    """Create a Muon optimizer.
+
+    Muon is used for 2D weight matrices (excluding embeddings and ``lm_head``); the remaining
+    parameters (1D bias/LayerNorm, embeddings, lm_head) are optimized by the built-in AdamW.
+
+    Note: Muon's Newton-Schulz orthogonalization runs on the parameter/gradient it receives. Under
+    FSDP2, parameters are sharded into DTensors, so the orthogonalization is performed on the local
+    shard rather than the full matrix (approximate). A DTensor-aware Muon that all-gathers the full
+    gradient is the exact fix; until then we warn under FSDP2.
+    """
+    from .muon_optimizer import Muon
+
+    muon_params, adamw_params = [], []
+    for name, param in model.named_parameters():
+        if param.requires_grad:
+            if param.ndim == 2 and "embed" not in name and "lm_head" not in name:
+                muon_params.append(param)
+            else:
+                adamw_params.append(param)
+
+    if any(_is_dtensor(p) for p in muon_params):
+        logger.warning_rank0_once(
+            "Muon is used with FSDP2 (DTensor params). Newton-Schulz orthogonalization runs on local "
+            "shards, not the full matrix, so updates are approximate. For exact full-matrix Muon under "
+            "FSDP2, use the DTensor-aware variant."
+        )
+
+    optimizer = Muon(
+        lr=optim_config.get("lr", 1e-3),
+        wd=optim_config.get("wd", 0.1),
+        muon_params=muon_params,
+        momentum=optim_config.get("momentum", 0.95),
+        nesterov=optim_config.get("nesterov", True),
+        ns_steps=optim_config.get("ns_steps", 5),
+        adamw_params=adamw_params,
+        adamw_betas=tuple(optim_config.get("adamw_betas", [0.9, 0.95])),
+        adamw_eps=optim_config.get("adamw_eps", 1e-8),
+    )
+    logger.info_rank0(
+        f"Using Muon optimizer with {len(muon_params)} Muon params and {len(adamw_params)} AdamW params."
+    )
+    return optimizer
