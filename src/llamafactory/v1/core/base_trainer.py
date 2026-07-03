@@ -27,6 +27,7 @@ Train Phase:
 
 """
 
+import os
 from abc import abstractmethod
 
 import torch
@@ -318,6 +319,10 @@ class BaseTrainer:
                         "grad_norm": grad_norm,
                         "learning_rate": current_lr,
                     }
+                    # Merge per-step trainer metrics (e.g. DPO rewards/logps/logits)
+                    step_metrics = getattr(self, "_step_metrics", None)
+                    if step_metrics:
+                        logs.update(step_metrics)
                     self.callback_handler.on_log(self.args, self.state, logs)
 
                 if self.args.save_steps and self.global_step % self.args.save_steps == 0:

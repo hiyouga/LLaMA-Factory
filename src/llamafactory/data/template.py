@@ -655,8 +655,10 @@ def get_template_and_fix_tokenizer(tokenizer: "PreTrainedTokenizer", data_args: 
 
     if isinstance(template, ReasoningTemplate):
         logger.warning_rank0(
-            "You are using reasoning template, "
-            "please add `_nothink` suffix if the model is not a reasoning model. "
+            "You are using reasoning template. "
+            "If the base model is NOT a reasoning model (i.e., it has a separate Instruct variant), "
+            "please add `_nothink` suffix to disable thinking. "
+            "For reasoning-only model families (e.g., Qwen3.6), the suffix is not needed. "
             "e.g., qwen3_vl_nothink"
         )
         template.enable_thinking = data_args.enable_thinking
@@ -1271,6 +1273,30 @@ register_template(
     format_system=StringFormatter(slots=["{{content}}<｜hy_place▁holder▁no▁3｜>"]),
     format_prefix=EmptyFormatter(slots=["<｜hy_begin▁of▁sentence｜>"]),
     stop_words=["<｜hy_place▁holder▁no▁2｜>"],
+)
+
+
+# The following two templates are copied from the official Hy-MT2 chat templates:
+# https://github.com/Tencent-Hunyuan/Hy-MT2/blob/main/train/llama_factory_support/hy_dense_template.py
+register_template(
+    name="hy_dense_1_8b",
+    format_user=StringFormatter(slots=["<｜hy_User｜>{{content}}"]),
+    format_assistant=StringFormatter(slots=["<｜hy_Assistant｜>{{content}}"]),
+    format_system=StringFormatter(slots=["{{content}}<｜hy_place▁holder▁no▁3｜>"]),
+    format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
+    stop_words=["<｜hy_place▁holder▁no▁2｜>"],
+    efficient_eos=True,
+)
+
+
+register_template(
+    name="hy_dense_7b",
+    format_user=StringFormatter(slots=["{{content}}<|extra_0|>"]),
+    format_assistant=StringFormatter(slots=["{{content}}"]),
+    format_system=StringFormatter(slots=["{{content}}<|extra_4|>"]),
+    format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
+    stop_words=["<|eos|>"],
+    efficient_eos=True,
 )
 
 

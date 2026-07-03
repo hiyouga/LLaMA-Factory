@@ -424,19 +424,31 @@ def test_qwen3_vl_plugin():
     tokenizer_module = _load_tokenizer_module(model_name_or_path="Qwen/Qwen3-VL-30B-A3B-Instruct")
     qwen3_vl_plugin = get_mm_plugin(name="qwen3_vl", video_token="<|video_pad|>")
     check_inputs = {"plugin": qwen3_vl_plugin, **tokenizer_module}
+    video_token = "<|video_pad|>" * frame_seqlen
+    first_video = (
+        f"<0.2 seconds><|vision_start|>{video_token}<|vision_end|>"
+        f"<1.2 seconds><|vision_start|>{video_token}<|vision_end|>"
+    )
+    second_video = first_video + f"<2.2 seconds><|vision_start|>{video_token}<|vision_end|>"
+    videos = [
+        [Image.new("RGB", (32, 32), (255, 255, 255))] * 4,
+        [Image.new("RGB", (32, 32), (255, 255, 255))] * 6,
+    ]
+    messages = [
+        {"role": "user", "content": "Compare these videos: <video> and <video>."},
+        {"role": "assistant", "content": "They are different."},
+    ]
     check_inputs["expected_mm_messages"] = [
-        {
-            key: value.replace(
-                "<video>",  # little different with original processor for default `fps=2` in our repo
-                "<0.2 seconds><|vision_start|>{}<|vision_end|><1.2 seconds><|vision_start|>{}<|vision_end|>".format(
-                    "<|video_pad|>" * frame_seqlen, "<|video_pad|>" * frame_seqlen
-                ),
-            )
-            for key, value in message.items()
-        }
-        for message in VIDEO_MESSAGES
+        {key: value.replace("<video>", first_video) for key, value in message.items()} for message in VIDEO_MESSAGES
     ]
     _check_plugin(**check_inputs)
+    assert qwen3_vl_plugin.process_messages(messages, NO_IMAGES, videos, NO_AUDIOS, tokenizer_module["processor"]) == [
+        {
+            "role": "user",
+            "content": f"Compare these videos: {first_video} and {second_video}.",
+        },
+        {"role": "assistant", "content": "They are different."},
+    ]
 
 
 @pytest.mark.runs_on(["cpu", "mps"])

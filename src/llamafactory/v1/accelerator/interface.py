@@ -68,6 +68,11 @@ class DistributedStrategy:
         if not helper.is_distributed():
             self.mp_shard_size = 1
         elif self.mp_shard_size is None:
+            if helper.get_world_size() % self.mp_replicate_size != 0:
+                raise ValueError(
+                    f"world_size ({helper.get_world_size()}) must be divisible by "
+                    f"mp_replicate_size ({self.mp_replicate_size})."
+                )
             self.mp_shard_size = helper.get_world_size() // self.mp_replicate_size
         elif self.mp_replicate_size * self.mp_shard_size != helper.get_world_size():
             raise ValueError(
@@ -78,6 +83,10 @@ class DistributedStrategy:
         if not helper.is_distributed():
             self.dp_size = 1
         elif self.dp_size is None:
+            if helper.get_world_size() % self.cp_size != 0:
+                raise ValueError(
+                    f"world_size ({helper.get_world_size()}) must be divisible by cp_size ({self.cp_size})."
+                )
             self.dp_size = helper.get_world_size() // self.cp_size
         elif self.dp_size * self.cp_size != helper.get_world_size():
             raise ValueError(

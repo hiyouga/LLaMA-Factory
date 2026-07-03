@@ -14,6 +14,7 @@
 
 import os
 from dataclasses import dataclass, field
+from typing import Literal
 from uuid import uuid4
 
 from .arg_utils import BatchingStrategy, PluginConfig, get_plugin_config
@@ -114,6 +115,30 @@ class TrainingArguments:
     logging_steps: int = field(
         default=1,
         metadata={"help": "Log metrics every N optimizer steps."},
+    )
+    pref_loss: Literal["sigmoid", "orpo", "simpo"] = field(
+        default="sigmoid",
+        metadata={"help": "The type of DPO loss to use."},
+    )
+    pref_beta: float = field(
+        default=0.1,
+        metadata={"help": "The beta parameter in the preference loss."},
+    )
+    pref_ftx: float = field(
+        default=0.0,
+        metadata={"help": "The supervised fine-tuning loss coefficient in DPO training."},
+    )
+    simpo_gamma: float = field(
+        default=0.5,
+        metadata={"help": "The target reward margin term in SimPO loss."},
+    )
+    dpo_label_smoothing: float = field(
+        default=0.0,
+        metadata={"help": "The robust DPO label smoothing parameter in cDPO that should be between 0 and 0.5."},
+    )
+    ld_alpha: float | None = field(
+        default=None,
+        metadata={"help": "Alpha parameter from LD-DPO, controls weighting of verbose token log-probabilities."},
     )
 
     def __post_init__(self) -> None:
