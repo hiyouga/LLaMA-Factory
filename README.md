@@ -558,7 +558,24 @@ Try `dataloader_num_workers: 0` if you encounter `Can't pickle local object` err
 
 #### Install BitsAndBytes
 
-If you want to enable the quantized LoRA (QLoRA) on the Windows platform, you need to install a pre-built version of `bitsandbytes` library, which supports CUDA 11.1 to 12.2, please select the appropriate [release version](https://github.com/jllllll/bitsandbytes-windows-webui/releases/tag/wheels) based on your CUDA version.
+To enable Quantized LoRA (QLoRA) on Windows, you need to install bitsandbytes.
+
+For most users, it is recommended to install the latest official release:
+
+```bash
+pip install bitsandbytes
+```
+
+If you are using uv to manage your virtual environment, it is recommended to install bitsandbytes after installing the GPU-enabled version of PyTorch:
+
+```bash
+uv pip install bitsandbytes --no-deps
+```
+
+[!IMPORTANT]
+Pay attention to the CUDA Toolkit version when installing bitsandbytes. Official bitsandbytes releases are built for specific CUDA Toolkit versions. On Windows x86-64, separate builds are currently provided for CUDA 11.8–12.6 and CUDA 12.8–12.9. Support for NVIDIA RTX 50 Series GPUs (e.g., RTX 5060 Ti, sm_120) requires the CUDA 12.8–12.9 builds.
+
+If your environment uses an older CUDA version, or you need compatibility with older Windows / PyTorch combinations, you can install the third-party precompiled Windows wheel:
 
 ```bash
 pip install https://github.com/jllllll/bitsandbytes-windows-webui/releases/download/wheels/bitsandbytes-0.41.2.post2-py3-none-win_amd64.whl
