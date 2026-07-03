@@ -567,7 +567,7 @@ python -c "import torch; print(torch.cuda.is_available())"
 pip install bitsandbytes
 ```
 
-如果使用 uv 管理虚拟环境，建议在 先安装好 GPU 版本 PyTorch 之后，再执行：
+如果使用 uv 管理虚拟环境，建议在安装好 GPU 版本 PyTorch 之后，再执行：
 
 ```bash
 uv pip install bitsandbytes --no-deps
