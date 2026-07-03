@@ -73,7 +73,10 @@ def _render_messages(
     tools_parsed = None
     if tools:
         tools = _escape_special(tools, specials, special_ids, tokenizer)  # E3: tools text is user-controlled
-        tools_parsed = json.loads(tools)
+        try:
+            tools_parsed = json.loads(tools)
+        except json.JSONDecodeError as e:
+            raise ValueError(f"Invalid tools format: {tools}") from e
         if not isinstance(tools_parsed, list):
             tools_parsed = [tools_parsed]
 
