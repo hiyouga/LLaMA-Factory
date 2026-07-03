@@ -35,8 +35,9 @@ class OptimizerPlugin(BasePlugin):
 def create_muon_optimizer(model: HFModel, optim_config: PluginConfig):
     """Create a Muon optimizer.
 
-    Muon is used for 2D weight matrices (excluding embeddings and ``lm_head``); the remaining
-    parameters (1D bias/LayerNorm, embeddings, lm_head) are optimized by the built-in AdamW.
+    Muon is used for 2D "hidden" weight matrices; the remaining parameters (1D bias/LayerNorm,
+    embeddings incl. GPT-2 ``wte``/``wpe``, the output ``lm_head``, and LoRA adapter factors) are
+    optimized by the built-in AdamW.
 
     The Muon step is DTensor-aware: under FSDP2 it all-gathers the full gradient, runs Newton-Schulz
     on the full 2D matrix, then scatters the update back to the local shard. So it is correct under
@@ -47,7 +48,17 @@ def create_muon_optimizer(model: HFModel, optim_config: PluginConfig):
     muon_params, adamw_params = [], []
     for name, param in model.named_parameters():
         if param.requires_grad:
-            if param.ndim == 2 and "embed" not in name and "lm_head" not in name:
+            # Muon is only appropriate for 2D "hidden" weight matrices. Route everything else to
+            # the internal AdamW: 1D bias/norm, embeddings ("embed", GPT-2 "wte"/"wpe"), the output
+            # head ("lm_head"), and LoRA adapter factors ("lora_A"/"lora_B"/"lora_embedding_*").
+            if (
+                param.ndim == 2
+                and "embed" not in name
+                and "lm_head" not in name
+                and "wte" not in name
+                and "wpe" not in name
+                and "lora" not in name
+            ):
                 muon_params.append(param)
             else:
                 adamw_params.append(param)

@@ -68,6 +68,10 @@ def zeropower_via_newtonschulz5(G: "torch.Tensor", steps: int) -> "torch.Tensor"
     one everywhere on the interval. This iteration therefore does not produce UV^T but rather something
     like US'V^T where S' is diagonal with S_{ii}' ~ Uniform(0.5, 1.5), which turns out not to hurt model
     performance at all relative to UV^T, where USV^T = G is the SVD.
+
+    Computation runs in ``bfloat16`` and the result is returned in ``bfloat16`` by design (NS is
+    stable in bf16, matching upstream Keller Jordan / Moonlight). The caller's in-place ``add_``
+    upcasts the operand to the parameter dtype, so no cast-back to ``G.dtype`` is needed.
     """
     assert len(G.shape) == 2
     a, b, c = (3.4445, -4.7750, 2.0315)
