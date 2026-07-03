@@ -226,29 +226,29 @@ class Muon(torch.optim.Optimizer):
 
                 # v2: under FSDP2, p.grad is a sharded DTensor. Newton-Schulz must run on
                 # the FULL 2D matrix (running it on the local shard computes a partial Gram
-                # matrix and the NS iteration diverges -> NaN), so all-gather the gradient,
-                # orthogonalize on the full matrix, then scatter the update back to the local
-                # shard before applying it to p.data.
+                # matrix and the NS iteration diverges -> NaN). Momentum accumulation is
+                # elementwise, so the momentum buffer is kept sharded (mirroring g's
+                # placements -> 1/N memory and FSDP2-checkpoint-native); we all-gather only
+                # for the NS step, then scatter the update back to the local shard.
                 sharded = _is_dtensor(g)
                 if sharded:
-                    g_full = g.full_tensor()
                     p_mesh, p_placements = p.device_mesh, p.placements
                 else:
-                    g_full = g
                     p_mesh = p_placements = None
+
+                # momentum buffer mirrors g's sharding (sharded DTensor under FSDP2, plain
+                # tensor otherwise); elementwise accumulation is correct on the local shard.
+                if "momentum_buffer" not in state:
+                    state["momentum_buffer"] = torch.zeros_like(g)
+                buf = state["momentum_buffer"]
+                buf.mul_(momentum).add_(g)
+                g_use = g.add(buf, alpha=momentum) if group["nesterov"] else buf
+
+                # all-gather ONLY here: NS needs the full 2D matrix (Gram matrix X @ X.T).
+                g_full = g_use.full_tensor() if sharded else g_use
                 if g_full.ndim > 2:
                     g_full = g_full.view(g_full.size(0), -1)
-
-                # calc update (momentum + Newton-Schulz on the full matrix)
-                if "momentum_buffer" not in state:
-                    state["momentum_buffer"] = torch.zeros_like(g_full)
-                buf = state["momentum_buffer"]
-                buf.mul_(momentum).add_(g_full)
-                if group["nesterov"]:
-                    g_use = g_full.add(buf, alpha=momentum)
-                else:
-                    g_use = buf
-                u_full = zeropower_via_newtonschulz5(g_use, steps=group["ns_steps"])
+                u_full = zeropower_via_newtonschulz5(g_full, steps=group["ns_steps"])
 
                 # scale update (p.shape is the DTensor global shape -> correct A, B)
                 adjusted_lr = self.adjust_lr_for_muon(lr, p.shape)
