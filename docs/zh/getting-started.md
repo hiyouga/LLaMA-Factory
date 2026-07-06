@@ -64,7 +64,7 @@ pip install deepspeed
 
 ## 数据准备
 
-LLaMA Factory 支持多种数据格式，包括 JSON、JSONL、CSV 等。关于数据集文件的详细格式说明，请参考 [数据准备指南](data-preparation/data-processing.md)。
+LLaMA Factory 支持多种数据格式，包括 JSON、JSONL、CSV 等。关于数据集文件的详细格式说明，请参考 [数据准备指南](../../data/README_zh.md)。
 
 ### 使用内置数据集
 
@@ -75,7 +75,7 @@ LLaMA Factory 提供了多个内置数据集用于快速测试，您可以在 `d
 您可以使用 HuggingFace / ModelScope 上的数据集或加载本地数据集。
 
 > [!NOTE]
-> 使用自定义数据集或自定义数据集格式时，请参照 [数据处理指南](data-preparation/data-processing.md) 进行配置。如有必要，请重新实现自定义数据集的数据处理逻辑，包括对应的 `converter`。
+> 使用自定义数据集或自定义数据集格式时，请参照 [数据准备指南](../../data/README_zh.md) 进行配置。如有必要，请重新实现自定义数据集的数据处理逻辑，包括对应的 `converter`。
 
 ### 数据构建工具
 
