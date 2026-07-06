@@ -8,9 +8,8 @@ LLaMA Factory 是一个高效、灵活的大模型微调框架，支持 100+ 种
 |:---------------------:| ------------------ | ------------------ | ------------------ | ------------------ |
 |   指令监督微调 (SFT)   | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 |      DPO 训练          | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
-|   奖励模型训练 (RM)    | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 
-> **提示**: v1 版本目前支持 SFT、DPO 和 RM 三种训练方法，均支持多种加速特性，包括 DeepSpeed、FSDP、FlashAttention-2 等。
+> **提示**: v1 版本目前支持 SFT 和 DPO 两种训练方法，均支持多种加速特性，包括 DeepSpeed、FSDP、FlashAttention-2 等。
 
 ## 软件依赖
 
@@ -68,7 +67,7 @@ pip install unsloth
 
 ## 数据准备
 
-LLaMA Factory 支持多种数据格式，包括 JSON、JSONL、CSV 等。关于数据集文件的详细格式说明，请参考 [数据准备指南](data-preparation/README.md)。
+LLaMA Factory 支持多种数据格式，包括 JSON、JSONL、CSV 等。关于数据集文件的详细格式说明，请参考 [数据准备指南](../../data/README_zh.md)。
 
 ### 使用内置数据集
 
@@ -79,7 +78,7 @@ LLaMA Factory 提供了多个内置数据集用于快速测试，您可以在 `d
 您可以使用 HuggingFace / ModelScope 上的数据集或加载本地数据集。
 
 > [!NOTE]
-> 使用自定义数据集或自定义数据集格式时，请参照 [数据准备指南](data-preparation/README.md) 进行配置。如有必要，请重新实现自定义数据集的数据处理逻辑，包括对应的 `converter`。
+> 使用自定义数据集或自定义数据集格式时，请参照 [数据准备指南](../../data/README_zh.md) 进行配置。如有必要，请重新实现自定义数据集的数据处理逻辑，包括对应的 `converter`。
 
 ### 数据构建工具
 
@@ -145,7 +144,6 @@ llamafactory-cli chat --model_name_or_path path/to/your/model --template qwen
 
 - **SFT（指令微调）**: 最常用的方法，适用于大多数场景，通过监督数据训练模型
 - **DPO（直接偏好优化）**: 用于对齐人类偏好，提升模型输出质量，无需训练奖励模型
-- **RM（奖励模型）**: 训练奖励模型，用于评估模型输出质量，可作为DPO的前置步骤
 
 ### 3. 训练完成后如何评估模型？
 
