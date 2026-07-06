@@ -7,12 +7,9 @@ LLaMA Factory 是一个高效、灵活的大模型微调框架，支持 100+ 种
 |          方法          |     全参数训练      |    部分参数训练     |       LoRA         |       QLoRA        |
 |:---------------------:| ------------------ | ------------------ | ------------------ | ------------------ |
 |   指令监督微调 (SFT)   | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
-|     奖励模型训练 (RM)   | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 |      DPO 训练          | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
-|      PPO 训练          | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
-|   持续预训练 (CPT)     | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 
-> **提示**: 所有训练方法均支持多种加速特性，包括 DeepSpeed、FSDP、FlashAttention-2 等。
+> **提示**: v1 版本目前支持 SFT 和 DPO 两种训练方法，均支持多种加速特性，包括 DeepSpeed、FSDP、FlashAttention-2 等。
 
 ## 软件依赖
 
@@ -145,10 +142,8 @@ llamafactory-cli chat --model_name_or_path path/to/your/model --template qwen
 
 ### 2. 如何选择合适的训练方法？
 
-- **SFT（指令微调）**: 最常用的方法，适用于大多数场景
-- **DPO（直接偏好优化）**: 用于对齐人类偏好，提升模型输出质量
-- **PPO（近端策略优化）**: 经典的强化学习方法，适用于复杂对齐任务
-- **RM（奖励模型）**: 训练奖励模型，通常与 PPO 配合使用
+- **SFT（指令微调）**: 最常用的方法，适用于大多数场景，通过监督数据训练模型
+- **DPO（直接偏好优化）**: 用于对齐人类偏好，提升模型输出质量，无需训练奖励模型
 
 ### 3. 训练完成后如何评估模型？
 
