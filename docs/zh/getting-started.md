@@ -27,7 +27,7 @@ LLaMA Factory 是一个高效、灵活的大模型微调框架，支持 100+ 种
 |       可选项        | 至少     | 推荐     |
 |:----------------:|--------|--------|
 | CUDA(NVIDIA GPU) | 11.6   | 12.2   |
-|    deepspeed     | 0.18.4 | 0.18.4 |
+|    deepspeed     | 0.18.4 | 0.18.4   |
 |   flash-attn(NVIDIA GPU)   | 2.5.6  | 2.7.2  |
 
 
@@ -64,7 +64,7 @@ pip install deepspeed
 
 ## 数据准备
 
-LLaMA Factory 支持多种数据格式，包括 JSON、JSONL、CSV 等。关于数据集文件的详细格式说明，请参考 [数据准备指南](../../data/README_zh.md)。
+LLaMA Factory 支持多种数据格式，包括 JSON、JSONL、CSV 等。关于数据集文件的详细格式说明，请参考 [数据准备指南](data-preparation/data-processing.md)。
 
 ### 使用内置数据集
 
@@ -75,7 +75,7 @@ LLaMA Factory 提供了多个内置数据集用于快速测试，您可以在 `d
 您可以使用 HuggingFace / ModelScope 上的数据集或加载本地数据集。
 
 > [!NOTE]
-> 使用自定义数据集或自定义数据集格式时，请参照 [数据准备指南](../../data/README_zh.md) 进行配置。如有必要，请重新实现自定义数据集的数据处理逻辑，包括对应的 `converter`。
+> 使用自定义数据集或自定义数据集格式时，请参照 [数据处理指南](data-preparation/data-processing.md) 进行配置。如有必要，请重新实现自定义数据集的数据处理逻辑，包括对应的 `converter`。
 
 ### 数据构建工具
 
@@ -84,7 +84,7 @@ LLaMA Factory 提供了多个内置数据集用于快速测试，您可以在 `d
 - **[DataFlow](https://github.com/OpenDCAI/DataFlow)** - 高质量数据准备管道
 - **[GraphGen](https://github.com/open-sciencelab/GraphGen)** - 基于图的数据生成工具
 
-## 快速开始
+## 训练
 
 ### 命令行训练
 
@@ -107,44 +107,16 @@ llamafactory-cli webui
 
 在浏览器中打开 http://localhost:7860 即可开始使用。
 
-### 推理部署
-
-训练完成后，您可以使用以下命令部署模型：
-
-```bash
-# 使用 vLLM 后端进行高性能推理
-llamafactory-cli chat --model_name_or_path path/to/your/model --template qwen --infer_backend vllm
-
-# 使用 HuggingFace 后端进行推理
-llamafactory-cli chat --model_name_or_path path/to/your/model --template qwen
-```
-
 ## 进阶用法
 
-高级用法请参考 [进阶指南](./advanced/README.md)，包括：
-- 多卡多机分布式训练
-- LoRA/QLoRA 微调
-- 模型量化（AWQ/GPTQ/LLM.int8 等）
-- 各种加速特性（DeepSpeed、FSDP、FlashAttention 等）
-- 多模态模型微调
-
-## 常见问题
-
-### 1. 内存不足怎么办？
-
-- 使用 LoRA 或 QLoRA 代替全参数训练
-- 减小 `batch_size` 和 `cutoff_len`
-- 启用 `gradient_checkpointing`
-- 使用 DeepSpeed ZeRO-2 或 ZeRO-3
-
-### 2. 如何选择合适的训练方法？
-
-- **SFT（指令微调）**: 最常用的方法，适用于大多数场景，通过监督数据训练模型
-- **DPO（直接偏好优化）**: 用于对齐人类偏好，提升模型输出质量，无需训练奖励模型
+高级用法请参考以下文档：
+- [LoRA 与量化](advanced/lora-and-quantization/lora.md)
+- [分布式训练](advanced/distributed/fsdp.md)
+- [DeepSpeed](advanced/distributed/deepspeed.md)
+- [自定义内核](advanced/custom-kernels/triton.md)
 
 ## 获取帮助
 
 如果您在使用过程中遇到问题：
 - 查看 [GitHub Issues](https://github.com/hiyouga/LLaMA-Factory/issues)
 - 加入 [Discord 社区](https://discord.gg/rKfvV9r9FK)
-- 加入微信群（扫描二维码）
