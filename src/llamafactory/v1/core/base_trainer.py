@@ -27,7 +27,6 @@ Train Phase:
 
 """
 
-import os
 from abc import abstractmethod
 
 import torch
