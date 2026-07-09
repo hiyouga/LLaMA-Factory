@@ -34,7 +34,6 @@ _TINY_QWEN3 = "llamafactory/tiny-random-qwen3"
 
 def _make_renderer(model_id: str, processor=None, trust_remote_code: bool = False) -> Renderer:
     """Build a Renderer the way ModelEngine does -- with the model's config (for model_type)."""
-    config = AutoConfig.from_pretrained(model_id, trust_remote_code=trust_remote_code)
     if processor is None:
         processor = AutoTokenizer.from_pretrained(model_id)
     return Renderer(processor=processor)
