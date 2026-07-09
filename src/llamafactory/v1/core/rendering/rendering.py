@@ -47,9 +47,10 @@ def _render_messages(
     **kwargs,
 ) -> ModelInput:
     r"""Render messages using the model's own chat template.
+
     Note: ``position_ids`` are not produced here; ``process_samples`` assigns a 1-based range.
     """
-    
+
     tokenizer = get_tokenizer(processor)
     if not getattr(tokenizer, "chat_template", None):
         tokenizer.chat_template = _FALLBACK_CHATML_JINJA
