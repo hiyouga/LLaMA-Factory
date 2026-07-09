@@ -27,6 +27,7 @@ Train Phase:
 
 """
 
+import time
 import os
 from abc import abstractmethod
 
@@ -69,6 +70,10 @@ class BaseTrainer:
 
         # info
         self.global_step = 0
+        self.train_start_time = None
+        self.total_train_loss = 0.0
+        self.num_loss_steps = 0
+        self.total_flos = 0.0
 
         # cached variables
         self.device = DistributedInterface().current_device
@@ -233,9 +238,39 @@ class BaseTrainer:
         """Compute the scalar loss."""
         ...
 
+    def compute_flops(self, batch: BatchInput) -> float:
+        """Compute floating point operations for a batch.
+
+        Following HuggingFace Trainer convention:
+        FLOPS = 6 * num_tokens * num_parameters (excluding embeddings)
+
+        Args:
+            batch: The input batch containing input_ids or other input tensors.
+
+        Returns:
+            The number of floating-point operations.
+        """
+        # Get the main input tensor (input_ids for most models)
+        main_input = batch.get("input_ids")
+        if main_input is None:
+            # Try alternative input names
+            for key in ["inputs", "input", "tokens"]:
+                if key in batch:
+                    main_input = batch[key]
+                    break
+
+        if main_input is None or not hasattr(self.model, "num_parameters"):
+            return 0.0
+
+        # Calculate: 6 * num_tokens * num_parameters (excluding embeddings)
+        num_tokens = main_input.numel()
+        num_params = self.model.num_parameters(exclude_embeddings=True)
+        return 6.0 * num_tokens * num_params
+
     def fit(self) -> None:
         """Train the model."""
         self.model.train()
+        self.train_start_time = time.time()
         self.callback_handler.on_train_begin(self.args, self.state)
 
         epoch = self._resume_epoch
@@ -252,6 +287,7 @@ class BaseTrainer:
                 self.callback_handler.on_step_begin(self.args, self.state)
 
                 step_loss = 0
+                step_flos = 0.0
                 step_valid_tokens = compute_valid_tokens(micro_batches)
                 step_valid_tokens = DistributedInterface().all_reduce(step_valid_tokens, op=ReduceOp.SUM)
                 num_micro = len(micro_batches)
@@ -275,6 +311,9 @@ class BaseTrainer:
                     else:
                         loss.backward()
                     step_loss += loss.item()
+
+                    # Accumulate FLOPS for this micro-batch
+                    step_flos += self.compute_flops(micro_batch)
 
                 if self._deepspeed_engine is not None:
                     # deepspeed: engine.step() already ran inside backward at the sync boundary
@@ -308,6 +347,11 @@ class BaseTrainer:
                 self.state.grad_norm = grad_norm
                 self.state.learning_rate = current_lr
 
+                # Track loss and FLOPS for final metrics
+                self.total_train_loss += step_loss
+                self.num_loss_steps += 1
+                self.total_flos += step_flos
+
                 self.callback_handler.on_step_end(self.args, self.state)
 
                 # Logging: trainer decides when to log
@@ -332,13 +376,67 @@ class BaseTrainer:
                 if self.global_step >= self.num_training_steps:
                     logger.info_rank0(f"Reached max_steps ({self.num_training_steps}), stopping training.")
                     self.callback_handler.on_epoch_end(self.args, self.state)
+                    self._log_final_train_metrics()
                     self.callback_handler.on_train_end(self.args, self.state)
                     return
 
             self.callback_handler.on_epoch_end(self.args, self.state)
             epoch += 1
 
+        self._log_final_train_metrics()
         self.callback_handler.on_train_end(self.args, self.state)
+
+    def _log_final_train_metrics(self) -> None:
+        """Compute and log final training metrics similar to v0."""
+        if DistributedInterface().get_rank() != 0 or self.train_start_time is None:
+            return
+
+        train_runtime = time.time() - self.train_start_time
+        train_loss = self.total_train_loss / max(self.num_loss_steps, 1)
+
+        # Calculate samples per second
+        # global_batch_size may be None, so calculate it: DP size * micro_batch_size
+        global_batch_size = self.args.global_batch_size
+        if global_batch_size is None:
+            global_batch_size = self.dp_size * self.args.micro_batch_size
+
+        # Use num_loss_steps for accurate throughput in current session (handles checkpoint resume)
+        total_samples = self.num_loss_steps * global_batch_size
+        train_samples_per_second = total_samples / train_runtime if train_runtime > 0 else 0
+        train_steps_per_second = self.num_loss_steps / train_runtime if train_runtime > 0 else 0
+
+        # Format runtime as HH:MM:SS
+        hours = int(train_runtime // 3600)
+        minutes = int((train_runtime % 3600) // 60)
+        seconds = train_runtime % 60
+        runtime_str = f"{hours}:{minutes:02d}:{seconds:05.2f}"
+
+        # Calculate epoch: total steps / steps per epoch
+        steps_per_epoch = len(self.train_batch_generator)
+        final_epoch = self.global_step / steps_per_epoch if steps_per_epoch > 0 else self.args.num_train_epochs
+
+        # Format total_flos in GigaFLOPS (GF) like v0
+        total_flos_gf = int(self.total_flos / 1e9)
+
+        # Create metrics dict similar to v0
+        metrics = {
+            "train_runtime": int(train_runtime),
+            "train_samples_per_second": round(train_samples_per_second, 3),
+            "train_steps_per_second": round(train_steps_per_second, 3),
+            "train_loss": round(train_loss, 4),
+            "total_flos": f"{total_flos_gf}GF",
+            "epoch": round(final_epoch, 3),
+        }
+
+        # Log in the same format as v0
+        logger.info_rank0(f"{{'train_runtime': '{int(train_runtime)}', 'train_samples_per_second': '{train_samples_per_second:.3f}', 'train_steps_per_second': '{train_steps_per_second:.3f}', 'total_flos': '{total_flos_gf}GF', 'train_loss': '{train_loss:.4f}', 'epoch': '{metrics['epoch']}'}}")
+        logger.info_rank0("***** train metrics *****")
+        logger.info_rank0(f"  epoch                    = {metrics['epoch']:>11}")
+        logger.info_rank0(f"  total_flos               = {total_flos_gf:>10}GF")
+        logger.info_rank0(f"  train_loss               = {train_loss:>11.4f}")
+        logger.info_rank0(f"  train_runtime            = {runtime_str:>11}")
+        logger.info_rank0(f"  train_samples_per_second = {train_samples_per_second:>11.3f}")
+        logger.info_rank0(f"  train_steps_per_second   = {train_steps_per_second:>11.3f}")
 
     def save_model(self) -> None:
         """Save the model."""
