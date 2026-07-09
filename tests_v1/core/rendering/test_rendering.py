@@ -37,7 +37,7 @@ def _make_renderer(model_id: str, processor=None, trust_remote_code: bool = Fals
     config = AutoConfig.from_pretrained(model_id, trust_remote_code=trust_remote_code)
     if processor is None:
         processor = AutoTokenizer.from_pretrained(model_id)
-    return Renderer(processor=processor, config=config)
+    return Renderer(processor=processor)
 
 
 def _count_loss_regions(model_input: dict) -> int:
@@ -263,9 +263,6 @@ def test_escape_tool_call_non_dict_passthrough():
     assert out[0]["content"][0]["value"] == "[1, 2, 3]"
 
 
-# ----------------------------- diff-based labeling (no marker table) -----------------------------
-
-
 def test_diff_labeling_matches_canonical():
     """input_ids are the model's own canonical encoding; only the final assistant turn is labeled."""
     tokenizer: Processor = AutoTokenizer.from_pretrained(_TINY_QWEN3)
@@ -332,8 +329,7 @@ def test_data_engine_prefix_cuts():
     assert DataEngine._prefix_cuts({"chosen_messages": [], "rejected_messages": []}) == [None]
 
 
-# ----------------------------- escaping -----------------------------
-
+def test_escape_special():
     tokenizer = AutoTokenizer.from_pretrained(_TINY_QWEN3)
     specials = _special_token_strings(tokenizer)
     special_ids = {tid for tid, t in tokenizer.added_tokens_decoder.items() if getattr(t, "special", False)}
@@ -348,9 +344,6 @@ def test_data_engine_prefix_cuts():
     escaped = _escape_special(dirty, specials, special_ids, tokenizer)
     assert escaped != dirty
     assert not special_ids.intersection(tokenizer(escaped, add_special_tokens=False)["input_ids"])
-
-
-# ----------------------------- injection / weighting (text, tiny model) -----------------------------
 
 
 def test_render_messages_injection_neutralized():
@@ -396,7 +389,7 @@ def test_render_messages_loss_weight_zero():
 
 if __name__ == "__main__":
     """
-    python -m tests_v1.core.utils.test_rendering
+    python -m tests_v1.core.rendering.test_rendering
     """
     test_render_messages()
     test_render_messages_remote(16)
@@ -408,3 +401,4 @@ if __name__ == "__main__":
     test_diff_labeling_matches_canonical()
     test_process_samples_renders_last_turn()
     test_data_engine_prefix_cuts()
+    test_escape_special()

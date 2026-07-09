@@ -44,7 +44,7 @@ def _render_messages(
     messages: list[Message],
     tools: str | None = None,
     is_generate: bool = False,
-    enable_thinking: bool = False,
+    **kwargs,
 ) -> ModelInput:
     r"""Render messages using the model's own chat template.
 
@@ -56,6 +56,11 @@ def _render_messages(
     For training (``is_generate=False``) the LAST message must be the supervised assistant turn:
     its label span is located by a single prompt/full token diff -- no per-model role markers. For
     generation (``is_generate=True``) the generation prompt is appended and nothing is supervised.
+
+    Extra ``**kwargs`` (e.g. ``enable_thinking``) are forwarded verbatim to ``apply_chat_template``;
+    when unset the template's own defaults apply. ``kwargs`` must not contain ``tools``, ``tokenize``,
+    or ``add_generation_prompt`` -- those are managed here. Note ``enable_thinking`` is overridden to
+    ``True`` for a supervised assistant turn carrying reasoning (see below).
 
     Note: ``position_ids`` are not produced here; ``process_samples`` assigns a 1-based range.
     """
@@ -76,24 +81,23 @@ def _render_messages(
         try:
             tools_parsed = json.loads(tools)
         except json.JSONDecodeError as e:
-            raise ValueError(f"Invalid tools format: {tools}") from e
+            raise ValueError(f"tools is not valid JSON: {tools!r}") from e
         if not isinstance(tools_parsed, list):
             tools_parsed = [tools_parsed]
 
     # A supervised turn that carries reasoning MUST be rendered with thinking enabled: only then is
     # the generation prompt a bare role header (and hence a clean prefix of the rendered turn). With
     # thinking disabled the template injects an empty ``<think></think>`` into the generation prompt
-    # while the real turn renders its actual reasoning, which would break the prompt/full diff.
+    # while the real turn renders its actual reasoning, which would break the prompt/full diff. This
+    # overrides any caller-supplied ``enable_thinking`` -- it is a correctness invariant, not a
+    # preference. The same ``kwargs`` is shared by both the full and the prompt encodings below, so
+    # the two stay consistent (a prerequisite for diff-based labeling).
     if not is_generate and hf_messages and hf_messages[-1].get("reasoning_content"):
-        enable_thinking = True
-
-    template_kwargs = {}
-    if enable_thinking is not None:
-        template_kwargs["enable_thinking"] = enable_thinking
+        kwargs["enable_thinking"] = True
 
     def _encode(msgs: list[dict], add_generation_prompt: bool) -> list[int]:
         text = tokenizer.apply_chat_template(
-            msgs, tokenize=False, add_generation_prompt=add_generation_prompt, tools=tools_parsed, **template_kwargs
+            msgs, tokenize=False, add_generation_prompt=add_generation_prompt, tools=tools_parsed, **kwargs
         )
         return tokenizer(text, add_special_tokens=False)["input_ids"]
 
@@ -131,7 +135,7 @@ def _render_messages(
     supervised = weight > 1e-6
     labels = [IGNORE_INDEX] * len(prompt_ids)
     loss_weights = [0.0] * len(prompt_ids)
-    for tid in input_ids[len(prompt_ids):]:
+    for tid in input_ids[len(prompt_ids) :]:
         labels.append(tid if supervised else IGNORE_INDEX)
         loss_weights.append(weight)
 
@@ -144,10 +148,7 @@ def _render_messages(
 
 
 class Renderer:
-    def __init__(self, processor: Processor, config=None):
-        # ``config`` is accepted for call-site compatibility (ModelEngine passes the model config)
-        # but is no longer needed: supervision is located by a prompt/full diff, not a per-model
-        # marker table, so the renderer is model-agnostic.
+    def __init__(self, processor: Processor):
         self.processor = processor
 
     def render_messages(
@@ -155,7 +156,7 @@ class Renderer:
         messages: list[Message],
         tools: str | None = None,
         is_generate: bool = False,
-        enable_thinking: bool = False,
+        **kwargs,
     ) -> ModelInput:
         """Render messages to model input using apply_chat_template.
 
@@ -164,7 +165,9 @@ class Renderer:
                 assistant turn (use ``process_samples`` to split multi-turn conversations).
             tools: JSON string of tool definitions.
             is_generate: Whether to render for generation (adds generation prompt, no supervision).
-            enable_thinking: Whether to enable thinking mode (passed as template kwarg).
+            **kwargs: Extra chat-template kwargs (e.g. ``enable_thinking``) forwarded verbatim to
+                ``apply_chat_template``; unset ones fall back to the template's own defaults. A
+                supervised assistant turn carrying reasoning forces ``enable_thinking=True``.
 
         Returns:
             ModelInput with input_ids, attention_mask, labels, and loss_weights.
@@ -174,7 +177,7 @@ class Renderer:
             messages,
             tools,
             is_generate,
-            enable_thinking=enable_thinking,
+            **kwargs,
         )
 
     def process_samples(self, samples: list[Sample]) -> list[ModelInput]:
