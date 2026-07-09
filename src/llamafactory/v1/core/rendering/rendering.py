@@ -37,6 +37,7 @@ from ...utils.helper import get_tokenizer
 from ...utils.types import Message, ModelInput, Processor, Sample
 from .escape import _escape_special, _escape_special_in_messages, _special_token_strings
 from .format import _FALLBACK_CHATML_JINJA, _to_hf_messages
+from ...config.arg_utils import TemplateKwargs
 
 
 def _render_messages(
@@ -71,10 +72,8 @@ def _render_messages(
             raise ValueError(f"tools is not valid JSON: {tools!r}") from e
         if not isinstance(tools_parsed, list):
             tools_parsed = [tools_parsed]
-
     if not is_generate and hf_messages and hf_messages[-1].get("reasoning_content"):
         kwargs["enable_thinking"] = True
-
     def _encode(msgs: list[dict], add_generation_prompt: bool) -> list[int]:
         text = tokenizer.apply_chat_template(
             msgs, tokenize=False, add_generation_prompt=add_generation_prompt, tools=tools_parsed, **kwargs
@@ -128,8 +127,9 @@ def _render_messages(
 
 
 class Renderer:
-    def __init__(self, processor: Processor):
+    def __init__(self, processor: Processor, template_kwargs: TemplateKwargs) -> None:
         self.processor = processor
+        self.template_kwargs = template_kwargs
 
     def render_messages(
         self,
@@ -152,12 +152,13 @@ class Renderer:
         Returns:
             ModelInput with input_ids, attention_mask, labels, and loss_weights.
         """
+        kwargs.update(self.template_kwargs)
         return _render_messages(
             self.processor,
             messages,
             tools,
             is_generate,
-            **kwargs,
+            **kwargs
         )
 
     def process_samples(self, samples: list[Sample]) -> list[ModelInput]:

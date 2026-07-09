@@ -67,7 +67,7 @@ class ModelEngine:
         self._sync_chat_template()
         self.model_config = self._init_model_config()
         """Model configuration."""
-        self.renderer = Renderer(self.processor)
+        self.renderer = Renderer(self.processor, template_kwargs=model_args.template_kwargs)
         """Renderer."""
         self._dist_config = DistributedInterface().dist_config
         self._deepspeed_zero3_plugin = None

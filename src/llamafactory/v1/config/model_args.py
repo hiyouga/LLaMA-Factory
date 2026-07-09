@@ -16,7 +16,7 @@
 from dataclasses import dataclass, field
 
 from ..utils.types import AttentionFunction
-from .arg_utils import ModelClass, PluginConfig, get_plugin_config
+from .arg_utils import ModelClass, PluginConfig, TemplateKwargs, get_plugin_config, get_template_kwargs
 
 
 @dataclass
@@ -28,6 +28,10 @@ class ModelArguments:
     custom_chat_template: str | None = field(
         default=None,
         metadata={"help": "Custom Jinja2 chat template string. Overrides the model's built-in template."},
+    )
+    template_kwargs: TemplateKwargs = field(
+        default=None,
+        metadata={"help": "Extra kwargs to pass to the rendering,such as `enable_thinking`."},
     )
     trust_remote_code: bool = field(
         default=False,
@@ -71,3 +75,4 @@ class ModelArguments:
         self.peft_config = get_plugin_config(self.peft_config)
         self.kernel_config = get_plugin_config(self.kernel_config)
         self.quant_config = get_plugin_config(self.quant_config)
+        self.template_kwargs = get_template_kwargs(self.template_kwargs)

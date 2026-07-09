@@ -35,6 +35,10 @@ class PluginConfig(dict):
 PluginArgument = PluginConfig | dict | str | None
 
 
+class TemplateKwargs(dict):
+    """Dictionary that allows attribute access."""
+
+
 @unique
 class ModelClass(StrEnum):
     """Auto class for model config."""
@@ -101,3 +105,27 @@ def get_plugin_config(config: PluginArgument) -> PluginConfig | None:
         raise ValueError("Plugin configuration must have a 'name' field.")
 
     return PluginConfig(config)
+
+
+def get_template_kwargs(kwargs: TemplateKwargs | str | dict | None) -> TemplateKwargs:
+
+    allow_keys = ["enable_thinking"]
+    if kwargs is None:
+        return TemplateKwargs()
+    if isinstance(kwargs, str):
+        if kwargs.startswith("{"):
+            kwargs = json.loads(kwargs)
+        else:
+            raise ValueError(f"template_kwargs must be a dict or JSON string, got: {kwargs}!")
+
+    if not isinstance(kwargs, dict):
+        raise TypeError(f"template_kwargs must be a dict or JSON string, got {type(kwargs).__name__}")
+
+    invalid_keys = [key for key in kwargs if key not in allow_keys]
+    if invalid_keys:
+        raise ValueError(
+            f"TemplateKwargs only allow fields: {allow_keys}, got invalid: {invalid_keys}"
+        )
+
+    kwargs = _convert_str_dict(kwargs)
+    return TemplateKwargs(kwargs)
