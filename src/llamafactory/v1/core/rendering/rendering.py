@@ -47,21 +47,6 @@ def _render_messages(
     **kwargs,
 ) -> ModelInput:
     r"""Render messages using the model's own chat template.
-
-    User-controlled literal text (``text``/``reasoning`` values, ``tool_call`` arg values, and
-    ``tools`` definitions) is escaped first so any control token written literally by the user is
-    neutralized -- this is a no-op for normal data. The escaped conversation is rendered and
-    tokenized, and the token ids are used verbatim.
-
-    For training (``is_generate=False``) the LAST message must be the supervised assistant turn:
-    its label span is located by a single prompt/full token diff -- no per-model role markers. For
-    generation (``is_generate=True``) the generation prompt is appended and nothing is supervised.
-
-    Extra ``**kwargs`` (e.g. ``enable_thinking``) are forwarded verbatim to ``apply_chat_template``;
-    when unset the template's own defaults apply. ``kwargs`` must not contain ``tools``, ``tokenize``,
-    or ``add_generation_prompt`` -- those are managed here. Note ``enable_thinking`` is overridden to
-    ``True`` for a supervised assistant turn carrying reasoning (see below).
-
     Note: ``position_ids`` are not produced here; ``process_samples`` assigns a 1-based range.
     """
     tokenizer = get_tokenizer(processor)
@@ -85,13 +70,6 @@ def _render_messages(
         if not isinstance(tools_parsed, list):
             tools_parsed = [tools_parsed]
 
-    # A supervised turn that carries reasoning MUST be rendered with thinking enabled: only then is
-    # the generation prompt a bare role header (and hence a clean prefix of the rendered turn). With
-    # thinking disabled the template injects an empty ``<think></think>`` into the generation prompt
-    # while the real turn renders its actual reasoning, which would break the prompt/full diff. This
-    # overrides any caller-supplied ``enable_thinking`` -- it is a correctness invariant, not a
-    # preference. The same ``kwargs`` is shared by both the full and the prompt encodings below, so
-    # the two stay consistent (a prerequisite for diff-based labeling).
     if not is_generate and hf_messages and hf_messages[-1].get("reasoning_content"):
         kwargs["enable_thinking"] = True
 
