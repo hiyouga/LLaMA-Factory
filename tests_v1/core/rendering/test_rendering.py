@@ -18,7 +18,6 @@ import pytest
 from transformers import AutoTokenizer
 
 from llamafactory.v1.config import DataArguments
-from llamafactory.v1.config.arg_utils import TemplateKwargs
 from llamafactory.v1.core.data_engine import DataEngine
 from llamafactory.v1.core.rendering import Renderer
 from llamafactory.v1.core.rendering.escape import (
@@ -33,13 +32,11 @@ from llamafactory.v1.utils.types import Processor
 _TINY_QWEN3 = "llamafactory/tiny-random-qwen3"
 
 
-def _make_renderer(model_id: str, processor=None, template_kwargs=None, trust_remote_code: bool = False) -> Renderer:
+def _make_renderer(model_id: str, processor=None, trust_remote_code: bool = False) -> Renderer:
     """Build a Renderer the way ModelEngine does -- with the model's config (for model_type)."""
     if processor is None:
         processor = AutoTokenizer.from_pretrained(model_id, trust_remote_code=trust_remote_code)
-    if template_kwargs is None:
-        template_kwargs = TemplateKwargs()
-    return Renderer(processor=processor, template_kwargs=template_kwargs)
+    return Renderer(processor=processor)
 
 
 def _count_loss_regions(model_input: dict) -> int:

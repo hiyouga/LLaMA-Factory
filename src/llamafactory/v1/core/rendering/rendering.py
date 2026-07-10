@@ -37,7 +37,6 @@ from ...utils.helper import get_tokenizer
 from ...utils.types import Message, ModelInput, Processor, Sample
 from .escape import _escape_special, _escape_special_in_messages, _special_token_strings
 from .format import _FALLBACK_CHATML_JINJA, _to_hf_messages
-from ...config.arg_utils import TemplateKwargs
 
 
 def _render_messages(
@@ -127,9 +126,9 @@ def _render_messages(
 
 
 class Renderer:
-    def __init__(self, processor: Processor, template_kwargs: TemplateKwargs) -> None:
+    def __init__(self, processor: Processor, **kwargs) -> None:
         self.processor = processor
-        self.template_kwargs = template_kwargs
+        self.template_kwargs = kwargs
 
     def render_messages(
         self,
