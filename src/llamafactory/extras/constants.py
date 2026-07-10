@@ -133,6 +133,7 @@ class AttentionFunction(StrEnum):
     SDPA = "sdpa"
     FA2 = "fa2"
     FA3 = "fa3"
+    FA4 = "fa4"
 
 
 class EngineName(StrEnum):
