@@ -126,9 +126,8 @@ def _render_messages(
 
 
 class Renderer:
-    def __init__(self, processor: Processor, **kwargs) -> None:
+    def __init__(self, processor: Processor) -> None:
         self.processor = processor
-        self.template_kwargs = kwargs
 
     def render_messages(
         self,
@@ -151,7 +150,6 @@ class Renderer:
         Returns:
             ModelInput with input_ids, attention_mask, labels, and loss_weights.
         """
-        kwargs.update(self.template_kwargs)
         return _render_messages(
             self.processor,
             messages,

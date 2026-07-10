@@ -29,10 +29,6 @@ class ModelArguments:
         default=None,
         metadata={"help": "Custom Jinja2 chat template string. Overrides the model's built-in template."},
     )
-    enable_thinking: bool | None = field(
-        default=None,
-        metadata={"help": "Enable thinking or not for rendering."},
-    )
     trust_remote_code: bool = field(
         default=False,
         metadata={"help": "Trust remote code from Hugging Face."},
