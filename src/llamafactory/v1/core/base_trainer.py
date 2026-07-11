@@ -279,12 +279,34 @@ class BaseTrainer:
                     # deepspeed: engine.step() already ran inside backward at the sync boundary
                     grad_norm = self._deepspeed_engine.get_grad_norm()
                 else:
-                    grad_norm = torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.args.max_grad_norm).item()
+                    # FSDP2 shards params/grads as DTensors across the fsdp mesh, so each rank only
+                    # holds 1/shard_size of every parameter. `get_total_norm`/`clip_grad_norm_`
+                    # return a *per-rank local shard* norm and `.item()` reads only that local
+                    # partial (== global_norm / sqrt(shard_size)). Using it directly makes the
+                    # reported grad_norm scale as 1/sqrt(dp_size) (e.g. 8xdp mbs1 vs 4xdp mbs2
+                    # differ by sqrt(2)), and -- worse -- makes `clip_grad_norm_` apply the clip
+                    # coefficient per-shard, corrupting the update once clipping is actually on.
+                    # Fix: reduce to the true global norm first (full_tensor all-reduces across the
+                    # fsdp shard mesh), then clip with that scalar via clip_grads_with_norm_.
+                    from torch.distributed.tensor import DTensor
 
-                    if self.args.dist_config and self.args.dist_config.get("cp_size", 1) > 1:
-                        grad_norm = grad_norm**2
-                        grad_norm = DistributedInterface().all_reduce(grad_norm, op=ReduceOp.SUM, dim=Dim.CP)
-                        grad_norm = grad_norm**0.5
+                    grads = [p.grad for p in self.model.parameters() if p.grad is not None]
+                    total_norm = torch.nn.utils.get_total_norm(grads)
+                    if isinstance(total_norm, DTensor):
+                        # full_tensor already all-reduces across the whole fsdp shard mesh. With the
+                        # default mp_shard_size = world_size this mesh spans CP too, so FSDP's
+                        # reduce-scatter has already summed grads across CP -- no separate CP
+                        # reduction is wanted (it would over-count grad_norm by sqrt(cp_size) and
+                        # also skew the clip coefficient below). CP-on and CP-off both report the
+                        # true global norm this way.
+                        total_norm = total_norm.full_tensor()
+                    # pass the (replicated) global norm as a Tensor -- clip_grads_with_norm_ does
+                    # torch.clamp(max_norm / (total_norm + 1e-6), max=1.0), which rejects a bare
+                    # python float. .item() for reporting only, after clipping.
+                    torch.nn.utils.clip_grads_with_norm_(
+                        self.model.parameters(), self.args.max_grad_norm, total_norm
+                    )
+                    grad_norm = total_norm.item()
 
                     if not torch.isfinite(torch.tensor(grad_norm)):  # type: ignore # pyright: ignore [reportUnknownReturnType]
                         logger.warning_rank0(f"Gradient norm is not finite: {grad_norm}")
