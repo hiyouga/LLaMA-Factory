@@ -13,9 +13,46 @@
 # limitations under the License.
 
 import os
+import re
 import subprocess
 import sys
 from copy import deepcopy
+
+
+def _validate_env_int(value: str, name: str) -> str:
+    """Validate that an environment variable value is a safe non-negative integer string."""
+    if not re.fullmatch(r"\d+", value):
+        raise ValueError(f"Invalid value for {name}: {value!r}. Expected a non-negative integer.")
+    return value
+
+
+def _validate_env_host(value: str, name: str) -> str:
+    """Validate that an environment variable value is a safe hostname or IP address."""
+    if not re.fullmatch(r"[A-Za-z0-9._\-]+", value):
+        raise ValueError(f"Invalid value for {name}: {value!r}. Expected a safe hostname or IP address.")
+    return value
+
+
+def _validate_env_rdzv_id(value: str, name: str) -> str:
+    """Validate that a rendezvous ID contains only safe alphanumeric characters."""
+    if not re.fullmatch(r"[A-Za-z0-9._\-]+", value):
+        raise ValueError(f"Invalid value for {name}: {value!r}. Expected alphanumeric characters only.")
+    return value
+
+
+def _sanitize_subprocess_args(args: "list[str]") -> "list[str]":
+    """Sanitize a list of CLI arguments before passing them to subprocess.
+
+    Rejects any argument containing null bytes, which can truncate argument
+    strings in some runtimes and lead to unexpected behaviour.
+    """
+    _dangerous = re.compile(r"[\x00]")
+    sanitized = []
+    for arg in args:
+        if _dangerous.search(arg):
+            raise ValueError(f"Argument contains disallowed characters: {arg!r}")
+        sanitized.append(arg)
+    return sanitized
 
 
 USAGE = (
@@ -61,20 +98,23 @@ def launch():
         is_env_enabled("FORCE_TORCHRUN") or (get_device_count() > 1 and not use_ray() and not use_kt())
     ):
         # launch distributed training
-        nnodes = os.getenv("NNODES", "1")
-        node_rank = os.getenv("NODE_RANK", "0")
-        nproc_per_node = os.getenv("NPROC_PER_NODE", str(get_device_count()))
-        master_addr = os.getenv("MASTER_ADDR", "127.0.0.1")
-        master_port = os.getenv("MASTER_PORT", str(find_available_port()))
+        nnodes = _validate_env_int(os.getenv("NNODES", "1"), "NNODES")
+        node_rank = _validate_env_int(os.getenv("NODE_RANK", "0"), "NODE_RANK")
+        nproc_per_node = _validate_env_int(os.getenv("NPROC_PER_NODE", str(get_device_count())), "NPROC_PER_NODE")
+        master_addr = _validate_env_host(os.getenv("MASTER_ADDR", "127.0.0.1"), "MASTER_ADDR")
+        master_port = _validate_env_int(os.getenv("MASTER_PORT", str(find_available_port())), "MASTER_PORT")
         logger.info_rank0(f"Initializing {nproc_per_node} distributed tasks at: {master_addr}:{master_port}")
         if int(nnodes) > 1:
             logger.info_rank0(f"Multi-node training enabled: num nodes: {nnodes}, node rank: {node_rank}")
 
         # elastic launch support
-        max_restarts = os.getenv("MAX_RESTARTS", "0")
-        rdzv_id = os.getenv("RDZV_ID")
-        min_nnodes = os.getenv("MIN_NNODES")
-        max_nnodes = os.getenv("MAX_NNODES")
+        max_restarts = _validate_env_int(os.getenv("MAX_RESTARTS", "0"), "MAX_RESTARTS")
+        rdzv_id_raw = os.getenv("RDZV_ID")
+        rdzv_id = _validate_env_rdzv_id(rdzv_id_raw, "RDZV_ID") if rdzv_id_raw is not None else None
+        min_nnodes_raw = os.getenv("MIN_NNODES")
+        min_nnodes = _validate_env_int(min_nnodes_raw, "MIN_NNODES") if min_nnodes_raw is not None else None
+        max_nnodes_raw = os.getenv("MAX_NNODES")
+        max_nnodes = _validate_env_int(max_nnodes_raw, "MAX_NNODES") if max_nnodes_raw is not None else None
 
         env = deepcopy(os.environ)
         if is_env_enabled("OPTIM_TORCH", "1"):
@@ -90,43 +130,33 @@ def launch():
             if min_nnodes is not None and max_nnodes is not None:
                 rdzv_nnodes = f"{min_nnodes}:{max_nnodes}"
 
+            # NOTE: DO NOT USE shell=True to avoid security risk; pass args as a list to prevent injection
             process = subprocess.run(
-                (
-                    "torchrun --nnodes {rdzv_nnodes} --nproc-per-node {nproc_per_node} "
-                    "--rdzv-id {rdzv_id} --rdzv-backend c10d --rdzv-endpoint {master_addr}:{master_port} "
-                    "--max-restarts {max_restarts} {file_name} {args}"
-                )
-                .format(
-                    rdzv_nnodes=rdzv_nnodes,
-                    nproc_per_node=nproc_per_node,
-                    rdzv_id=rdzv_id,
-                    master_addr=master_addr,
-                    master_port=master_port,
-                    max_restarts=max_restarts,
-                    file_name=__file__,
-                    args=" ".join(sys.argv[1:]),
-                )
-                .split(),
+                [
+                    "torchrun",
+                    "--nnodes", rdzv_nnodes,
+                    "--nproc-per-node", nproc_per_node,
+                    "--rdzv-id", rdzv_id,
+                    "--rdzv-backend", "c10d",
+                    "--rdzv-endpoint", f"{master_addr}:{master_port}",
+                    "--max-restarts", max_restarts,
+                    __file__,
+                ] + _sanitize_subprocess_args(sys.argv[1:]),
                 env=env,
                 check=True,
             )
         else:
-            # NOTE: DO NOT USE shell=True to avoid security risk
+            # NOTE: DO NOT USE shell=True to avoid security risk; pass args as a list to prevent injection
             process = subprocess.run(
-                (
-                    "torchrun --nnodes {nnodes} --node_rank {node_rank} --nproc_per_node {nproc_per_node} "
-                    "--master_addr {master_addr} --master_port {master_port} {file_name} {args}"
-                )
-                .format(
-                    nnodes=nnodes,
-                    node_rank=node_rank,
-                    nproc_per_node=nproc_per_node,
-                    master_addr=master_addr,
-                    master_port=master_port,
-                    file_name=__file__,
-                    args=" ".join(sys.argv[1:]),
-                )
-                .split(),
+                [
+                    "torchrun",
+                    "--nnodes", nnodes,
+                    "--node_rank", node_rank,
+                    "--nproc_per_node", nproc_per_node,
+                    "--master_addr", master_addr,
+                    "--master_port", master_port,
+                    __file__,
+                ] + _sanitize_subprocess_args(sys.argv[1:]),
                 env=env,
                 check=True,
             )
