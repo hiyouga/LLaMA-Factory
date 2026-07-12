@@ -12,34 +12,39 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING
 
-from ....accelerator.helper import DeviceType, get_current_accelerator
 from ....utils.plugin import ensure_methods_implemented
-from ....utils.types import HFModel
 
 
-class BaseKernel(ABC):
-    """Template base for concrete kernel implementations."""
+if TYPE_CHECKING:
+    import torch
 
-    _device: DeviceType | list[DeviceType]
+    from ....utils.types import HFModel, Processor
+
+
+class BaseDistributed(ABC):
+    """Contract for distributed backend method groups."""
 
     def __init_subclass__(cls, **kwargs) -> None:
         super().__init_subclass__(**kwargs)
         ensure_methods_implemented(cls)
 
-    @classmethod
-    def check_deps(cls) -> None:
-        supported = cls._device if isinstance(cls._device, list) else [cls._device]
-        current = get_current_accelerator().type
-        if current not in supported:
-            raise RuntimeError(f"Kernel {cls.__name__!r} requires {supported}, current accelerator is {current}.")
-
-    @classmethod
-    def apply(cls, **kwargs) -> HFModel:
-        cls.check_deps()
-        return cls._apply(**kwargs)
-
-    @classmethod
+    @staticmethod
     @abstractmethod
-    def _apply(cls, **kwargs) -> HFModel: ...
+    def shard_model(model: HFModel, dist_config: object, **kwargs) -> object: ...
+
+    @staticmethod
+    @abstractmethod
+    def save_model(model: HFModel, output_dir: str, processor: Processor) -> None: ...
+
+    @staticmethod
+    @abstractmethod
+    def save_checkpoint(model: HFModel, optimizer: torch.optim.Optimizer, ckpt_dir: str, **kwargs) -> None: ...
+
+    @staticmethod
+    @abstractmethod
+    def load_checkpoint(model: HFModel, optimizer: torch.optim.Optimizer, ckpt_dir: str, **kwargs) -> None: ...

@@ -4,7 +4,6 @@ model_class: llm
 
 kernel_config:
     name: auto
-    include_kernels: auto
 
 dist_config:
     name: deepspeed

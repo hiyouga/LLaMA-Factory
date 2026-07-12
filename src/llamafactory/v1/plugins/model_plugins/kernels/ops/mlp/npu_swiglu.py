@@ -28,7 +28,6 @@ import torch
 from ......accelerator.helper import DeviceType
 from ......utils.types import HFModel
 from ...base import BaseKernel
-from ...registry import register_kernel
 
 
 try:
@@ -86,7 +85,6 @@ def _npu_swiglu_gemma3ntext_forward(self, hidden_states):
     return down_proj
 
 
-@register_kernel
 class NpuSwiGluKernel(BaseKernel):
     """NPU Kernel for fused SwiGLU activation."""
 
@@ -125,7 +123,7 @@ class NpuSwiGluKernel(BaseKernel):
     _device = DeviceType.NPU
 
     @classmethod
-    def apply(cls, **kwargs) -> "HFModel":
+    def _apply(cls, **kwargs) -> "HFModel":
         """Applies the NPU fused SwiGLU kernel to the model.
 
         Args:
@@ -141,9 +139,6 @@ class NpuSwiGluKernel(BaseKernel):
         model = kwargs.get("model", None)
         if model is None:
             raise ValueError(f"HFModel instance is required for {cls.__name__}.")
-
-        if not cls.check_deps():
-            raise RuntimeError("torch_npu is not available but NpuSwiGluKernel was called.")
 
         # Mapping of specific mlp modules to their corresponding kernel implementations
         kernel_mapping = {

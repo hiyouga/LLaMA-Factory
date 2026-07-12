@@ -36,7 +36,6 @@ from ......accelerator.helper import DeviceType
 from ......utils.packages import is_transformers_version_greater_than
 from ......utils.types import HFModel
 from ...base import BaseKernel
-from ...registry import register_kernel
 
 
 class GmmFunction(torch.autograd.Function):
@@ -334,7 +333,6 @@ else:
     }
 
 
-@register_kernel
 class NpuFusedMoEKernel(BaseKernel):
     """NPU Fused MoE Kernel implementation."""
 
@@ -342,7 +340,7 @@ class NpuFusedMoEKernel(BaseKernel):
     _device = DeviceType.NPU
 
     @classmethod
-    def apply(cls, **kwargs) -> HFModel:
+    def _apply(cls, **kwargs) -> HFModel:
         """Applies the NPU fused MoE kernel to the model.
 
         Args:
@@ -358,9 +356,6 @@ class NpuFusedMoEKernel(BaseKernel):
         model = kwargs.get("model", None)
         if model is None:
             raise ValueError(f"HFModel instance is required for {cls.__name__}.")
-
-        if not cls.check_deps():
-            raise RuntimeError("torch_npu is not available but NpuMoEFusedMoEKernel was called.")
 
         archs = getattr(model.config, "architectures", None) or []
         target_moe_mapping = None

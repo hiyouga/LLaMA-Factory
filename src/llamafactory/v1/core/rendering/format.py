@@ -52,12 +52,8 @@ def _to_hf_messages(messages: list[Message]) -> list[dict]:
                 except json.JSONDecodeError as e:
                     raise ValueError(f"tool_call value is not valid JSON: {content['value']!r}") from e
                 if not isinstance(tc, dict) or "name" not in tc or "arguments" not in tc:
-                    raise ValueError(
-                        f"tool_call must be a JSON object with 'name' and 'arguments' keys, got {tc!r}"
-                    )
-                tool_calls.append(
-                    {"type": "function", "function": {"name": tc["name"], "arguments": tc["arguments"]}}
-                )
+                    raise ValueError(f"tool_call must be a JSON object with 'name' and 'arguments' keys, got {tc!r}")
+                tool_calls.append({"type": "function", "function": {"name": tc["name"], "arguments": tc["arguments"]}})
         hf_msg = {"role": message["role"], "content": text}
 
         if tool_calls:
@@ -67,4 +63,3 @@ def _to_hf_messages(messages: list[Message]) -> list[dict]:
 
         hf_messages.append(hf_msg)
     return hf_messages
-

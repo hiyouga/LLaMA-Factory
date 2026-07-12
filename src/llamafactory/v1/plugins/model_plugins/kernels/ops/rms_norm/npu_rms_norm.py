@@ -29,7 +29,6 @@ import torch.nn.functional as F
 from ......accelerator.helper import DeviceType
 from ......utils.types import HFModel
 from ...base import BaseKernel
-from ...registry import register_kernel
 
 
 try:
@@ -118,7 +117,6 @@ def npu_gated_rms_norm_forward(self, hidden_states, gate=None):
     return hidden_states.to(input_dtype)
 
 
-@register_kernel
 class NpuRMSNormKernel(BaseKernel):
     """NPU kernel wrapper for RMSNorm that applies the replacement within a model."""
 
@@ -126,7 +124,7 @@ class NpuRMSNormKernel(BaseKernel):
     _device = DeviceType.NPU
 
     @classmethod
-    def apply(cls, **kwargs) -> "HFModel":
+    def _apply(cls, **kwargs) -> "HFModel":
         """Iterate the model and apply NPU-optimized forward to matched RMSNorm modules.
 
         Matches modules whose class name contains "RMSNorm" (case-insensitive) and binds
@@ -146,9 +144,6 @@ class NpuRMSNormKernel(BaseKernel):
         model = kwargs.get("model")
         if model is None:
             raise ValueError(f"HFModel instance is required for {cls.__name__}.")
-
-        if not cls.check_deps():
-            raise RuntimeError(f"torch_npu is not available but {cls.__name__} was called.")
 
         rms_norm_pattern = re.compile("RMSNorm", re.IGNORECASE)
 

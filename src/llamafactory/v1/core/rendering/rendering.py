@@ -50,7 +50,6 @@ def _render_messages(
 
     Note: ``position_ids`` are not produced here; ``process_samples`` assigns a 1-based range.
     """
-
     tokenizer = get_tokenizer(processor)
     if not getattr(tokenizer, "chat_template", None):
         tokenizer.chat_template = _FALLBACK_CHATML_JINJA
@@ -73,6 +72,7 @@ def _render_messages(
             tools_parsed = [tools_parsed]
     if not is_generate and hf_messages and hf_messages[-1].get("reasoning_content"):
         kwargs["enable_thinking"] = True
+
     def _encode(msgs: list[dict], add_generation_prompt: bool) -> list[int]:
         text = tokenizer.apply_chat_template(
             msgs, tokenize=False, add_generation_prompt=add_generation_prompt, tools=tools_parsed, **kwargs
@@ -150,13 +150,7 @@ class Renderer:
         Returns:
             ModelInput with input_ids, attention_mask, labels, and loss_weights.
         """
-        return _render_messages(
-            self.processor,
-            messages,
-            tools,
-            is_generate,
-            **kwargs
-        )
+        return _render_messages(self.processor, messages, tools, is_generate, **kwargs)
 
     def process_samples(self, samples: list[Sample]) -> list[ModelInput]:
         """Process samples to model input.

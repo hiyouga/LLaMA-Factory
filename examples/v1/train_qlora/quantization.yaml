@@ -13,7 +13,6 @@ peft_config:
 # Kernel Config
 kernel_config:
   name: auto
-  include_kernels: auto
 
 # FSDP Config
 dist_config:

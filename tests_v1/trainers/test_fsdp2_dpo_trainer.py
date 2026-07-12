@@ -33,7 +33,6 @@ template: qwen3_nothink
 
 kernel_config:
     name: auto
-    include_kernels: auto
 
 quant_config: null
 
