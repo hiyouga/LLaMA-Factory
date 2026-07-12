@@ -1,7 +1,6 @@
 model: Qwen/Qwen3-4B
 model_class: llm
 
-
 # PEFT Configuration
 peft_config:
   name: lora
