@@ -16,12 +16,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...utils import logging
-from ...utils.plugin import BasePlugin
+from ....utils import logging
+from ....utils.plugin import BasePlugin
 
 if TYPE_CHECKING:
-    from ...config.arg_utils import PluginConfig
-    from ...utils.types import HFModel
+    from ....config.arg_utils import PluginConfig
+    from ....utils.types import HFModel
 
 
 logger = logging.get_logger(__name__)

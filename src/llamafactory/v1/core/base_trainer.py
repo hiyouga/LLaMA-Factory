@@ -196,7 +196,7 @@ class BaseTrainer:
             _trainable_params = [p for p in self.model.parameters() if p.requires_grad]
             self.optimizer = torch.optim.AdamW(_trainable_params, lr=self.args.learning_rate)
         else:
-            from ..plugins.trainer_plugins.optimizer import OptimizerPlugin
+            from ..plugins.trainer_plugins.optimizers.optimizer import OptimizerPlugin
 
             self.optimizer = OptimizerPlugin(self.args.optim_config.name)(self.model, self.args.optim_config)
 
