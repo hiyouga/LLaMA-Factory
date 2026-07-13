@@ -1,4 +1,4 @@
-# Copyright 2025 the LlamaFactory team.
+# Copyright 2026 the LlamaFactory team.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ from ..utils.callbacks import (
     TrainerCallback,
     TrainerState,
 )
-from ..utils.helper import compute_valid_tokens
+from ..utils.helper import compute_valid_tokens, is_tokenizer, model_uses_mrope
 from ..utils.types import BatchInput, HFModel, ModelOutput, Tensor, TorchDataset
 from .rendering import Renderer
 from .utils.batching import BatchGenerator
@@ -74,6 +74,7 @@ class BaseTrainer:
         self.dp_size = DistributedInterface().get_world_size(Dim.DP)
         self.cp_size = DistributedInterface().get_world_size(Dim.CP)
         self.model_input_names = self.renderer.processor.model_input_names
+        self._uses_mrope = model_uses_mrope(self.model.config)
 
         self._create_batch_generator()
         # Calculate num_training_steps: max_steps takes priority if set
@@ -88,6 +89,13 @@ class BaseTrainer:
 
         if self.args.enable_activation_checkpointing:
             self.model.gradient_checkpointing_enable({"use_reentrant": False})
+            if not is_tokenizer(self.renderer.processor):
+                for module in self.model.modules():
+                    blocks = getattr(module, "blocks", None)
+                    if isinstance(blocks, torch.nn.ModuleList):
+                        for block in blocks:
+                            if hasattr(block, "gradient_checkpointing"):
+                                block.gradient_checkpointing = False
 
         self._deepspeed_engine = None
         dist_name = self.args.dist_config.name if self.args.dist_config is not None else None
@@ -180,7 +188,11 @@ class BaseTrainer:
                     "dist_config is None but distributed training is enabled; falling back to DistributedDataParallel."
                 )
                 device_ids = None if self.device.type == "cpu" else [self.device.index]
-                self.model = DDP(self.model, device_ids=device_ids)
+                # Multimodal models invoke the vision tower only when a step carries media; a
+                # globally media-less step leaves vision params unused, which trips DDP's default
+                # all-params-used assertion. (FSDP tolerates a uniform skip; DDP does not.)
+                find_unused = not is_tokenizer(self.renderer.processor)
+                self.model = DDP(self.model, device_ids=device_ids, find_unused_parameters=find_unused)
         else:
             from ..plugins.trainer_plugins.distributed.hub import DistributedPlugin
 
@@ -220,6 +232,9 @@ class BaseTrainer:
         model_inputs = {
             k: v.to(self.device, non_blocking=True) for k, v in batch.items() if isinstance(v, torch.Tensor)
         }
+        # Let mRoPE models build their own multimodal 3D position ids (see _uses_mrope in __init__).
+        if self._uses_mrope:
+            model_inputs.pop("position_ids", None)
         labels = batch["labels"].to(self.device, non_blocking=True)
         outputs: ModelOutput = model(**model_inputs)
         logits = outputs.logits.float()

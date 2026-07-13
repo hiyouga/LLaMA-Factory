@@ -1,4 +1,4 @@
-# Copyright 2025 the LlamaFactory team.
+# Copyright 2026 the LlamaFactory team.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -149,10 +149,13 @@ class ModelEngine:
             )
 
         if self.args.model_class == ModelClass.LLM:
-            from transformers import AutoModelForCausalLM, AutoModelForImageTextToText
+            from transformers import AutoModelForCausalLM, AutoModelForImageTextToText, AutoModelForMultimodalLM
 
-            if type(self.model_config) in AutoModelForImageTextToText._model_mapping.keys():
+            cfg_type = type(self.model_config)
+            if cfg_type in AutoModelForImageTextToText._model_mapping.keys():
                 AutoClass = AutoModelForImageTextToText
+            elif cfg_type in AutoModelForMultimodalLM._model_mapping.keys():
+                AutoClass = AutoModelForMultimodalLM
             else:
                 AutoClass = AutoModelForCausalLM
 
