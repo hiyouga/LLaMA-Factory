@@ -31,6 +31,7 @@ from abc import abstractmethod
 
 import torch
 import torch.nn.functional as F
+from torch.distributed.tensor import DTensor
 
 from ..accelerator.helper import ReduceOp
 from ..accelerator.interface import Dim, DistributedInterface
@@ -283,8 +284,6 @@ class BaseTrainer:
                     # per-rank local shard norm (global / sqrt(shard_size)): reported grad_norm then
                     # scales as 1/sqrt(dp_size) and the clip coefficient is applied per-shard. Reduce
                     # to the true global norm first, then clip with it.
-                    from torch.distributed.tensor import DTensor
-
                     grads = [p.grad for p in self.model.parameters() if p.grad is not None]
                     total_norm = torch.nn.utils.get_total_norm(grads)
                     if isinstance(total_norm, DTensor):
