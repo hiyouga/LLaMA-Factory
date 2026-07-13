@@ -37,8 +37,9 @@ from ..accelerator.helper import DeviceType
 from ..accelerator.interface import DistributedInterface
 from ..config.model_args import ModelArguments, ModelClass
 from ..utils import logging
+from ..utils.helper import get_tokenizer, is_tokenizer
 from ..utils.types import HFConfig, HFModel, Processor
-from .utils.rendering import Renderer
+from .rendering import Renderer
 
 
 logger = logging.get_logger(__name__)
@@ -63,10 +64,11 @@ class ModelEngine:
         """Whether to train the model."""
         self.processor = self._init_processor()
         """Tokenizer or multi-modal processor."""
-        self.renderer = Renderer(self.args.template, self.processor)
-        """Renderer."""
+        self._sync_chat_template()
         self.model_config = self._init_model_config()
         """Model configuration."""
+        self.renderer = Renderer(self.processor)
+        """Renderer."""
         self._dist_config = DistributedInterface().dist_config
         self._deepspeed_zero3_plugin = None
         self._deepspeed_zero3_enabled = False
@@ -98,6 +100,19 @@ class ModelEngine:
             self.args.model,
             trust_remote_code=self.args.trust_remote_code,
         )
+
+    def _sync_chat_template(self) -> None:
+        """Sync chat_template and inject custom_chat_template."""
+        tokenizer = get_tokenizer(self.processor)
+        if not is_tokenizer(self.processor) and not getattr(self.processor, "chat_template", None):
+            if getattr(tokenizer, "chat_template", None):
+                self.processor.chat_template = tokenizer.chat_template
+
+        if self.args.custom_chat_template:
+            if not is_tokenizer(self.processor):
+                self.processor.chat_template = self.args.custom_chat_template
+            else:
+                tokenizer.chat_template = self.args.custom_chat_template
 
     def _init_model_config(self) -> HFConfig:
         """Init model config."""

@@ -37,7 +37,7 @@ from ...utils import logging
 from ...utils.helper import pad_and_truncate
 from ...utils.objects import StatefulBuffer
 from ...utils.types import BatchInfo, BatchInput, ModelInput, TorchDataset
-from .rendering import Renderer
+from ..rendering import Renderer
 
 
 logger = logging.get_logger(__name__)
@@ -87,6 +87,7 @@ class BatchGenerator(Iterator):
         self.pin_memory = pin_memory
         self.drop_last = drop_last
         self.seed = seed
+        self._warned_truncation = False  # warn once when dropping fully-truncated (zero-loss) samples
         # TODO: support length and infinity
         dp_size = DistributedInterface().get_world_size(Dim.DP)
 
@@ -185,6 +186,31 @@ class BatchGenerator(Iterator):
 
         return batch
 
+    def _drop_unsupervised(self, samples: list[ModelInput]) -> list[ModelInput]:
+        """Drop samples whose supervised span is entirely beyond ``cutoff_len``.
+
+        Prefix-split puts the supervised tokens at the tail, and truncation keeps ``[:cutoff_len]``,
+        so a sample longer than ``cutoff_len`` loses all supervision and would contribute a zero-loss
+        (wasted) step. Only such over-length samples are at risk -- samples that fit within
+        ``cutoff_len`` are never truncated and always keep supervision -- so they pass an O(1) length
+        test before any ``loss_weights`` scan. Drop the at-risk, fully-masked ones and warn once.
+        """
+        kept = []
+        for sample in samples:
+            if len(sample["input_ids"]) > self.cutoff_len and not any(
+                w > 1e-6 for w in sample["loss_weights"][: self.cutoff_len]
+            ):
+                if not self._warned_truncation:
+                    self._warned_truncation = True
+                    logger.warning_rank0(
+                        f"Dropping training sample(s) whose supervised tokens fall entirely beyond "
+                        f"cutoff_len={self.cutoff_len} (all loss masked after truncation). "
+                        "Increase cutoff_len to keep them."
+                    )
+                continue
+            kept.append(sample)
+        return kept
+
     def _fill_buffer(self) -> None:
         if self.batching_strategy == BatchingStrategy.NORMAL:
             while len(self._buffer) < self.micro_batch_size * self.num_micro_batch:
@@ -193,7 +219,7 @@ class BatchGenerator(Iterator):
                 except StopIteration:
                     break
 
-                self._buffer.put(samples)
+                self._buffer.put(self._drop_unsupervised(samples))
         else:
             from ...plugins.trainer_plugins.batching import BatchingPlugin
 

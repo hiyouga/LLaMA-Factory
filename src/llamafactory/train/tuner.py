@@ -134,7 +134,7 @@ def _training_function(config: dict[str, Any]) -> None:
         raise ValueError(f"Unknown task: {finetuning_args.stage}.")
 
     if is_ray_available() and ray.is_initialized():
-        return  # if ray is intialized it will destroy the process group on return
+        return  # if ray is initialized it will destroy the process group on return
 
     try:
         if dist.is_initialized():

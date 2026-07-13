@@ -34,7 +34,7 @@ from .adapter import init_adapter
 from .model_utils.liger_kernel import apply_liger_kernel
 from .model_utils.misc import register_autoclass
 from .model_utils.mod import convert_pretrained_model_to_mod, load_mod_pretrained_model
-from .model_utils.unsloth import load_unsloth_pretrained_model, load_unsloth_peft_model
+from .model_utils.unsloth import load_unsloth_peft_model, load_unsloth_pretrained_model
 from .model_utils.valuehead import load_valuehead_params
 from .patcher import patch_config, patch_model, patch_processor, patch_tokenizer, patch_valuehead_model
 

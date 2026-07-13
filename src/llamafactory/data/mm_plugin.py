@@ -929,7 +929,7 @@ class InternVLPlugin(BasePlugin):
         messages = deepcopy(messages)
         mm_inputs = self._get_mm_inputs(images, videos, audios, processor)
 
-        image_pixel_patch_list = mm_inputs.get("image_num_patches")  # pathes of images
+        image_pixel_patch_list = mm_inputs.get("image_num_patches")  # patches of images
         video_num_patches = mm_inputs.get("video_num_patches")  # all patches for frames of videos
         video_patch_indices = mm_inputs.get("video_patch_indices")  # num frames of per video
 
@@ -2667,7 +2667,7 @@ class Qwen2OmniPlugin(Qwen2VLPlugin):
 
             if (
                 use_audio_in_video and len(audios) and len(videos)
-            ):  # if use the audio of video # deal video token and audio token togather
+            ):  # if use the audio of video # deal video token and audio token together
                 if len(videos) != len(audios):
                     raise ValueError(
                         f"Number of videos ({len(videos)}) must match number of audios ({len(audios)}) when using audio in video."

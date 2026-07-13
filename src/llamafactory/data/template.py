@@ -1035,7 +1035,7 @@ register_template(
     format_assistant=StringFormatter(slots=["{{content}}<turn|>\n"]),
     format_system=StringFormatter(
         slots=["<|turn>system\n<|think|>{{content}}<turn|>\n"]
-    ),  #  default thought singal contained
+    ),  #  default thought signal contained
     format_observation=StringFormatter(
         slots=["<|turn>tool\n{{content}}<turn|>\n<|turn>model\n"]
     ),  # seem not consistent with the chattemplate
@@ -1061,7 +1061,7 @@ register_template(
     format_assistant=StringFormatter(slots=["{{content}}<turn|>\n"]),
     format_system=StringFormatter(
         slots=["<|turn>system\n<|think|>{{content}}<turn|>\n"]
-    ),  #  default thought singal contained
+    ),  #  default thought signal contained
     format_observation=StringFormatter(slots=["<|turn>tool\n{{content}}<turn|>\n<|turn>model\n"]),
     format_tools=ToolFormatter(tool_format="gemma4"),
     format_function=FunctionFormatter(slots=["<|tool>{{content}}<tool|>"], tool_format="gemma4"),
