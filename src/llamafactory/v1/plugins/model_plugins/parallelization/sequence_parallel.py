@@ -61,6 +61,11 @@ def new_flash_attn_forward(
     target_dtype=None,
     **kwargs,
 ):
+    kwargs = dict(kwargs)
+    kwargs.pop("query_length", None)
+    query_length = query_states.shape[1] * sequence_parallel_size
+    position_ids = kwargs.pop("position_ids", None)
+
     if mode == "ulysses":
         dist_attn = UlyssesAttention(sequence_process_group=group, attn_fn=attn_fn)
         attn_output = dist_attn(
@@ -68,12 +73,13 @@ def new_flash_attn_forward(
             key_states,
             value_states,
             attention_mask,
-            query_length=query_states.shape[1] * sequence_parallel_size,
+            query_length=query_length,
             deterministic=deterministic,
             dropout_p=dropout,
             causal=is_causal,
-            position_ids=kwargs.get("position_ids", None),
+            position_ids=position_ids,
             target_dtype=target_dtype,
+            **kwargs,
         )
     else:
         raise NotImplementedError("Other sequence parallel modes are to be implemented.")

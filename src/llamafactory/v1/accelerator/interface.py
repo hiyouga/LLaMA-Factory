@@ -31,7 +31,17 @@ from datetime import timedelta
 from enum import StrEnum
 from typing import Any, Optional
 
-from torch.distributed import barrier, destroy_process_group, init_process_group
+from torch.distributed import (
+    barrier,
+    destroy_process_group,
+    init_process_group,
+)
+from torch.distributed import (
+    get_rank as dist_get_rank,
+)
+from torch.distributed import (
+    get_world_size as dist_get_world_size,
+)
 from torch.distributed.device_mesh import DeviceMesh, init_device_mesh
 
 from ..utils import logging
@@ -49,6 +59,8 @@ class Dim(StrEnum):
     MP_SHARD = "mp_shard"
     DP = "dp"
     CP = "cp"
+    EFSDP = "efsdp"
+    EP = "ep"
 
 
 @dataclass
@@ -63,8 +75,13 @@ class DistributedStrategy:
     """Data parallel size, default to world_size // cp_size."""
     cp_size: int = 1
     """Context parallel size, default to 1."""
+    ep_size: int = 1
+    """Expert parallel size inside each CP slice, default to 1."""
 
     def __post_init__(self) -> None:
+        if self.ep_size < 1:
+            raise ValueError(f"ep_size must be positive, got {self.ep_size}.")
+
         if not helper.is_distributed():
             self.mp_shard_size = 1
         elif self.mp_shard_size is None:
@@ -92,6 +109,11 @@ class DistributedStrategy:
             raise ValueError(
                 f"dp_size * cp_size must equal to world_size, "
                 f"got {self.dp_size} * {self.cp_size} != {helper.get_world_size()}."
+            )
+
+        if self.dp_size % self.ep_size != 0:
+            raise ValueError(
+                f"dp_size must be divisible by ep_size, got {self.dp_size} % {self.ep_size} != 0."
             )
 
     @property
@@ -142,6 +164,11 @@ class DistributedInterface:
         self._local_world_size = helper.get_local_world_size()
         self.current_device = helper.get_current_device()
         self.device_count = helper.get_device_count()
+        self._extra_groups: dict[Dim, ProcessGroup] = {}
+        self._extra_group_ranks: dict[Dim, list[int]] = {}
+        self._expert_parent_mesh: DeviceMesh | None = None
+        self._expert_ep_mesh: DeviceMesh | None = None
+        self._expert_efsdp_mesh: DeviceMesh | None = None
 
         if config is None:
             self.strategy = DistributedStrategy()
@@ -152,6 +179,7 @@ class DistributedInterface:
                 mp_shard_size=config.get("mp_shard_size", None),
                 dp_size=config.get("dp_size", None),
                 cp_size=config.get("cp_size", 1),
+                ep_size=config.get("ep_size", 1),
             )
             timeout = config.get("timeout", 18000)
 
@@ -167,6 +195,7 @@ class DistributedInterface:
                 mesh_shape=self.strategy.data_mesh_shape,
                 mesh_dim_names=self.strategy.data_mesh_dim_names,
             )
+            self._init_extra_groups()
         else:
             self.model_device_mesh = None
             self.data_device_mesh = None
@@ -178,14 +207,54 @@ class DistributedInterface:
         return (
             f"DistributedInterface(strategy={self.strategy}), is_distributed={self._is_distributed}, "
             f"current_device={self.current_device}, rank={self._rank}, world_size={self._world_size}, "
-            f"model_device_mesh={self.model_device_mesh}, data_device_mesh={self.data_device_mesh}"
+            f"model_device_mesh={self.model_device_mesh}, data_device_mesh={self.data_device_mesh}, "
+            f"extra_groups={list(self._extra_groups.keys())}"
         )
+
+    def _init_extra_groups(self) -> None:
+        if self.strategy.ep_size <= 1:
+            return
+
+        cp_size = self.strategy.cp_size
+        dp_size = self.strategy.dp_size
+        ep_size = self.strategy.ep_size
+        ep_fsdp_size = self._get_ep_fsdp_size()
+        edp_size = dp_size // (ep_size * ep_fsdp_size)
+
+        # Build all expert-side dimensions atomically so every rank creates HCCL
+        # communicators in the same order.
+        expert_mesh = init_device_mesh(
+            device_type=self.current_device.type,
+            mesh_shape=(edp_size, ep_fsdp_size, ep_size, cp_size),
+            mesh_dim_names=("edp", Dim.EFSDP.value, Dim.EP.value, "expert_cp"),
+        )
+
+        self._expert_parent_mesh = expert_mesh
+        self._expert_ep_mesh = expert_mesh[Dim.EP.value]
+        self._expert_efsdp_mesh = expert_mesh[Dim.EFSDP.value]
+
+        self._extra_groups[Dim.EP] = self._expert_ep_mesh.get_group()
+        self._extra_group_ranks[Dim.EP] = self._expert_ep_mesh.mesh.flatten().tolist()
+
+        self._extra_groups[Dim.EFSDP] = self._expert_efsdp_mesh.get_group()
+        self._extra_group_ranks[Dim.EFSDP] = self._expert_efsdp_mesh.mesh.flatten().tolist()
+
+    def _get_ep_fsdp_size(self) -> int:
+        if self.strategy.ep_size <= 1:
+            return 1
+        return self.strategy.dp_size // self.strategy.ep_size
+
+    def get_expert_meshes(self) -> tuple[DeviceMesh | None, DeviceMesh | None]:
+        """Return cached expert-side EP/EFSDP meshes for FSDPTurbo."""
+        return self._expert_ep_mesh, self._expert_efsdp_mesh
 
     def get_device_mesh(self, dim: Dim | None = None) -> DeviceMesh | None:
         """Get device mesh for specified dimension."""
         if dim is None:
             raise ValueError("dim must be specified.")
         elif not self._is_distributed:
+            return None
+        elif dim in self._extra_groups:
             return None
         elif dim in self.strategy.data_mesh_dim_names:
             return self.data_device_mesh[dim.value]
@@ -196,6 +265,8 @@ class DistributedInterface:
         """Get process group for specified dimension."""
         if not self._is_distributed or dim is None:
             return None
+        elif dim in self._extra_groups:
+            return self._extra_groups[dim]
         else:
             return self.get_device_mesh(dim).get_group()
 
@@ -205,6 +276,8 @@ class DistributedInterface:
             return 0
         elif dim is None:
             return self._rank
+        elif dim in self._extra_groups:
+            return dist_get_rank(self._extra_groups[dim])
         else:
             return self.get_device_mesh(dim).get_local_rank()
 
@@ -214,8 +287,19 @@ class DistributedInterface:
             return 1
         elif dim is None:
             return self._world_size
+        elif dim in self._extra_groups:
+            return dist_get_world_size(self._extra_groups[dim])
         else:
             return self.get_device_mesh(dim).size()
+
+    def get_group_ranks(self, dim: Dim | None = None) -> list[int]:
+        """Get global ranks for specified process group."""
+        if not self._is_distributed or dim is None:
+            return [0]
+        elif dim in self._extra_group_ranks:
+            return self._extra_group_ranks[dim]
+        else:
+            raise ValueError(f"Global ranks are only tracked for extra groups, got dim={dim}.")
 
     def get_local_rank(self) -> int:
         """Get parallel local rank."""

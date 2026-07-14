@@ -87,6 +87,26 @@ class DistributedConfig(TypedDict, total=False):
     """Data parallel size, default to world_size // cp_size."""
     cp_size: NotRequired[int]
     """Context parallel size, default to 1."""
+    ep_size: NotRequired[int]
+    """Expert parallel size, default to 1."""
+    ep_dispatcher: NotRequired[str]
+    """FSDPTurbo EP dispatcher, e.g. eager/fused/mc2."""
+    ep_modules: NotRequired[list[str]]
+    """Module name patterns to apply expert parallelism."""
+    ep_fsdp_modules: NotRequired[list[str]]
+    """Module name patterns to apply FSDPTurbo expert fully sharding."""
+    fsdp_modules: NotRequired[dict[str, dict[str, Any]]]
+    """Module name patterns to apply FSDP2 wrapping."""
+    fsdp_ignored_modules: NotRequired[list[str]]
+    """Module name patterns to exclude from FSDP2 wrapping."""
+    hook_modules: NotRequired[list[str]]
+    """FSDPTurbo module patterns used to place FSDP hooks."""
+    param_dtype: NotRequired[str]
+    """FSDP parameter dtype, e.g. bf16."""
+    reduce_dtype: NotRequired[str]
+    """FSDP reduction dtype, e.g. fp32."""
+    fsdp_implementation: NotRequired[str]
+    """FSDPTurbo FSDP implementation, native or custom."""
     timeout: NotRequired[int]
     """Timeout for distributed communication, default to 600."""
 

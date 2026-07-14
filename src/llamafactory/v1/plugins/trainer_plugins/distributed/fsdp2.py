@@ -74,17 +74,25 @@ def _make_safetensor_loader(checkpoint_file: str, tensor_key: str):
 
 
 def get_transformer_layer_cls(model: HFModel) -> type[nn.Module] | None:
+    for layer_path in (
+        "model.language_model.layers",
+        "language_model.layers",
+        "model.layers",
+        "layers",
+    ):
+        current = model
+        for attr in layer_path.split("."):
+            current = getattr(current, attr, None)
+            if current is None:
+                break
+        if current is not None and len(current) > 0:
+            return type(current[0])
+
     no_split_modules = getattr(model, "_no_split_modules", None)
     if no_split_modules:
-        if isinstance(no_split_modules, (list, tuple)):
-            for name, module in model.named_modules():
-                for cls_name in no_split_modules:
-                    if module.__class__.__name__ == cls_name:
-                        return module.__class__
-    if hasattr(model, "model") and hasattr(model.model, "layers"):
-        return type(model.model.layers[0])
-    if hasattr(model, "layers"):
-        return type(model.layers[0])
+        for _, module in model.named_modules():
+            if module.__class__.__name__ in no_split_modules:
+                return module.__class__
 
     return None
 
@@ -148,6 +156,35 @@ def load_checkpoint(model: HFModel, optimizer: torch.optim.Optimizer, ckpt_dir: 
     set_optimizer_state_dict(model, optimizer, optim_state, options=options)
 
 
+def clip_grad_norm_(model: HFModel, max_norm: float, **kwargs) -> float:
+    from torch.distributed._tensor import DTensor
+    from torch.nn.utils import get_total_norm
+
+    dist_interface = DistributedInterface()
+    cp_size = getattr(dist_interface.strategy, "cp_size", 1)
+
+    parameters = [p for p in model.parameters() if p.grad is not None]
+    if not parameters:
+        return 0.0
+
+    grads = [p.grad for p in parameters]
+    total_norm = get_total_norm(grads, 2.0)
+    if isinstance(total_norm, DTensor):
+        total_norm = total_norm.full_tensor()
+
+    if cp_size > 1:
+        total_norm = total_norm * cp_size
+
+    total_norm_val = float(total_norm.item())
+    clip_coef = min(max_norm / (total_norm_val + 1e-6), 1.0)
+
+    if clip_coef < 1.0:
+        for grad in grads:
+            grad.detach().mul_(clip_coef)
+
+    return total_norm_val
+
+
 class FSDP2Engine:
     def __init__(self, dist_config: dict, bf16: bool = False):
         self.dist_interface = DistributedInterface()
@@ -167,7 +204,10 @@ class FSDP2Engine:
             )
 
         if self.device_mesh is not None:
-            self.fsdp_mesh = self.device_mesh
+            try:
+                self.fsdp_mesh = self.device_mesh["dp"]
+            except Exception:
+                self.fsdp_mesh = self.device_mesh
 
             logger.info(f"Using Device Mesh: {self.fsdp_mesh}")
         else:
@@ -190,7 +230,7 @@ class FSDP2Engine:
     def is_lora_module_wrap(self, model) -> bool:
         return any(isinstance(module, LoraLayer) for module in model.modules())
 
-    def prepare_model(self, model: HFModel) -> HFModel:
+    def prepare_model(self, model: HFModel, ignored_params: set = None) -> HFModel:
         if self.fsdp_mesh is None:
             logger.warning("No FSDP Mesh available, skipping FSDP wrapping.")
             return model
@@ -207,6 +247,22 @@ class FSDP2Engine:
             logger.info(f"Applying per-layer FSDP to {layer_cls.__name__}")
             transformer_layer_cls_to_wrap = {layer_cls}
 
+        base_fsdp_kwargs = {
+            "mesh": self.fsdp_mesh,
+            "reshard_after_forward": self.reshard_after_forward,
+            "mp_policy": mp_policy,
+            "offload_policy": CPUOffloadPolicy(pin_memory=self.pin_memory) if self.offload_params else None,
+        }
+
+        def get_fsdp_kwargs(module: nn.Module) -> dict:
+            fsdp_kwargs = dict(base_fsdp_kwargs)
+            if ignored_params:
+                module_params = set(module.parameters())
+                module_ignored_params = ignored_params & module_params
+                if module_ignored_params:
+                    fsdp_kwargs["ignored_params"] = module_ignored_params
+            return fsdp_kwargs
+
         if self.is_lora_module_wrap(model):
             lora_modules = []
             for module in model.modules():
@@ -216,13 +272,7 @@ class FSDP2Engine:
                     lora_modules.append(module)
 
             for module in lora_modules:
-                fully_shard(
-                    module,
-                    mesh=self.fsdp_mesh,
-                    reshard_after_forward=self.reshard_after_forward,
-                    mp_policy=mp_policy,
-                    offload_policy=CPUOffloadPolicy(pin_memory=self.pin_memory) if self.offload_params else None,
-                )
+                fully_shard(module, **get_fsdp_kwargs(module))
 
             logger.info("Applying FSDP wrap for LoRA layer separately.")
 
@@ -236,13 +286,7 @@ class FSDP2Engine:
                     should_wrap = True
 
             if should_wrap:
-                fully_shard(
-                    module,
-                    mesh=self.fsdp_mesh,
-                    reshard_after_forward=self.reshard_after_forward,
-                    mp_policy=mp_policy,
-                    offload_policy=CPUOffloadPolicy(pin_memory=self.pin_memory) if self.offload_params else None,
-                )
+                fully_shard(module, **get_fsdp_kwargs(module))
 
         # BaseTrainer is the single source of truth for gradient checkpointing.
         # FSDP2 only applies the input-grad compatibility hook when checkpointing is already enabled.
@@ -259,13 +303,7 @@ class FSDP2Engine:
 
                 model.get_input_embeddings().register_forward_hook(make_inputs_require_grad)
 
-        fully_shard(
-            model,
-            mesh=self.fsdp_mesh,
-            reshard_after_forward=self.reshard_after_forward,
-            mp_policy=mp_policy,
-            offload_policy=CPUOffloadPolicy(pin_memory=self.pin_memory) if self.offload_params else None,
-        )
+        fully_shard(model, **get_fsdp_kwargs(model))
 
         return model
 
@@ -658,12 +696,12 @@ class FSDP2Engine:
             if shard_placement is None:
                 local_tensor.copy_(loaded_tensor)
             else:
-                dim = shard_placement.dim
                 mesh = param.device_mesh
                 my_coordinate = mesh.get_coordinate()
                 if my_coordinate is None:
                     return
 
+                dim = shard_placement.dim
                 rank_in_dim = my_coordinate[mesh_dim]
                 world_size_in_dim = mesh.size(mesh_dim)
 

@@ -111,8 +111,7 @@ class ModelEngine:
         if self.args.custom_chat_template:
             if not is_tokenizer(self.processor):
                 self.processor.chat_template = self.args.custom_chat_template
-            else:
-                tokenizer.chat_template = self.args.custom_chat_template
+            tokenizer.chat_template = self.args.custom_chat_template
 
     def _init_model_config(self) -> HFConfig:
         """Init model config."""
@@ -136,6 +135,13 @@ class ModelEngine:
 
         init_kwargs = {} if self._deepspeed_zero3_enabled else {"device_map": init_device}
         logger.info_rank0(f"Using attention implementation: {self.args.flash_attn}.")
+
+        use_fsdp_turbo = self._dist_config is not None and self._dist_config.get("name") == "mindspeed_fsdp2"
+        if use_fsdp_turbo:
+            from fsdp_turbo.models import apply_model_adapter
+
+            apply_model_adapter(self.model_config)
+            logger.info_rank0("Applied FSDPTurbo model adapters before model construction.")
 
         if self.args.quant_config is not None:
             from ..plugins.model_plugins.quantization import QuantizationPlugin
@@ -185,13 +191,21 @@ class ModelEngine:
                 **init_kwargs,
             )
 
+        if use_fsdp_turbo:
+            patched_modules = apply_model_adapter(model)
+            logger.info_rank0(f"FSDPTurbo model adapters updated {patched_modules} instantiated modules.")
+
         init_mode = self.args.init_config.name if self.args.init_config is not None else "init_on_default"
         model._init_mode = init_mode
 
         if self.args.peft_config is None:
             if self.is_train:
                 logger.info_rank0("Fine-tuning mode: full tuning")
-                model = model.to(torch.float32)
+                param_dtype = str(self._dist_config.get("param_dtype", "bf16")).lower() if use_fsdp_turbo else "fp32"
+                target_dtype = torch.bfloat16 if param_dtype in ("bf16", "bfloat16") else torch.float32
+                model = model.to(target_dtype)
+                if use_fsdp_turbo:
+                    logger.info_rank0(f"Using {target_dtype} for FSDPTurbo full tuning.")
             else:
                 logger.info_rank0("Inference the original model")
         else:
