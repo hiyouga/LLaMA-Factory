@@ -668,7 +668,9 @@ class Gemma4Plugin(BasePlugin):
     ) -> dict[str, Union[list[int], "torch.Tensor"]]:
         image_processor = getattr(processor, "image_processor", None)
         video_processor = getattr(processor, "video_processor", None)
-        feature_extractor = getattr(processor, "feature_extractor", None)
+        feature_extractor = getattr(processor, "feature_extractor", None) or getattr(
+            processor, "audio_processor", None
+        )
         mm_inputs = {}
 
         if len(images) != 0:
@@ -744,6 +746,9 @@ class Gemma4Plugin(BasePlugin):
         image_token: str = getattr(processor, "image_token")
         video_token: str = getattr(processor, "video_token")
         audio_token: str = getattr(processor, "audio_token")
+        feature_extractor = getattr(processor, "feature_extractor", None) or getattr(
+            processor, "audio_processor", None
+        )
 
         if self.expand_mm_tokens:
             mm_inputs = self._get_mm_inputs(images, videos, audios, processor)
@@ -786,7 +791,6 @@ class Gemma4Plugin(BasePlugin):
                 # The Gemma4 processor may be loaded without `feature_extractor`
                 # (text-only checkpoints, partial offline loads); guard before
                 # reading `.sampling_rate` to prevent an AttributeError crash.
-                feature_extractor = getattr(processor, "feature_extractor", None)
                 if self.expand_mm_tokens and feature_extractor is not None:
                     num_audio_tokens = processor._compute_audio_num_tokens(
                         current_audio, feature_extractor.sampling_rate
