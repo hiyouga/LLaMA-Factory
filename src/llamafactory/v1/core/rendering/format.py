@@ -37,7 +37,6 @@ _FALLBACK_CHATML_JINJA = (
 
 def _to_hf_messages(messages: list[Message], is_multimodal: bool = False) -> list[dict]:
     """Convert v1 Message format to HF format for apply_chat_template."""
-
     hf_messages = []
     for message in messages:
         tool_calls: list[dict] = []
@@ -101,7 +100,6 @@ def _to_hf_messages(messages: list[Message], is_multimodal: bool = False) -> lis
 
 def _extract_media_from_messages(messages: list[Message]) -> tuple[list, list, list]:
     """Extract image, video and audio paths/values from messages in order."""
-
     images, videos, audios = [], [], []
     for message in messages:
         for content in message["content"]:
@@ -116,7 +114,6 @@ def _extract_media_from_messages(messages: list[Message]) -> tuple[list, list, l
 
 def _count_media_in_messages(messages: list[Message]) -> tuple[int, int, int]:
     """Count total images, videos and audios in messages."""
-
     n_images, n_videos, n_audios = 0, 0, 0
     for message in messages:
         for content in message["content"]:
@@ -131,7 +128,6 @@ def _count_media_in_messages(messages: list[Message]) -> tuple[int, int, int]:
 
 def _load_audios(values: list, sampling_rate: int) -> list:
     """Load audio inputs into mono waveforms resampled to ``sampling_rate``."""
-
     import numpy as np
     import torchaudio
 
@@ -181,4 +177,3 @@ def _check_placeholder_counts(
                 f"{kind} placeholder count ({seen}) != number of {kind} blocks ({count}); "
                 "media must be provided via image_url/video_url content blocks."
             )
-

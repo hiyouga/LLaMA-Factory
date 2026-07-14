@@ -52,7 +52,6 @@ def _render_messages(
     **kwargs,
 ) -> ModelInput:
     r"""Render messages using the model's own chat template, locating supervision by a prompt/full diff."""
-
     tokenizer = get_tokenizer(processor)
     is_multimodal = not is_tokenizer(processor)
 
@@ -205,7 +204,6 @@ class Renderer:
 
     def get_dummy_media_fragment(self, modality: str) -> dict:
         """Build (and cache) a minimal valid media fragment for ``modality`` ("image"|"video"|"audio")."""
-
         if modality not in ("image", "video", "audio"):
             raise ValueError(f"Unsupported dummy media modality: {modality!r} (expected image/video/audio).")
         if is_tokenizer(self.processor):
