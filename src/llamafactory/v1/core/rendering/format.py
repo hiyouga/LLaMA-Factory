@@ -127,7 +127,13 @@ def _count_media_in_messages(messages: list[Message]) -> tuple[int, int, int]:
 
 
 def _load_audios(values: list, sampling_rate: int) -> list:
-    """Load audio inputs into mono waveforms resampled to ``sampling_rate``."""
+    """Load audio inputs into mono waveforms resampled to ``sampling_rate``.
+
+    Audio processors (e.g. Qwen2-Audio's Whisper feature extractor) expect raw waveforms at the
+    model's sampling rate, not file paths -- so unlike images/videos we decode here, before the
+    processor call. ``np.ndarray`` values are passed through untouched; str/path-like values are
+    read and resampled. Mirrors v0 ``mm_plugin._regularize_audios``.
+    """
     import numpy as np
     import torchaudio
 
@@ -177,3 +183,4 @@ def _check_placeholder_counts(
                 f"{kind} placeholder count ({seen}) != number of {kind} blocks ({count}); "
                 "media must be provided via image_url/video_url content blocks."
             )
+

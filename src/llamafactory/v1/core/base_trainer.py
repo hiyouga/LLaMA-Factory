@@ -1,4 +1,4 @@
-# Copyright 2026 the LlamaFactory team.
+# Copyright 2025 the LlamaFactory team.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -210,7 +210,9 @@ class BaseTrainer:
         else:
             from ..plugins.trainer_plugins.optimizer import OptimizerPlugin
 
-            self.optimizer = OptimizerPlugin(self.args.optim_config.name)(self.model, self.args.optim_config)
+            self.optimizer = OptimizerPlugin(self.args.optim_config.name)(
+                self.model, self.args.optim_config, learning_rate=self.args.learning_rate
+            )
 
     def _init_lr_scheduler(self) -> None:
         """Init lr scheduler."""
@@ -371,3 +373,4 @@ class BaseTrainer:
             logger.info_rank0(f"Model saved to {self.args.output_dir}")
 
         self.callback_handler.on_save(self.args, self.state)
+
