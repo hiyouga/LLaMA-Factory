@@ -91,6 +91,8 @@ class DistributedConfig(TypedDict, total=False):
     """Expert parallel size, default to 1."""
     ep_dispatcher: NotRequired[str]
     """FSDPTurbo EP dispatcher, e.g. eager/fused/mc2."""
+    triton_ops: NotRequired[list[dict[str, Any]]]
+    """FSDPTurbo Triton callables installed on modules from parameterized plans."""
     ep_modules: NotRequired[list[str]]
     """Module name patterns to apply expert parallelism."""
     ep_fsdp_modules: NotRequired[list[str]]

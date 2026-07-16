@@ -9,10 +9,17 @@ kernel_config:
   include_kernels: auto
 
 dist_config:
-  name: mindspeed_fsdp2
+  name: fsdpturbo
   cp_size: 1
   ep_size: 16
   ep_dispatcher: eager
+  triton_ops:
+    - name: fla_chunk_gated_delta_rule
+      apply_modules:
+        - model.language_model.layers.{*}.linear_attn
+      module_attribute: chunk_gated_delta_rule
+      kwargs:
+        chunk_size: 64
   param_dtype: bf16
   reduce_dtype: fp32
   ep_modules:

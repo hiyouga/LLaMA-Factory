@@ -3,8 +3,9 @@ from types import SimpleNamespace
 import torch
 
 from llamafactory.v1.plugins.trainer_plugins.distributed.fsdp2 import get_transformer_layer_cls
-from llamafactory.v1.plugins.trainer_plugins.distributed.mindspeed_fsdp2 import (
+from llamafactory.v1.plugins.trainer_plugins.distributed.fsdpturbo import (
     FSDPTurboEPModelSpec,
+    FSDPTurboFSDP2Engine,
     _import_fsdpturbo_ep,
 )
 
@@ -25,12 +26,44 @@ def test_fsdpturbo_ep_api_is_imported_from_external_package():
     assert module_match.__module__.startswith("fsdp_turbo.")
 
 
-def test_qwen35_conditional_model_uses_language_model_expert_paths():
-    spec = FSDPTurboEPModelSpec.get(_Model("qwen3_5_moe"))
+def test_qwen35_support_is_not_hardcoded_in_model_registry():
+    assert FSDPTurboEPModelSpec.get(_Model("qwen3_5_moe")) is None
 
-    assert spec is not None
-    assert spec.ep_modules == ["model.language_model.layers.{*}.mlp.experts"]
-    assert spec.ep_fsdp_modules == ["model.language_model.layers.{*}.mlp"]
+
+def test_triton_ops_are_forwarded_from_dist_config(monkeypatch):
+    import fsdp_turbo.ops.triton as triton_ops
+
+    class LinearAttention(torch.nn.Module):
+        pass
+
+    class Layer(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.linear_attn = LinearAttention()
+
+    model = _Model("parameter_driven")
+    model.layers = torch.nn.ModuleList([Layer(), Layer()])
+    plans = [
+        {
+            "name": "fla_chunk_gated_delta_rule",
+            "apply_modules": ["layers.{*}.linear_attn"],
+            "module_attribute": "chunk_gated_delta_rule",
+            "kwargs": {"chunk_size": 64},
+        }
+    ]
+    calls = []
+
+    def fake_apply(received_model, received_plans):
+        calls.append((received_model, received_plans))
+        return 2
+
+    monkeypatch.setattr(triton_ops, "apply_triton_ops", fake_apply)
+    engine = object.__new__(FSDPTurboFSDP2Engine)
+    engine.dist_config = {"triton_ops": plans}
+    engine.rank = 0
+
+    assert engine._apply_triton_ops(model) == 2
+    assert calls == [(model, plans)]
 
 
 def test_transformer_layer_prefers_nested_language_model_over_vision_blocks():

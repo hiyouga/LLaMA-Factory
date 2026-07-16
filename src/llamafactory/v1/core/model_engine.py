@@ -136,12 +136,7 @@ class ModelEngine:
         init_kwargs = {} if self._deepspeed_zero3_enabled else {"device_map": init_device}
         logger.info_rank0(f"Using attention implementation: {self.args.flash_attn}.")
 
-        use_fsdp_turbo = self._dist_config is not None and self._dist_config.get("name") == "mindspeed_fsdp2"
-        if use_fsdp_turbo:
-            from fsdp_turbo.models import apply_model_adapter
-
-            apply_model_adapter(self.model_config)
-            logger.info_rank0("Applied FSDPTurbo model adapters before model construction.")
+        use_fsdp_turbo = self._dist_config is not None and self._dist_config.get("name") == "fsdpturbo"
 
         if self.args.quant_config is not None:
             from ..plugins.model_plugins.quantization import QuantizationPlugin
@@ -190,10 +185,6 @@ class ModelEngine:
                 trust_remote_code=self.args.trust_remote_code,
                 **init_kwargs,
             )
-
-        if use_fsdp_turbo:
-            patched_modules = apply_model_adapter(model)
-            logger.info_rank0(f"FSDPTurbo model adapters updated {patched_modules} instantiated modules.")
 
         init_mode = self.args.init_config.name if self.args.init_config is not None else "init_on_default"
         model._init_mode = init_mode

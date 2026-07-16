@@ -66,29 +66,29 @@ def clip_grad_norm_fsdp2(model: HFModel, max_norm: float, **kwargs) -> float:
     return clip_grad_norm_(model, max_norm, **kwargs)
 
 
-@DistributedPlugin("mindspeed_fsdp2").register()
-def shard_model_mindspeed_fsdp2(model: HFModel, dist_config: PluginConfig, **kwargs) -> HFModel:
-    from .mindspeed_fsdp2 import FSDPTurboFSDP2Engine
+@DistributedPlugin("fsdpturbo").register()
+def shard_model_fsdpturbo(model: HFModel, dist_config: PluginConfig, **kwargs) -> HFModel:
+    from .fsdpturbo import FSDPTurboFSDP2Engine
 
     return FSDPTurboFSDP2Engine(dist_config, bf16=bool(kwargs.get("bf16"))).shard_model(model)
 
 
-@DistributedPlugin("mindspeed_fsdp2").register("save_model")
-def save_model_mindspeed_fsdp2(model: HFModel, output_dir: str, processor: Processor) -> None:
+@DistributedPlugin("fsdpturbo").register("save_model")
+def save_model_fsdpturbo(model: HFModel, output_dir: str, processor: Processor) -> None:
     from .fsdp2 import save_model
 
     return save_model(model, output_dir, processor)
 
 
-@DistributedPlugin("mindspeed_fsdp2").register("clip_grad_norm")
-def clip_grad_norm_mindspeed_fsdp2(model: HFModel, max_norm: float, **kwargs) -> float:
-    from .mindspeed_fsdp2 import clip_grad_norm_
+@DistributedPlugin("fsdpturbo").register("clip_grad_norm")
+def clip_grad_norm_fsdpturbo(model: HFModel, max_norm: float, **kwargs) -> float:
+    from .fsdpturbo import clip_grad_norm_
 
     return clip_grad_norm_(model, max_norm, **kwargs)
 
 
-@DistributedPlugin("mindspeed_fsdp2").register("save_checkpoint")
-def save_checkpoint_mindspeed_fsdp2(
+@DistributedPlugin("fsdpturbo").register("save_checkpoint")
+def save_checkpoint_fsdpturbo(
     model: HFModel, optimizer: torch.optim.Optimizer, ckpt_dir: str, **kwargs
 ) -> None:
     from .fsdp2 import save_checkpoint
@@ -96,8 +96,8 @@ def save_checkpoint_mindspeed_fsdp2(
     return save_checkpoint(model, optimizer, ckpt_dir, **kwargs)
 
 
-@DistributedPlugin("mindspeed_fsdp2").register("load_checkpoint")
-def load_checkpoint_mindspeed_fsdp2(
+@DistributedPlugin("fsdpturbo").register("load_checkpoint")
+def load_checkpoint_fsdpturbo(
     model: HFModel, optimizer: torch.optim.Optimizer, ckpt_dir: str, **kwargs
 ) -> None:
     from .fsdp2 import load_checkpoint

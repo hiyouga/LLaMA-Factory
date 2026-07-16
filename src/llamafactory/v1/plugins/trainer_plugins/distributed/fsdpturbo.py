@@ -194,21 +194,7 @@ def _prepare_qwen3_moe_for_ep(model: HFModel) -> HFModel:
     return model
 
 
-@FSDPTurboEPModelSpec.register(
-    "qwen3_5_moe",
-    ep_modules=["model.language_model.layers.{*}.mlp.experts"],
-    ep_fsdp_modules=["model.language_model.layers.{*}.mlp"],
-)
-@FSDPTurboEPModelSpec.register(
-    "qwen3_5_moe_text",
-    ep_modules=["model.layers.{*}.mlp.experts"],
-    ep_fsdp_modules=["model.layers.{*}.mlp"],
-)
-def _prepare_qwen3_5_moe_for_ep(model: HFModel) -> HFModel:
-    return _prepare_qwen3_moe_for_ep(model)
-
-
-_REGISTERED_EP_PREPARE_FNS = (_prepare_qwen3_moe_for_ep, _prepare_qwen3_5_moe_for_ep)
+_REGISTERED_EP_PREPARE_FNS = (_prepare_qwen3_moe_for_ep,)
 
 
 class FSDPTurboFSDP2Engine(FSDP2Engine):
@@ -303,8 +289,21 @@ class FSDPTurboFSDP2Engine(FSDP2Engine):
 
         param.data.copy_(loaded_tensor)
 
+    def _apply_triton_ops(self, model: HFModel) -> int:
+        triton_ops = self.dist_config.get("triton_ops")
+        if not triton_ops:
+            return 0
+
+        from fsdp_turbo.ops.triton import apply_triton_ops
+
+        patched = apply_triton_ops(model, triton_ops)
+        if self.rank == 0:
+            logger.info(f"FSDPTurbo Triton ops updated {patched} module callables.")
+        return patched
+
     def prepare_model_ep(self, model: HFModel) -> tuple[HFModel, set]:
         """Apply FSDPTurbo EP/EFSDP and return parameters excluded from outer FSDP."""
+        self._apply_triton_ops(model)
         (
             expert_parallelize_modules,
             expert_fully_shard_modules,
@@ -401,7 +400,3 @@ class FSDPTurboFSDP2Engine(FSDP2Engine):
                 param.grad = None
 
         logger.info_rank0("FSDPTurbo mixed-mesh grad norm warmup completed.")
-
-
-# Keep the target commit's public class name for downstream imports.
-MindSpeedFSDP2Engine = FSDPTurboFSDP2Engine

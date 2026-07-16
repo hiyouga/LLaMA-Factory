@@ -281,7 +281,7 @@ class BaseTrainer:
                     grad_norm = self._deepspeed_engine.get_grad_norm()
                 else:
                     dist_name = self.args.dist_config.name if self.args.dist_config else None
-                    if dist_name == "mindspeed_fsdp2":
+                    if dist_name == "fsdpturbo":
                         from ..plugins.trainer_plugins.distributed.hub import DistributedPlugin
 
                         grad_norm = DistributedPlugin(dist_name).clip_grad_norm(self.model, self.args.max_grad_norm)
@@ -355,7 +355,7 @@ class BaseTrainer:
         if self.args.dist_config is not None and self.args.dist_config.name in (
             "deepspeed",
             "fsdp2",
-            "mindspeed_fsdp2",
+            "fsdpturbo",
         ):
             from ..plugins.trainer_plugins.distributed.hub import DistributedPlugin
 
