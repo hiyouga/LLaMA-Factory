@@ -16,7 +16,6 @@ dist_config:
 
 optim_config:
   name: muon
-  lr: 1.0e-5
   wd: 0.1
   momentum: 0.95
   nesterov: true
