@@ -9,7 +9,7 @@
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and,
+# See the License for the specific language governing permissions and
 # limitations under the License.
 
 from dataclasses import dataclass
@@ -32,8 +32,13 @@ class _FakeArgs:
     profiler_with_stack: bool = False
 
 
+@dataclass
+class _FakeTrainArgs:
+    output_dir: str = ""
+
+
 @pytest.mark.runs_on(["cpu", "mps"])
-def test_profiler_callback_warns_missing_npu_activity(monkeypatch, caplog):
+def test_profiler_callback_warns_missing_npu_activity(monkeypatch, caplog, tmp_path):
     r"""``TorchProfilerCallback.on_train_begin`` should not crash if the installed
     torch build lacks ``ProfilerActivity.NPU`` (older torch shipped without NPU).
 
@@ -45,8 +50,6 @@ def test_profiler_callback_warns_missing_npu_activity(monkeypatch, caplog):
     """
     from llamafactory.train import callbacks as cb_mod
 
-    # Force the code path that thinks NPU is available, then attempt to access the
-    # enum value — which we make missing via a fake ProfilerActivity class.
     monkeypatch.setattr(cb_mod, "is_torch_npu_available", lambda: True)
     monkeypatch.setattr(cb_mod, "is_torch_cuda_available", lambda: False)
 
@@ -63,11 +66,7 @@ def test_profiler_callback_warns_missing_npu_activity(monkeypatch, caplog):
 
     with caplog.at_level(logging.WARNING, logger="llamafactory"):
         try:
-            callback.on_train_begin(
-                args=type("A", (), {"output_dir": "/tmp/opencode_test_prof_no_npu"})(),
-                state=type("S", (), {})(),
-                control=None,
-            )
+            callback.on_train_begin(args=_FakeTrainArgs(output_dir=str(tmp_path)), state=type("S", (), {})(), control=None)
         finally:
             if getattr(callback, "profiler", None) is not None:
                 callback.profiler.stop()
@@ -77,19 +76,26 @@ def test_profiler_callback_warns_missing_npu_activity(monkeypatch, caplog):
 
 
 @pytest.mark.runs_on(["cpu", "mps"])
-def test_profiler_callback_handles_failed_activity(monkeypatch, caplog):
-    r"""If appending a profiler activity raises for any reason, the callback must
-    log a warning instead of silently swallowing the error.
+def test_profiler_callback_handles_failed_activity(monkeypatch, caplog, tmp_path):
+    r"""If accessing a ``ProfilerActivity`` member raises for any reason, the
+    callback must log a warning instead of silently swallowing the error.
+
+    Uses a metaclass with ``__getattribute__`` so that *accessing* ``CUDA`` or
+    ``NPU`` raises — a plain function-valued class attribute would just return
+    the function object without invoking it, masking the very code path we want
+    to exercise (the broad ``except Exception``).
     """
 
-    def boom():
-        raise RuntimeError("simulated torch issue")
+    class _BoomMeta(type):
+        def __getattribute__(cls, name):
+            if name in ("CUDA", "NPU"):
+                raise RuntimeError("simulated torch issue")
+            return super().__getattribute__(name)
 
-    monkeypatch.setattr(
-        torch.profiler,
-        "ProfilerActivity",
-        type("Boom", (), {"CPU": torch.profiler.ProfilerActivity.CPU, "CUDA": boom, "NPU": boom}),
-    )
+    class _Boom(metaclass=_BoomMeta):
+        CPU = torch.profiler.ProfilerActivity.CPU
+
+    monkeypatch.setattr(torch.profiler, "ProfilerActivity", _Boom)
 
     from llamafactory.train import callbacks as cb_mod
 
@@ -102,11 +108,7 @@ def test_profiler_callback_handles_failed_activity(monkeypatch, caplog):
 
     with caplog.at_level(logging.WARNING, logger="llamafactory"):
         try:
-            callback.on_train_begin(
-                args=type("A", (), {"output_dir": "/tmp/opencode_test_prof_boom"})(),
-                state=type("S", (), {})(),
-                control=None,
-            )
+            callback.on_train_begin(args=_FakeTrainArgs(output_dir=str(tmp_path)), state=type("S", (), {})(), control=None)
         finally:
             if getattr(callback, "profiler", None) is not None:
                 callback.profiler.stop()
