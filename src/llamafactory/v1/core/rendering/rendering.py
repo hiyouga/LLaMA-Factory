@@ -20,6 +20,16 @@ sibling modules:
   - ``escape``    -- special-token escaping (prompt-injection hardening)
   - ``collation`` -- batch padding/truncation/MM alignment (consumed by the batch generators)
 
+Assistant supervision is located WITHOUT a per-model marker table: a training sample is rendered
+so that its last message is the supervised assistant turn, and that turn's token span is recovered
+by a single prompt/full difference -- encode the prompt (everything up to and including the
+assistant role header, via ``add_generation_prompt=True``) and the full sequence, then the tail of
+the full sequence that the prompt does not cover is exactly this turn. Multi-turn conversations are
+split into one sample per supervised turn (see ``process_samples``) so the supervised turn is always
+the last one; this keeps the diff on the only boundary that is prefix-stable across chat templates
+(appending the final assistant turn never restripts earlier turns), so models with reasoning-history
+stripping (e.g. Qwen3 ``<think>``) are handled correctly without hard-coding role markers.
+
 Note: ``position_ids`` are assigned by ``process_samples`` (1-based); multimodal (mrope) position
 ids are expected to be recomputed by the model/trainer.
 """
@@ -51,7 +61,10 @@ def _render_messages(
     is_generate: bool = False,
     **kwargs,
 ) -> ModelInput:
-    r"""Render messages using the model's own chat template, locating supervision by a prompt/full diff."""
+    r"""Render messages using the model's own chat template, locating supervision by a prompt/full diff.
+
+    Note: ``position_ids`` are not produced here; ``process_samples`` assigns a 1-based range.
+    """
     tokenizer = get_tokenizer(processor)
     is_multimodal = not is_tokenizer(processor)
 
@@ -143,6 +156,9 @@ def _render_messages(
 
     prompt_ids, _ = _encode(hf_messages[:-1], messages[:-1], add_generation_prompt=True)
     if input_ids[: len(prompt_ids)] != prompt_ids:
+        # The prompt must be a token-prefix of the full sequence for the diff to be valid. If a
+        # template re-renders earlier turns when the final turn is appended, fail loud rather than
+        # mislabel.
         raise ValueError(
             "prompt is not a token-prefix of the full sequence; the chat template is not "
             "prefix-stable for this turn, so diff-based labeling is unsafe."
@@ -263,6 +279,11 @@ class Renderer:
         Multi-turn SFT conversations are already prefix-split in the data layer (DataEngine), so each
         ``messages`` sample is rendered once -- the diff-based renderer supervises only its last
         assistant turn.
+
+        Args:
+            samples: The samples to process.
+        Returns:
+            List of processed model inputs.
         """
         model_inputs = []
         for sample in samples:

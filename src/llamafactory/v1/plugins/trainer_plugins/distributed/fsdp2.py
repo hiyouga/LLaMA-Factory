@@ -73,7 +73,7 @@ def _make_safetensor_loader(checkpoint_file: str, tensor_key: str):
     return _load_tensor
 
 
-def get_transformer_layer_classes(model: HFModel) -> set[type[nn.Module]]:
+def get_transformer_layer_cls(model: HFModel) -> set[type[nn.Module]]:
     # Return the set of Transformer layer classes that should each be wrapped by FSDP2.
 
     classes: set[type[nn.Module]] = set()
@@ -207,7 +207,7 @@ class FSDP2Engine:
             return model
 
         mp_policy = self.get_mp_policy()
-        transformer_layer_cls_to_wrap = get_transformer_layer_classes(model)
+        transformer_layer_cls_to_wrap = get_transformer_layer_cls(model)
 
         if not transformer_layer_cls_to_wrap:
             logger.warning(
