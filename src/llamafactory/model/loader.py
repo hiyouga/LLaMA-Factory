@@ -89,7 +89,7 @@ def load_tokenizer(model_args: "ModelArguments") -> "TokenizerModule":
             padding_side="right",
             **init_kwargs,
         )
-    except Exception as e:
+    except (OSError, ValueError, ImportError, RuntimeError) as e:
         raise OSError("Failed to load tokenizer.") from e
 
     patch_tokenizer(tokenizer, model_args)
@@ -106,7 +106,7 @@ def load_tokenizer(model_args: "ModelArguments") -> "TokenizerModule":
             use_fast=not model_args.use_fast_tokenizer,
             **init_kwargs,
         )
-    except Exception as e:
+    except (OSError, ValueError, ImportError, RuntimeError) as e:
         logger.info_rank0(f"Failed to load processor: {e}.")
         processor = None
 
