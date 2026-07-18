@@ -19,7 +19,7 @@
 [![Open in Studios](https://img.shields.io/badge/ModelScope-Open%20in%20Studios-blue)](https://modelscope.cn/studios/hiyouga/LLaMA-Board)
 [![Open in Novita](https://img.shields.io/badge/Novita-Deploy%20Template-blue)](https://novita.ai/templates-library/105981?sharer=88115474-394e-4bda-968e-b88e123d0c47)
 
-### Used by [Amazon](https://aws.amazon.com/cn/blogs/machine-learning/how-apoidea-group-enhances-visual-information-extraction-from-banking-documents-with-multimodal-models-using-llama-factory-on-amazon-sagemaker-hyperpod/), [NVIDIA](https://developer.nvidia.com/rtx/ai-toolkit), [Aliyun](https://help.aliyun.com/zh/pai/use-cases/fine-tune-a-llama-3-model-with-llama-factory), etc.
+### Used by [Amazon](https://aws.amazon.com/cn/blogs/machine-learning/how-apoidea-group-enhances-visual-information-extraction-from-banking-documents-with-multimodal-models-using-llama-factory-on-amazon-sagemaker-hyperpod/), [NVIDIA](https://developer.nvidia.com/rtx/ai-toolkit), [Aliyun](https://help.aliyun.com/zh/pai/use-cases/fine-tune-a-llama-3-model-with-llama-factory), etc
 
 <div align="center" markdown="1">
 
@@ -42,21 +42,24 @@
 
 **Fine-tuning a large language model can be easy as...**
 
-https://github.com/user-attachments/assets/3991a3a8-4276-4d30-9cab-4cb0c4b9b99e
+<https://github.com/user-attachments/assets/3991a3a8-4276-4d30-9cab-4cb0c4b9b99e>
 
 Start local training:
+
 - Please refer to [usage](#getting-started)
 
 Start cloud training:
-- **Colab (free)**: https://colab.research.google.com/drive/1eRTPn37ltBbYsISy9Aw2NuI2Aq5CQrD9?usp=sharing
-- **PAI-DSW (free trial)**: https://gallery.pai-ml.com/#/preview/deepLearning/nlp/llama_factory
-- **AMD GPU Cloud (free credits)**: https://github.com/AMD-AIM/AMD_Developers_Notebooks/blob/main/en/AMD_developer_LLaMAFactory_note_en.md
+
+- **Colab (free)**: <https://colab.research.google.com/drive/1eRTPn37ltBbYsISy9Aw2NuI2Aq5CQrD9?usp=sharing>
+- **PAI-DSW (free trial)**: <https://gallery.pai-ml.com/#/preview/deepLearning/nlp/llama_factory>
+- **AMD GPU Cloud (free credits)**: <https://github.com/AMD-AIM/AMD_Developers_Notebooks/blob/main/en/AMD_developer_LLaMAFactory_note_en.md>
 
 Read technical notes:
-- **Documentation (WIP)**: https://llamafactory.readthedocs.io/en/latest/
-- **Documentation (AMD GPU)**: https://rocm.docs.amd.com/projects/ai-developer-hub/en/latest/notebooks/fine_tune/llama_factory_llama3.html
-- **Documentation (ASCEND NPU)**: https://llamafactory.readthedocs.io/en/latest/multibackend/npu/index.html
-- **Official Blog**: https://blog.llamafactory.net/en/
+
+- **Documentation (WIP)**: <https://llamafactory.readthedocs.io/en/latest/>
+- **Documentation (AMD GPU)**: <https://rocm.docs.amd.com/projects/ai-developer-hub/en/latest/notebooks/fine_tune/llama_factory_llama3.html>
+- **Documentation (ASCEND NPU)**: <https://llamafactory.readthedocs.io/en/latest/multibackend/npu/index.html>
+- **Official Blog**: <https://blog.llamafactory.net/en/>
 
 > [!NOTE]
 > Except for the above links, all other websites are unauthorized third-party websites. Please carefully use them.
@@ -109,7 +112,7 @@ Read technical notes:
 > [!TIP]
 > Now we have a dedicated blog for LLaMA Factory!
 >
-> Website: https://blog.llamafactory.net/en/
+> Website: <https://blog.llamafactory.net/en/>
 
 - 💡 [KTransformers Fine-Tuning × LLaMA Factory: Fine-tuning 1000 Billion models with 2 4090-GPU + CPU](https://blog.llamafactory.net/en/posts/ktransformers/) (English)
 - 💡 [Easy Dataset × LLaMA Factory: Enabling LLMs to Efficiently Learn Domain Knowledge](https://buaa-act.feishu.cn/wiki/GVzlwYcRFiR8OLkHbL6cQpYin7g) (English)
@@ -527,7 +530,7 @@ docker run -it --rm --gpus=all --ipc=host hiyouga/llamafactory:latest
 
 This image is built on Ubuntu 22.04 (x86\_64), CUDA 12.4, Python 3.11, PyTorch 2.6.0, and Flash-attn 2.7.4.
 
-Find the pre-built images: https://hub.docker.com/r/hiyouga/llamafactory/tags
+Find the pre-built images: <https://hub.docker.com/r/hiyouga/llamafactory/tags>
 
 Please refer to [build docker](#build-docker) to build the image yourself.
 
@@ -592,7 +595,6 @@ To enable FlashAttention-2 on the Windows platform, please use the script from [
 
 To install LLaMA Factory on Ascend NPU devices, please upgrade Python to version 3.10 or higher: `pip install -r requirements/npu.txt`. Additionally, you need to install the **Ascend CANN Toolkit and Kernels**. Please follow the [installation tutorial](https://llamafactory.readthedocs.io/en/latest/advanced/npu_installation.html).
 
-
 You can also download the pre-built Docker images:
 
 ```bash
@@ -629,7 +631,7 @@ make
 pip install .
 ```
 
-2. Install transformers from the main branch.
+1. Install transformers from the main branch.
 
 ```bash
 git clone -b main https://github.com/huggingface/transformers.git
@@ -637,7 +639,7 @@ cd transformers
 pip install .
 ```
 
-3. Set `double_quantization: false` in the configuration. You can refer to the [example](examples/train_qlora/qwen3_lora_sft_bnb_npu.yaml).
+1. Set `double_quantization: false` in the configuration. You can refer to the [example](examples/train_qlora/qwen3_lora_sft_bnb_npu.yaml).
 
 </details>
 
@@ -934,6 +936,7 @@ If you have a project that should be incorporated, please contact via email or c
 1. **[Sky-T1](https://novasky-ai.github.io/posts/sky-t1/)**: An o1-like model fine-tuned by NovaSky AI with very small cost.
 1. **[WeClone](https://github.com/xming521/WeClone)**: One-stop solution for creating your digital avatar from chat logs.
 1. **[EmoLLM](https://github.com/SmartFlowAI/EmoLLM)**: A project about large language models (LLMs) and mental health.
+
 </details>
 
 ## License
