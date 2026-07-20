@@ -23,12 +23,26 @@ from ....utils.plugin import BasePlugin
 
 
 if TYPE_CHECKING:
+    from ....accelerator.interface import DistributedInterface, DistributedStrategy
     from ....utils.types import HFModel, Processor
 
 
 class DistributedPlugin(BasePlugin):
     def __call__(self, model: HFModel, dist_config: PluginConfig, **kwargs) -> HFModel:
         return super().__call__(model, dist_config, **kwargs)
+
+
+def initialize_distributed_interface(dist_config: PluginConfig | None) -> DistributedInterface:
+    """Initialize the accelerator with topology declared by the selected distributed plugin."""
+    from ....accelerator.interface import DistributedInterface
+
+    mesh_spec_factory = None
+    if dist_config is not None:
+        plugin = DistributedPlugin(dist_config.name)
+        if plugin.has_method("mesh_specs"):
+            mesh_spec_factory = plugin.mesh_specs
+
+    return DistributedInterface(dist_config, mesh_spec_factory=mesh_spec_factory)
 
 
 @DistributedPlugin("fsdp2").register()
@@ -71,6 +85,13 @@ def shard_model_fsdpturbo(model: HFModel, dist_config: PluginConfig, **kwargs) -
     from .fsdpturbo import FSDPTurboFSDP2Engine
 
     return FSDPTurboFSDP2Engine(dist_config, bf16=bool(kwargs.get("bf16"))).shard_model(model)
+
+
+@DistributedPlugin("fsdpturbo").register("mesh_specs")
+def get_mesh_specs_fsdpturbo(strategy: DistributedStrategy):
+    from .fsdpturbo import get_fsdpturbo_mesh_specs
+
+    return get_fsdpturbo_mesh_specs(strategy)
 
 
 @DistributedPlugin("fsdpturbo").register("save_model")

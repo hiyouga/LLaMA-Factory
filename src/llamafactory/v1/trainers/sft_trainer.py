@@ -18,6 +18,7 @@ from ..config import InputArgument, get_args
 from ..core.base_trainer import BaseTrainer
 from ..core.data_engine import DataEngine
 from ..core.model_engine import ModelEngine
+from ..plugins.trainer_plugins.distributed.hub import initialize_distributed_interface
 from ..utils.types import BatchInput, Tensor
 
 
@@ -31,7 +32,7 @@ class SFTTrainer(BaseTrainer):
 
 def run_sft(args: InputArgument = None):
     model_args, data_args, training_args, _ = get_args(args)
-    DistributedInterface(training_args.dist_config)
+    initialize_distributed_interface(training_args.dist_config)
     train_dataset = DataEngine(data_args.train_dataset)
     model_engine = ModelEngine(model_args, is_train=True)
     trainer = SFTTrainer(

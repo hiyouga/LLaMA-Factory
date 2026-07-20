@@ -15,7 +15,9 @@
 import sys
 from unittest.mock import MagicMock, patch
 
+import pytest
 import torch.multiprocessing as mp
+from torch import nn
 from transformers import AutoModelForCausalLM
 
 
@@ -71,3 +73,49 @@ def test_apply_kernel():
 
 def test_apply_all_kernels():
     mp.spawn(_apply_all_kernels)
+
+
+def test_flash_linear_attention_kernels_compose_with_auto(monkeypatch):
+    import fsdp_turbo.ops.fla as fla_ops
+
+    from llamafactory.v1.plugins.model_plugins.kernels.interface import apply_default_kernels, get_default_kernels
+    from llamafactory.v1.plugins.model_plugins.kernels.ops.linear_attention.fla import _FlashLinearAttentionOpKernel
+
+    model = nn.Sequential(nn.Linear(2, 2))
+    selected = "fused_recurrent_gated_delta_rule, chunk_gated_delta_rule"
+    calls = []
+
+    assert set(selected.replace(" ", "").split(",")).issubset(get_default_kernels())
+    monkeypatch.setattr(_FlashLinearAttentionOpKernel, "check_deps", classmethod(lambda cls: True))
+    monkeypatch.setattr(
+        fla_ops,
+        "apply_fla_ops",
+        lambda received_model, received_names, strict: calls.append((received_model, received_names, strict)) or 1,
+    )
+
+    assert apply_default_kernels(model, include_kernels=selected) is model
+    assert calls == [
+        (model, ["fused_recurrent_gated_delta_rule"], False),
+        (model, ["chunk_gated_delta_rule"], False),
+    ]
+
+
+def test_flash_linear_attention_plugin_uses_strict_standard_kernels(monkeypatch):
+    from llamafactory.v1.plugins.model_plugins.kernels import interface
+
+    model = nn.Sequential(nn.Linear(2, 2))
+    calls = []
+    monkeypatch.setattr(
+        interface,
+        "apply_kernel",
+        lambda kernel, **kwargs: calls.append((kernel, kwargs)),
+    )
+
+    assert interface.apply_flash_linear_attention_kernels(model, include_kernels="auto") is model
+    assert calls == [
+        ("chunk_gated_delta_rule", {"model": model, "strict": True}),
+        ("fused_recurrent_gated_delta_rule", {"model": model, "strict": True}),
+    ]
+
+    with pytest.raises(ValueError, match="Unsupported Flash Linear Attention kernels"):
+        interface.apply_flash_linear_attention_kernels(model, include_kernels="not_a_kernel")

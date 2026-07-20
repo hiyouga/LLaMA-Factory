@@ -5,9 +5,10 @@ import torch
 from llamafactory.v1.plugins.trainer_plugins.distributed.fsdp2 import get_transformer_layer_cls
 from llamafactory.v1.plugins.trainer_plugins.distributed.fsdpturbo import (
     FSDPTurboEPModelSpec,
-    FSDPTurboFSDP2Engine,
     _import_fsdpturbo_ep,
+    get_fsdpturbo_mesh_specs,
 )
+from llamafactory.v1.plugins.trainer_plugins.distributed.hub import DistributedPlugin
 
 
 class _Model(torch.nn.Module):
@@ -30,40 +31,17 @@ def test_qwen35_support_is_not_hardcoded_in_model_registry():
     assert FSDPTurboEPModelSpec.get(_Model("qwen3_5_moe")) is None
 
 
-def test_triton_ops_are_forwarded_from_dist_config(monkeypatch):
-    import fsdp_turbo.ops.triton as triton_ops
+def test_fsdpturbo_declares_expert_mesh_topology_through_plugin():
+    strategy = SimpleNamespace(dp_size=16, cp_size=1, ep_size=8)
 
-    class LinearAttention(torch.nn.Module):
-        pass
+    specs = get_fsdpturbo_mesh_specs(strategy)
+    assert len(specs) == 1
+    assert specs[0].name == "fsdpturbo_expert"
+    assert specs[0].mesh_shape == (1, 2, 8, 1)
+    assert specs[0].mesh_dim_names == ("edp", "efsdp", "ep", "expert_cp")
+    assert DistributedPlugin("fsdpturbo").has_method("mesh_specs")
 
-    class Layer(torch.nn.Module):
-        def __init__(self):
-            super().__init__()
-            self.linear_attn = LinearAttention()
-
-    model = _Model("parameter_driven")
-    model.layers = torch.nn.ModuleList([Layer(), Layer()])
-    plans = [
-        {
-            "name": "fla_chunk_gated_delta_rule",
-            "apply_modules": ["layers.{*}.linear_attn"],
-            "module_attribute": "chunk_gated_delta_rule",
-            "kwargs": {"chunk_size": 64},
-        }
-    ]
-    calls = []
-
-    def fake_apply(received_model, received_plans):
-        calls.append((received_model, received_plans))
-        return 2
-
-    monkeypatch.setattr(triton_ops, "apply_triton_ops", fake_apply)
-    engine = object.__new__(FSDPTurboFSDP2Engine)
-    engine.dist_config = {"triton_ops": plans}
-    engine.rank = 0
-
-    assert engine._apply_triton_ops(model) == 2
-    assert calls == [(model, plans)]
+    assert get_fsdpturbo_mesh_specs(SimpleNamespace(dp_size=16, cp_size=1, ep_size=1)) == ()
 
 
 def test_transformer_layer_prefers_nested_language_model_over_vision_blocks():

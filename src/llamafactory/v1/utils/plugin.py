@@ -74,6 +74,10 @@ class BasePlugin:
         """Call the registered function with the given arguments."""
         return self["__call__"](*args, **kwargs)
 
+    def has_method(self, method_name: str = "__call__") -> bool:
+        """Return whether this plugin provides the requested method."""
+        return method_name in self._registry.get(self.name, {})
+
     def __getattr__(self, method_name: str) -> Callable:
         """Get the registered function with the given name."""
         return self[method_name]

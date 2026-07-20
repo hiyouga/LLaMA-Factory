@@ -26,21 +26,17 @@ And data parallelism types:
 - cp: Context parallelism.
 """
 
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from datetime import timedelta
 from enum import StrEnum
+from math import prod
 from typing import Any, Optional
 
 from torch.distributed import (
     barrier,
     destroy_process_group,
     init_process_group,
-)
-from torch.distributed import (
-    get_rank as dist_get_rank,
-)
-from torch.distributed import (
-    get_world_size as dist_get_world_size,
 )
 from torch.distributed.device_mesh import DeviceMesh, init_device_mesh
 
@@ -61,6 +57,30 @@ class Dim(StrEnum):
     CP = "cp"
     EFSDP = "efsdp"
     EP = "ep"
+
+
+@dataclass(frozen=True)
+class DeviceMeshSpec:
+    """Declarative description of an additional distributed device mesh."""
+
+    name: str
+    mesh_shape: tuple[int, ...]
+    mesh_dim_names: tuple[str, ...]
+    exposed_dims: tuple[Dim, ...]
+
+    def __post_init__(self) -> None:
+        if not self.name:
+            raise ValueError("Device mesh spec name must not be empty.")
+        if len(self.mesh_shape) != len(self.mesh_dim_names):
+            raise ValueError("Device mesh shape and dimension names must have the same length.")
+        if not self.mesh_shape or any(size < 1 for size in self.mesh_shape):
+            raise ValueError(f"Device mesh shape must contain positive dimensions, got {self.mesh_shape}.")
+        if len(set(self.mesh_dim_names)) != len(self.mesh_dim_names):
+            raise ValueError(f"Device mesh dimension names must be unique, got {self.mesh_dim_names}.")
+
+        missing_dims = {dim.value for dim in self.exposed_dims}.difference(self.mesh_dim_names)
+        if missing_dims:
+            raise ValueError(f"Exposed dimensions are missing from device mesh spec: {sorted(missing_dims)}.")
 
 
 @dataclass
@@ -150,7 +170,11 @@ class DistributedInterface:
 
         return cls._instance
 
-    def __init__(self, config: DistributedConfig | None = None) -> None:
+    def __init__(
+        self,
+        config: DistributedConfig | None = None,
+        mesh_spec_factory: Callable[[DistributedStrategy], Sequence[DeviceMeshSpec]] | None = None,
+    ) -> None:
         if self._initialized:
             return
 
@@ -164,11 +188,8 @@ class DistributedInterface:
         self._local_world_size = helper.get_local_world_size()
         self.current_device = helper.get_current_device()
         self.device_count = helper.get_device_count()
-        self._extra_groups: dict[Dim, ProcessGroup] = {}
-        self._extra_group_ranks: dict[Dim, list[int]] = {}
-        self._expert_parent_mesh: DeviceMesh | None = None
-        self._expert_ep_mesh: DeviceMesh | None = None
-        self._expert_efsdp_mesh: DeviceMesh | None = None
+        self._extra_parent_meshes: dict[str, DeviceMesh] = {}
+        self._extra_meshes: dict[Dim, DeviceMesh] = {}
 
         if config is None:
             self.strategy = DistributedStrategy()
@@ -195,7 +216,8 @@ class DistributedInterface:
                 mesh_shape=self.strategy.data_mesh_shape,
                 mesh_dim_names=self.strategy.data_mesh_dim_names,
             )
-            self._init_extra_groups()
+            if mesh_spec_factory is not None:
+                self._init_extra_meshes(mesh_spec_factory(self.strategy))
         else:
             self.model_device_mesh = None
             self.data_device_mesh = None
@@ -208,45 +230,32 @@ class DistributedInterface:
             f"DistributedInterface(strategy={self.strategy}), is_distributed={self._is_distributed}, "
             f"current_device={self.current_device}, rank={self._rank}, world_size={self._world_size}, "
             f"model_device_mesh={self.model_device_mesh}, data_device_mesh={self.data_device_mesh}, "
-            f"extra_groups={list(self._extra_groups.keys())}"
+            f"extra_meshes={list(self._extra_meshes.keys())}"
         )
 
-    def _init_extra_groups(self) -> None:
-        if self.strategy.ep_size <= 1:
-            return
+    def _init_extra_meshes(self, mesh_specs: Sequence[DeviceMeshSpec]) -> None:
+        """Create plugin-declared meshes in a deterministic order on every rank."""
+        for spec in mesh_specs:
+            if spec.name in self._extra_parent_meshes:
+                raise ValueError(f"Device mesh spec `{spec.name}` is already initialized.")
+            if prod(spec.mesh_shape) != self._world_size:
+                raise ValueError(
+                    f"Device mesh spec `{spec.name}` must cover world_size {self._world_size}, "
+                    f"got shape {spec.mesh_shape}."
+                )
 
-        cp_size = self.strategy.cp_size
-        dp_size = self.strategy.dp_size
-        ep_size = self.strategy.ep_size
-        ep_fsdp_size = self._get_ep_fsdp_size()
-        edp_size = dp_size // (ep_size * ep_fsdp_size)
+            duplicate_dims = set(spec.exposed_dims).intersection(self._extra_meshes)
+            if duplicate_dims:
+                raise ValueError(f"Device mesh dimensions are already initialized: {sorted(duplicate_dims)}.")
 
-        # Build all expert-side dimensions atomically so every rank creates HCCL
-        # communicators in the same order.
-        expert_mesh = init_device_mesh(
-            device_type=self.current_device.type,
-            mesh_shape=(edp_size, ep_fsdp_size, ep_size, cp_size),
-            mesh_dim_names=("edp", Dim.EFSDP.value, Dim.EP.value, "expert_cp"),
-        )
-
-        self._expert_parent_mesh = expert_mesh
-        self._expert_ep_mesh = expert_mesh[Dim.EP.value]
-        self._expert_efsdp_mesh = expert_mesh[Dim.EFSDP.value]
-
-        self._extra_groups[Dim.EP] = self._expert_ep_mesh.get_group()
-        self._extra_group_ranks[Dim.EP] = self._expert_ep_mesh.mesh.flatten().tolist()
-
-        self._extra_groups[Dim.EFSDP] = self._expert_efsdp_mesh.get_group()
-        self._extra_group_ranks[Dim.EFSDP] = self._expert_efsdp_mesh.mesh.flatten().tolist()
-
-    def _get_ep_fsdp_size(self) -> int:
-        if self.strategy.ep_size <= 1:
-            return 1
-        return self.strategy.dp_size // self.strategy.ep_size
-
-    def get_expert_meshes(self) -> tuple[DeviceMesh | None, DeviceMesh | None]:
-        """Return cached expert-side EP/EFSDP meshes for FSDPTurbo."""
-        return self._expert_ep_mesh, self._expert_efsdp_mesh
+            parent_mesh = init_device_mesh(
+                device_type=self.current_device.type,
+                mesh_shape=spec.mesh_shape,
+                mesh_dim_names=spec.mesh_dim_names,
+            )
+            self._extra_parent_meshes[spec.name] = parent_mesh
+            for dim in spec.exposed_dims:
+                self._extra_meshes[dim] = parent_mesh[dim.value]
 
     def get_device_mesh(self, dim: Dim | None = None) -> DeviceMesh | None:
         """Get device mesh for specified dimension."""
@@ -254,21 +263,21 @@ class DistributedInterface:
             raise ValueError("dim must be specified.")
         elif not self._is_distributed:
             return None
-        elif dim in self._extra_groups:
-            return None
+        elif dim in self._extra_meshes:
+            return self._extra_meshes[dim]
         elif dim in self.strategy.data_mesh_dim_names:
             return self.data_device_mesh[dim.value]
-        else:
+        elif dim in self.strategy.model_mesh_dim_names:
             return self.model_device_mesh[dim.value]
+        else:
+            raise ValueError(f"Device mesh dimension is not initialized: {dim}.")
 
     def get_group(self, dim: Dim | None = None) -> Optional[ProcessGroup]:
         """Get process group for specified dimension."""
         if not self._is_distributed or dim is None:
             return None
-        elif dim in self._extra_groups:
-            return self._extra_groups[dim]
-        else:
-            return self.get_device_mesh(dim).get_group()
+
+        return self.get_device_mesh(dim).get_group()
 
     def get_rank(self, dim: Dim | None = None) -> int:
         """Get parallel rank for specified dimension."""
@@ -276,10 +285,8 @@ class DistributedInterface:
             return 0
         elif dim is None:
             return self._rank
-        elif dim in self._extra_groups:
-            return dist_get_rank(self._extra_groups[dim])
-        else:
-            return self.get_device_mesh(dim).get_local_rank()
+
+        return self.get_device_mesh(dim).get_local_rank()
 
     def get_world_size(self, dim: Dim | None = None) -> int:
         """Get parallel size for specified dimension."""
@@ -287,19 +294,17 @@ class DistributedInterface:
             return 1
         elif dim is None:
             return self._world_size
-        elif dim in self._extra_groups:
-            return dist_get_world_size(self._extra_groups[dim])
-        else:
-            return self.get_device_mesh(dim).size()
+
+        return self.get_device_mesh(dim).size()
 
     def get_group_ranks(self, dim: Dim | None = None) -> list[int]:
         """Get global ranks for specified process group."""
         if not self._is_distributed or dim is None:
             return [0]
-        elif dim in self._extra_group_ranks:
-            return self._extra_group_ranks[dim]
-        else:
-            raise ValueError(f"Global ranks are only tracked for extra groups, got dim={dim}.")
+        elif dim not in self._extra_meshes:
+            raise ValueError(f"Global ranks are only tracked for extra meshes, got dim={dim}.")
+
+        return self._extra_meshes[dim].mesh.flatten().tolist()
 
     def get_local_rank(self) -> int:
         """Get parallel local rank."""

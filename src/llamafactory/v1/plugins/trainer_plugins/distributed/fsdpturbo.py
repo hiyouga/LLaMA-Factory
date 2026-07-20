@@ -17,13 +17,30 @@ from collections.abc import Callable
 import torch
 from torch.distributed.device_mesh import DeviceMesh
 
-from ....accelerator.interface import Dim
+from ....accelerator.interface import DeviceMeshSpec, Dim, DistributedStrategy
 from ....utils.logging import get_logger
 from ....utils.types import HFModel
 from .fsdp2 import FSDP2Engine
 
 
 logger = get_logger(__name__)
+
+
+def get_fsdpturbo_mesh_specs(strategy: DistributedStrategy) -> tuple[DeviceMeshSpec, ...]:
+    """Describe the expert topology while leaving communicator creation to the accelerator layer."""
+    if strategy.ep_size <= 1:
+        return ()
+
+    ep_fsdp_size = strategy.dp_size // strategy.ep_size
+    edp_size = strategy.dp_size // (strategy.ep_size * ep_fsdp_size)
+    return (
+        DeviceMeshSpec(
+            name="fsdpturbo_expert",
+            mesh_shape=(edp_size, ep_fsdp_size, strategy.ep_size, strategy.cp_size),
+            mesh_dim_names=("edp", Dim.EFSDP.value, Dim.EP.value, "expert_cp"),
+            exposed_dims=(Dim.EP, Dim.EFSDP),
+        ),
+    )
 
 
 def _grad_to_local_fp32(grad: torch.Tensor) -> torch.Tensor:
@@ -209,16 +226,11 @@ class FSDPTurboFSDP2Engine(FSDP2Engine):
         self.dist_config = dist_config
         super().__init__(dist_config, bf16=bf16)
         self.ep_size = self.dist_config.get("ep_size", 1)
-        self.ep_fsdp_size = self._get_ep_fsdp_size(self.ep_size)
+        self.ep_fsdp_size = self.dist_interface.get_world_size(Dim.EFSDP) if self.ep_size > 1 else 1
         dp_mesh = self.dist_interface.get_device_mesh(Dim.DP)
         if dp_mesh is not None:
             self.fsdp_mesh = dp_mesh
             logger.info(f"Using DP-orthogonal FSDP mesh: {self.fsdp_mesh}")
-
-    def _get_ep_fsdp_size(self, ep_size: int) -> int:
-        if ep_size <= 1:
-            return 1
-        return self.dist_interface.get_world_size(Dim.DP) // ep_size
 
     def _get_ep_fsdp_modules(self, model: HFModel, ep_modules: list[str]) -> list[str]:
         modules = self.dist_config.get("ep_fsdp_modules")
@@ -238,8 +250,9 @@ class FSDPTurboFSDP2Engine(FSDP2Engine):
         return ep_fsdp_modules
 
     def _get_external_ep_meshes(self) -> tuple[DeviceMesh, DeviceMesh | None]:
-        """Reuse the cached expert-side meshes owned by DistributedInterface."""
-        ep_mesh, efsdp_mesh = self.dist_interface.get_expert_meshes()
+        """Reuse plugin-declared meshes created by DistributedInterface."""
+        ep_mesh = self.dist_interface.get_device_mesh(Dim.EP)
+        efsdp_mesh = self.dist_interface.get_device_mesh(Dim.EFSDP)
         if ep_mesh is None:
             raise RuntimeError("Expert EP mesh is not initialized in DistributedInterface.")
         if self.ep_fsdp_size > 1 and efsdp_mesh is None:
@@ -289,21 +302,8 @@ class FSDPTurboFSDP2Engine(FSDP2Engine):
 
         param.data.copy_(loaded_tensor)
 
-    def _apply_triton_ops(self, model: HFModel) -> int:
-        triton_ops = self.dist_config.get("triton_ops")
-        if not triton_ops:
-            return 0
-
-        from fsdp_turbo.ops.triton import apply_triton_ops
-
-        patched = apply_triton_ops(model, triton_ops)
-        if self.rank == 0:
-            logger.info(f"FSDPTurbo Triton ops updated {patched} module callables.")
-        return patched
-
     def prepare_model_ep(self, model: HFModel) -> tuple[HFModel, set]:
         """Apply FSDPTurbo EP/EFSDP and return parameters excluded from outer FSDP."""
-        self._apply_triton_ops(model)
         (
             expert_parallelize_modules,
             expert_fully_shard_modules,

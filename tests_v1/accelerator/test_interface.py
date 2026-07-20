@@ -18,7 +18,7 @@ import pytest
 import torch.multiprocessing as mp
 
 from llamafactory.v1.accelerator.helper import ReduceOp
-from llamafactory.v1.accelerator.interface import DistributedInterface
+from llamafactory.v1.accelerator.interface import DeviceMeshSpec, Dim, DistributedInterface
 from llamafactory.v1.utils.env import find_available_port
 from llamafactory.v1.utils.pytest import dist_env
 
@@ -50,6 +50,16 @@ def test_all_device():
     assert DistributedInterface().get_world_size() == int(os.getenv("WORLD_SIZE", "1"))
     assert DistributedInterface().get_local_rank() == int(os.getenv("LOCAL_RANK", "0"))
     assert DistributedInterface().get_local_world_size() == int(os.getenv("LOCAL_WORLD_SIZE", "1"))
+
+
+def test_device_mesh_spec_validates_exposed_dimensions():
+    with pytest.raises(ValueError, match="missing from device mesh spec"):
+        DeviceMeshSpec(
+            name="invalid",
+            mesh_shape=(2,),
+            mesh_dim_names=(Dim.EP.value,),
+            exposed_dims=(Dim.EFSDP,),
+        )
 
 
 @pytest.mark.runs_on(["cuda", "npu"])

@@ -129,7 +129,7 @@ def apply_default_kernels(model: HFModel, include_kernels: str = None) -> HFMode
     elif include_kernels == "auto" or include_kernels is True:
         use_kernels = default_kernels.keys()
     else:
-        use_kernels = include_kernels.split(",")  # "kernel_id1,kernel_id2,kernel_id3"
+        use_kernels = [kernel.strip() for kernel in include_kernels.split(",") if kernel.strip()]
 
     for kernel in use_kernels:
         if kernel not in default_kernels:
@@ -183,3 +183,26 @@ def apply_liger_kernels(
         return model
 
     return LigerKernel.apply(use_kernels=use_kernels, model=model, require_logits=require_logits)
+
+
+@KernelPlugin("flash-linear-attention").register()
+def apply_flash_linear_attention_kernels(model: HFModel, include_kernels: str = None) -> HFModel:
+    """Apply selected Flash Linear Attention kernels through the standard kernel registry."""
+    if not include_kernels:
+        return model
+
+    from .ops.linear_attention.fla import FLASH_LINEAR_ATTENTION_KERNELS
+
+    if include_kernels == "auto" or include_kernels is True:
+        use_kernels = FLASH_LINEAR_ATTENTION_KERNELS
+    else:
+        use_kernels = [name.strip() for name in include_kernels.split(",") if name.strip()]
+
+    unsupported = set(use_kernels).difference(FLASH_LINEAR_ATTENTION_KERNELS)
+    if unsupported:
+        raise ValueError(f"Unsupported Flash Linear Attention kernels: {sorted(unsupported)}")
+
+    for kernel in use_kernels:
+        apply_kernel(kernel, model=model, strict=True)
+
+    return model
