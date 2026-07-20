@@ -125,12 +125,16 @@ class UlyssesAttention(torch.nn.Module):
             softmax_scale = q.shape[-1] ** -0.5
 
         sp_world_size = get_ulysses_sequence_parallel_world_size(self.spg)
-        local_position_ids = position_ids
-
-        if position_ids is not None:
+        # HF FlashAttention only uses 2-D position IDs to detect packed
+        # sequences. Multi-axis IDs (for example Qwen3.5 mRoPE) have already
+        # been consumed by rotary embedding and must not enter that detector.
+        if position_ids is not None and position_ids.ndim == 2:
+            position_ids = position_ids.contiguous()
             global_position_ids = [torch.empty_like(position_ids) for _ in range(sp_world_size)]
             dist.all_gather(global_position_ids, position_ids, group=self.spg)
             position_ids = torch.cat(global_position_ids, dim=-1).contiguous()
+        else:
+            position_ids = None
 
         # HF may turn an all-ones local attention_mask into None before this
         # function. Under CP, different ranks can then disagree: some local
@@ -146,13 +150,11 @@ class UlyssesAttention(torch.nn.Module):
         # contribute an all-ones shard.
         if torch.any(torch.stack(global_has_attention_mask)):
             if attention_mask is None:
-                if local_position_ids is not None:
-                    attention_mask = torch.ones_like(local_position_ids, dtype=torch.int64)
-                else:
-                    attention_mask = torch.ones(query.shape[0], query.shape[1], dtype=torch.int64, device=query.device)
+                attention_mask = torch.ones(query.shape[0], query.shape[1], dtype=torch.int64, device=query.device)
             else:
                 attention_mask = attention_mask.to(torch.int64)
 
+            attention_mask = attention_mask.contiguous()
             global_attention_mask = [torch.empty_like(attention_mask) for _ in range(sp_world_size)]
             dist.all_gather(global_attention_mask, attention_mask, group=self.spg)
             attention_mask = torch.cat(global_attention_mask, dim=1).contiguous()

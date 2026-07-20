@@ -23,6 +23,7 @@ Init Phase:
 
 import importlib
 from pathlib import Path
+from typing import Literal
 
 from ....utils import logging
 from ....utils.plugin import BasePlugin
@@ -186,12 +187,23 @@ def apply_liger_kernels(
 
 
 @KernelPlugin("flash-linear-attention").register()
-def apply_flash_linear_attention_kernels(model: HFModel, include_kernels: str = None) -> HFModel:
+def apply_flash_linear_attention_kernels(
+    model: HFModel,
+    include_kernels: str = None,
+    chunk_size: Literal[16, 32, 64] = 64,
+) -> HFModel:
     """Apply selected Flash Linear Attention kernels through the standard kernel registry."""
     if not include_kernels:
         return model
 
-    from .ops.linear_attention.fla import FLASH_LINEAR_ATTENTION_KERNELS
+    from .ops.linear_attention.fla import (
+        CHUNK_GATED_DELTA_RULE,
+        FLASH_LINEAR_ATTENTION_KERNELS,
+        SUPPORTED_CHUNK_SIZES,
+    )
+
+    if type(chunk_size) is not int or chunk_size not in SUPPORTED_CHUNK_SIZES:
+        raise ValueError(f"chunk_size must be one of {SUPPORTED_CHUNK_SIZES}, got {chunk_size!r}.")
 
     if include_kernels == "auto" or include_kernels is True:
         use_kernels = FLASH_LINEAR_ATTENTION_KERNELS
@@ -203,6 +215,9 @@ def apply_flash_linear_attention_kernels(model: HFModel, include_kernels: str = 
         raise ValueError(f"Unsupported Flash Linear Attention kernels: {sorted(unsupported)}")
 
     for kernel in use_kernels:
-        apply_kernel(kernel, model=model, strict=True)
+        kernel_kwargs = {"model": model, "strict": True}
+        if kernel == CHUNK_GATED_DELTA_RULE:
+            kernel_kwargs["op_kwargs"] = {"chunk_size": chunk_size}
+        apply_kernel(kernel, **kernel_kwargs)
 
     return model

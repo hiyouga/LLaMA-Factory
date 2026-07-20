@@ -123,22 +123,6 @@ def clip_grad_norm_(model: HFModel, max_norm: float, **kwargs) -> float:
     return float(total_norm.item())
 
 
-def _import_fsdpturbo_ep():
-    """Import EP/EFSDP from FSDPTurbo, where the former MindSpeed APIs now live."""
-    from fsdp_turbo.distributed.expert_parallel.expert_fully_shard_parallel import expert_fully_shard_modules
-    from fsdp_turbo.distributed.expert_parallel.expert_parallel import expert_parallelize_modules
-    from fsdp_turbo.fsdp_turbo_config import EPPlanConfig, FSDPPlanConfig
-    from fsdp_turbo.utils.str_match import module_name_match
-
-    return (
-        expert_parallelize_modules,
-        expert_fully_shard_modules,
-        EPPlanConfig,
-        FSDPPlanConfig,
-        module_name_match,
-    )
-
-
 def _get_model_type(model: HFModel) -> str | None:
     return getattr(getattr(model, "config", None), "model_type", None)
 
@@ -209,9 +193,6 @@ def _prepare_qwen3_moe_for_ep(model: HFModel) -> HFModel:
     else:
         logger.info_rank0("FSDPTurbo EP adapter did not find a sparse expert module requiring preparation.")
     return model
-
-
-_REGISTERED_EP_PREPARE_FNS = (_prepare_qwen3_moe_for_ep,)
 
 
 class FSDPTurboFSDP2Engine(FSDP2Engine):
@@ -304,13 +285,13 @@ class FSDPTurboFSDP2Engine(FSDP2Engine):
 
     def prepare_model_ep(self, model: HFModel) -> tuple[HFModel, set]:
         """Apply FSDPTurbo EP/EFSDP and return parameters excluded from outer FSDP."""
-        (
-            expert_parallelize_modules,
-            expert_fully_shard_modules,
+        from fsdp_turbo.distributed import (
             EPPlanConfig,
             FSDPPlanConfig,
+            expert_fully_shard_modules,
+            expert_parallelize_modules,
             module_name_match,
-        ) = _import_fsdpturbo_ep()
+        )
 
         ep_modules = self.dist_config.get("ep_modules")
         if ep_modules is None:
@@ -336,12 +317,9 @@ class FSDPTurboFSDP2Engine(FSDP2Engine):
                 self.ep_size * self.dist_interface.get_world_size(Dim.EFSDP)
             )
             fsdp_plan = FSDPPlanConfig(
-                ignored_modules=list(self.dist_config.get("fsdp_ignored_modules", [])),
-                apply_modules=self.dist_config.get("fsdp_modules", {}),
-                param_dtype="bf16" if self.mixed_precision == "bf16" else "fp32",
-                reduce_dtype=self.dist_config.get("reduce_dtype", "fp32"),
-                output_dtype="bf16" if self.mixed_precision == "bf16" else "fp32",
-                cast_forward_inputs=True,
+                # FSDPTurbo uses this plan only to place EFSDP hooks and select its
+                # implementation. EFSDP targets come from ep_plan.apply_efsdp_modules.
+                apply_modules={},
                 hook_modules=self.dist_config.get("hook_modules", []),
                 fsdp_implementation=self.dist_config.get("fsdp_implementation", "native"),
             )

@@ -148,6 +148,46 @@ def test_render_messages():
             assert w == 0.0
 
 
+def test_render_messages_closes_unstable_thinking_prompt():
+    class PrefixSensitiveThinkingTokenizer:
+        chat_template = "thinking"
+        added_tokens_decoder = {}
+
+        def __init__(self):
+            self.prompt_modes = []
+
+        def apply_chat_template(
+            self,
+            messages,
+            *,
+            tokenize,
+            add_generation_prompt,
+            enable_thinking=None,
+            **kwargs,
+        ):
+            if not add_generation_prompt:
+                return "closed-prompt+answer"
+
+            self.prompt_modes.append(enable_thinking)
+            return "closed-prompt" if enable_thinking is False else "open-prompt"
+
+        def __call__(self, text, *, add_special_tokens):
+            encodings = {
+                "open-prompt": [1, 9],
+                "closed-prompt": [1, 2],
+                "closed-prompt+answer": [1, 2, 3],
+            }
+            return {"input_ids": encodings[text]}
+
+    tokenizer = PrefixSensitiveThinkingTokenizer()
+    renderer = Renderer(processor=tokenizer)
+    model_input = renderer.render_messages(V1_MESSAGES)
+
+    assert tokenizer.prompt_modes == [None, False]
+    assert model_input["input_ids"] == [1, 2, 3]
+    assert model_input["labels"] == [IGNORE_INDEX, IGNORE_INDEX, 3]
+
+
 def test_render_messages_with_tools():
     model_id = "Qwen/Qwen3-4B-Instruct-2507"
     tokenizer: Processor = AutoTokenizer.from_pretrained(model_id)

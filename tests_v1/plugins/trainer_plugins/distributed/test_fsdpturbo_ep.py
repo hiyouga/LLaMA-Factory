@@ -5,7 +5,6 @@ import torch
 from llamafactory.v1.plugins.trainer_plugins.distributed.fsdp2 import get_transformer_layer_cls
 from llamafactory.v1.plugins.trainer_plugins.distributed.fsdpturbo import (
     FSDPTurboEPModelSpec,
-    _import_fsdpturbo_ep,
     get_fsdpturbo_mesh_specs,
 )
 from llamafactory.v1.plugins.trainer_plugins.distributed.hub import DistributedPlugin
@@ -15,16 +14,6 @@ class _Model(torch.nn.Module):
     def __init__(self, model_type: str):
         super().__init__()
         self.config = SimpleNamespace(model_type=model_type)
-
-
-def test_fsdpturbo_ep_api_is_imported_from_external_package():
-    expert_parallelize, expert_fully_shard, ep_config, fsdp_config, module_match = _import_fsdpturbo_ep()
-
-    assert expert_parallelize.__module__.startswith("fsdp_turbo.")
-    assert expert_fully_shard.__module__.startswith("fsdp_turbo.")
-    assert ep_config.__module__.startswith("fsdp_turbo.")
-    assert fsdp_config.__module__.startswith("fsdp_turbo.")
-    assert module_match.__module__.startswith("fsdp_turbo.")
 
 
 def test_qwen35_support_is_not_hardcoded_in_model_registry():

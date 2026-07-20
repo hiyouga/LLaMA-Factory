@@ -175,7 +175,7 @@ class ModelEngine:
         if init_device.type == DeviceType.META:
             assert self.args.quant_config is None, "Quantization is not supported with meta device."
             with init_empty_weights():
-                model = AutoClass.from_config(self.model_config)
+                model = AutoClass.from_config(self.model_config, attn_implementation=self.args.flash_attn)
         else:
             model = AutoClass.from_pretrained(
                 self.args.model,
@@ -211,7 +211,8 @@ class ModelEngine:
             from ..plugins.model_plugins.kernels.interface import KernelPlugin
 
             kernel_config = self.args.kernel_config
-            kernel_kwargs: dict = {"model": model, "include_kernels": kernel_config.get("include_kernels")}
+            kernel_kwargs: dict = {"model": model}
+            kernel_kwargs.update({key: value for key, value in kernel_config.items() if key != "name"})
             if kernel_config.name == "liger_kernel":
                 # Fused linear CE omits logits; SFT stage needs logits for loss_weights.
                 kernel_kwargs["require_logits"] = self.is_train

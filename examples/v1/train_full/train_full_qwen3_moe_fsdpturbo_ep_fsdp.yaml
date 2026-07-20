@@ -1,6 +1,5 @@
 model: Qwen/Qwen3.5-35B-A3B
 model_class: llm
-template: qwen3_5_nothink
 
 kernel_config:
   name: auto
@@ -12,7 +11,6 @@ dist_config:
   ep_size: 16
   ep_dispatcher: eager
   param_dtype: bf16
-  reduce_dtype: fp32
   ep_modules:
     - model.language_model.layers.{*}.mlp.experts
   ep_fsdp_modules:

@@ -29,6 +29,7 @@ FLASH_LINEAR_ATTENTION_KERNELS = (
     CHUNK_GATED_DELTA_RULE,
     FUSED_RECURRENT_GATED_DELTA_RULE,
 )
+SUPPORTED_CHUNK_SIZES = (16, 32, 64)
 
 
 class _FlashLinearAttentionOpKernel(BaseKernel):
@@ -39,7 +40,7 @@ class _FlashLinearAttentionOpKernel(BaseKernel):
     def check_deps(cls) -> bool:
         try:
             import fla.ops.gated_delta_rule  # noqa: F401
-            import fsdp_turbo.ops.fla  # noqa: F401
+            from fsdp_turbo.ops import apply_fla_ops  # noqa: F401
         except ImportError:
             return False
 
@@ -56,9 +57,11 @@ class _FlashLinearAttentionOpKernel(BaseKernel):
                 raise RuntimeError(f"Dependencies for {cls.__name__} are unavailable.")
             return model
 
-        from fsdp_turbo.ops.fla import apply_fla_ops
+        from fsdp_turbo.ops import apply_fla_ops
 
-        patched = apply_fla_ops(model, [cls._op_name], strict=strict)
+        configured_kwargs = kwargs.get("op_kwargs")
+        op_kwargs = {cls._op_name: configured_kwargs} if configured_kwargs else None
+        patched = apply_fla_ops(model, [cls._op_name], op_kwargs=op_kwargs, strict=strict)
         if patched:
             logger.info_rank0(f"Kernel {cls.get_kernel_id()} updated {patched} module callables.")
         return model

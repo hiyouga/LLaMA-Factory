@@ -50,7 +50,6 @@ def _render_messages(
 
     Note: ``position_ids`` are not produced here; ``process_samples`` assigns a 1-based range.
     """
-
     tokenizer = get_tokenizer(processor)
     if not getattr(tokenizer, "chat_template", None):
         tokenizer.chat_template = _FALLBACK_CHATML_JINJA
@@ -73,9 +72,14 @@ def _render_messages(
             tools_parsed = [tools_parsed]
     if not is_generate and hf_messages and hf_messages[-1].get("reasoning_content"):
         kwargs["enable_thinking"] = True
-    def _encode(msgs: list[dict], add_generation_prompt: bool) -> list[int]:
+    def _encode(msgs: list[dict], add_generation_prompt: bool, **template_kwargs) -> list[int]:
+        render_kwargs = {**kwargs, **template_kwargs}
         text = tokenizer.apply_chat_template(
-            msgs, tokenize=False, add_generation_prompt=add_generation_prompt, tools=tools_parsed, **kwargs
+            msgs,
+            tokenize=False,
+            add_generation_prompt=add_generation_prompt,
+            tools=tools_parsed,
+            **render_kwargs,
         )
         return tokenizer(text, add_special_tokens=False)["input_ids"]
 
@@ -100,6 +104,12 @@ def _render_messages(
         )
 
     prompt_ids = _encode(hf_messages[:-1], add_generation_prompt=True)
+    if input_ids[: len(prompt_ids)] != prompt_ids and "enable_thinking" not in kwargs:
+        # Some reasoning templates leave an open thinking block in the generation prompt.
+        # Closing the empty block keeps the canonical full sequence unchanged while making
+        # its tokenized prompt boundary stable for diff-based labeling.
+        prompt_ids = _encode(hf_messages[:-1], add_generation_prompt=True, enable_thinking=False)
+
     if input_ids[: len(prompt_ids)] != prompt_ids:
         # The prompt must be a token-prefix of the full sequence for the diff to be valid. If a
         # template re-renders earlier turns when the final turn is appended, fail loud rather than

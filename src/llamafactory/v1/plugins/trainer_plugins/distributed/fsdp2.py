@@ -204,10 +204,7 @@ class FSDP2Engine:
             )
 
         if self.device_mesh is not None:
-            try:
-                self.fsdp_mesh = self.device_mesh["dp"]
-            except Exception:
-                self.fsdp_mesh = self.device_mesh
+            self.fsdp_mesh = self.device_mesh
 
             logger.info(f"Using Device Mesh: {self.fsdp_mesh}")
         else:

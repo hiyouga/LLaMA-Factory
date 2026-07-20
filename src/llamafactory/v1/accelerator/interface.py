@@ -297,15 +297,6 @@ class DistributedInterface:
 
         return self.get_device_mesh(dim).size()
 
-    def get_group_ranks(self, dim: Dim | None = None) -> list[int]:
-        """Get global ranks for specified process group."""
-        if not self._is_distributed or dim is None:
-            return [0]
-        elif dim not in self._extra_meshes:
-            raise ValueError(f"Global ranks are only tracked for extra meshes, got dim={dim}.")
-
-        return self._extra_meshes[dim].mesh.flatten().tolist()
-
     def get_local_rank(self) -> int:
         """Get parallel local rank."""
         return self._local_rank
