@@ -965,3 +965,7 @@ This repo benefits from [PEFT](https://github.com/huggingface/peft), [TRL](https
 ## Star History
 
 ![Star History Chart](https://api.star-history.com/svg?repos=hiyouga/LLaMA-Factory&type=Date)
+
+---
+
+*[Mukller](https://github.com/Mukller)*
