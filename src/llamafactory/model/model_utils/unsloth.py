@@ -16,6 +16,7 @@ from typing import TYPE_CHECKING, Any, Optional
 
 from ...extras import logging
 from ...extras.misc import get_current_device
+from .visual import COMPOSITE_MODELS
 
 
 if TYPE_CHECKING:
@@ -65,11 +66,38 @@ def load_unsloth_pretrained_model(
     return model
 
 
+def _coerce_unsloth_target_modules(model: "PreTrainedModel", target_modules: list[str]) -> list[str]:
+    r"""Convert expanded VLM target modules back to leaf names for unsloth.
+
+    For composite VLMs, `patch_target_modules` expands short target names (e.g. `out_proj`) into
+    full module paths (e.g. `model.language_model.layers.0.linear_attn.out_proj`) so that standard
+    PEFT can exclude frozen submodules like the vision tower. Unsloth's `get_peft_regex`, however,
+    treats every entry in `target_modules` as a leaf name and matches modules ending in it, so a full
+    path never matches and no layers get adapters. Reduce back to unique leaf names in that case.
+    """
+    if isinstance(target_modules, str):
+        target_modules = [target_modules]
+    elif isinstance(target_modules, set):
+        target_modules = list(target_modules)
+
+    model_type = getattr(model.config, "model_type", None)
+    if model_type not in COMPOSITE_MODELS or not target_modules:
+        return target_modules
+
+    if all("." not in name for name in target_modules):
+        return target_modules
+
+    return sorted({name.rsplit(".", 1)[-1] for name in target_modules})
+
+
 def get_unsloth_peft_model(
     model: "PreTrainedModel", model_args: "ModelArguments", peft_kwargs: dict[str, Any]
 ) -> "PreTrainedModel":
     r"""Get the peft model for the pretrained model with unsloth. Used in training."""
     from unsloth import FastLanguageModel  # type: ignore
+
+    if "target_modules" in peft_kwargs:
+        peft_kwargs["target_modules"] = _coerce_unsloth_target_modules(model, peft_kwargs["target_modules"])
 
     unsloth_peft_kwargs = {
         "model": model,
