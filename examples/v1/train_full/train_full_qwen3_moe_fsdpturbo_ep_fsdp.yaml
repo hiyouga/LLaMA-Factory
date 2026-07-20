@@ -1,8 +1,6 @@
-model: /home/model/Qwen3.5-35B-A3B
-trust_remote_code: true
+model: Qwen/Qwen3.5-35B-A3B
 model_class: llm
-custom_chat_template: >-
-  {% for message in messages %}{{'<|im_start|>' + message['role'] + '\n' + message['content'] + '<|im_end|>' + '\n'}}{% endfor %}{% if add_generation_prompt %}{{'<|im_start|>assistant\n'}}{% endif %}
+template: qwen3_5_nothink
 
 kernel_config:
   name: auto
@@ -27,7 +25,7 @@ init_config:
 train_dataset: data/v1_sft_demo.yaml
 
 ### training
-output_dir: /tmp/llamafactory_fsdp_plugin/smoke_qwen35_a3b_fsdpturbo_ep_fsdp2
+output_dir: outputs/Qwen3.5-35B-A3B/full/sft
 micro_batch_size: 1
 cutoff_len: 256
 learning_rate: 1.0e-4
