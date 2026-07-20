@@ -14,32 +14,38 @@
 
 from abc import ABC, abstractmethod
 
-from ....accelerator.helper import DeviceType, get_current_accelerator
-from ....utils.plugin import ensure_methods_implemented
+from ....utils.plugin import BasePlugin, ensure_methods_implemented
 from ....utils.types import HFModel
+
+
+class KernelPlugin(BasePlugin):
+    """Plugin family for model kernel optimization classes."""
 
 
 class BaseKernel(ABC):
     """Template base for concrete kernel implementations."""
 
-    _device: DeviceType | list[DeviceType]
-
     def __init_subclass__(cls, **kwargs) -> None:
         super().__init_subclass__(**kwargs)
         ensure_methods_implemented(cls)
 
-    @classmethod
-    def check_deps(cls) -> None:
-        supported = cls._device if isinstance(cls._device, list) else [cls._device]
-        current = get_current_accelerator().type
-        if current not in supported:
-            raise RuntimeError(f"Kernel {cls.__name__!r} requires {supported}, current accelerator is {current}.")
+    @staticmethod
+    @abstractmethod
+    def check_device() -> None: ...
+
+    @staticmethod
+    def check_deps() -> None:
+        pass
 
     @classmethod
     def apply(cls, **kwargs) -> HFModel:
+        cls.check_device()
         cls.check_deps()
+        if kwargs.get("model") is None:
+            raise ValueError(f"HFModel instance is required for {cls.__name__}.")
+
         return cls._apply(**kwargs)
 
-    @classmethod
+    @staticmethod
     @abstractmethod
-    def _apply(cls, **kwargs) -> HFModel: ...
+    def _apply(**kwargs) -> HFModel: ...

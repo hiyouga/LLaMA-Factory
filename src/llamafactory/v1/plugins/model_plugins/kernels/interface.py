@@ -14,77 +14,29 @@
 
 from typing import Any
 
-from ....utils import logging
-from ....utils.plugin import BasePlugin
+from ....accelerator.helper import DeviceType, get_current_accelerator
 from ....utils.types import HFModel
+from .base import KernelPlugin
+
+# Import built-in implementations so their class decorators populate the registry.
+from .liger_kernel_ops import LigerKernel  # noqa: F401
+from .ops.mlp.cuda_fused_moe import CudaFusedMoEKernel  # noqa: F401
+from .ops.mlp.npu_fused_moe import NpuFusedMoEKernel  # noqa: F401
+from .ops.mlp.npu_swiglu import NpuSwiGluKernel  # noqa: F401
+from .ops.rms_norm.npu_rms_norm import NpuRMSNormKernel  # noqa: F401
+from .ops.rope.npu_rope import NpuRoPEKernel  # noqa: F401
 
 
-logger = logging.get_logger(__name__)
+_AUTO_KERNELS = {
+    DeviceType.NPU: ("npu_fused_moe", "npu_fused_rmsnorm", "npu_fused_rope", "npu_fused_swiglu"),
+}
 
 
-class KernelPlugin(BasePlugin):
-    """Plugin family for model kernel optimizations."""
+def _apply_auto_kernels(model: HFModel, **kwargs) -> HFModel:
+    device_type = get_current_accelerator().type
+    for kernel_name in _AUTO_KERNELS.get(device_type, ()):
+        model = KernelPlugin(kernel_name).apply(model=model, **kwargs)
 
-
-@KernelPlugin("npu_fused_rmsnorm").register()
-def apply_npu_fused_rmsnorm(model: HFModel, **kwargs) -> HFModel:
-    from .ops.rms_norm.npu_rms_norm import NpuRMSNormKernel
-
-    return NpuRMSNormKernel.apply(model=model, **kwargs)
-
-
-@KernelPlugin("npu_fused_rope").register()
-def apply_npu_fused_rope(model: HFModel, **kwargs) -> HFModel:
-    from .ops.rope.npu_rope import NpuRoPEKernel
-
-    return NpuRoPEKernel.apply(model=model, **kwargs)
-
-
-@KernelPlugin("npu_fused_swiglu").register()
-def apply_npu_fused_swiglu(model: HFModel, **kwargs) -> HFModel:
-    from .ops.mlp.npu_swiglu import NpuSwiGluKernel
-
-    return NpuSwiGluKernel.apply(model=model, **kwargs)
-
-
-@KernelPlugin("npu_fused_moe").register()
-def apply_npu_fused_moe(model: HFModel, **kwargs) -> HFModel:
-    from .ops.mlp.npu_fused_moe import NpuFusedMoEKernel
-
-    return NpuFusedMoEKernel.apply(model=model, **kwargs)
-
-
-@KernelPlugin("cuda_fused_moe").register()
-def apply_cuda_fused_moe(model: HFModel, **kwargs) -> HFModel:
-    from .ops.mlp.cuda_fused_moe import CudaFusedMoEKernel
-
-    return CudaFusedMoEKernel.apply(model=model, **kwargs)
-
-
-@KernelPlugin("liger_kernel").register()
-def apply_liger_kernels(model: HFModel, config: dict[str, Any] | None = None, **kwargs) -> HFModel:
-    try:
-        from .liger_kernel_ops import LigerKernel
-    except ImportError as exc:
-        logger.warning_rank0(f"[Kernel] Failed to import liger_kernel ops, skip. Error: {exc}")
-        return model
-
-    require_logits = kwargs.get("require_logits", False)
-    if config is not None:
-        require_logits = config.get("require_logits", require_logits)
-    return LigerKernel.apply(use_kernels="auto", model=model, require_logits=require_logits)
-
-
-_AUTO_KERNELS = ("npu_fused_moe", "npu_fused_rmsnorm", "npu_fused_rope", "npu_fused_swiglu")
-
-
-@KernelPlugin("auto").register()
-def apply_auto_kernels(model: HFModel, **kwargs) -> HFModel:
-    for kernel_name in _AUTO_KERNELS:
-        try:
-            model = KernelPlugin(kernel_name)(model=model, **kwargs)
-        except RuntimeError:
-            continue
     return model
 
 
@@ -99,7 +51,11 @@ def apply_kernels(model: HFModel, config: dict[str, Any], require_logits: bool =
         raise ValueError("kernel_config.name must contain at least one kernel name.")
 
     for name in names:
-        model = KernelPlugin(name)(model=model, config=config, require_logits=require_logits)
+        if name == "auto":
+            model = _apply_auto_kernels(model=model, config=config, require_logits=require_logits)
+        else:
+            model = KernelPlugin(name).apply(model=model, config=config, require_logits=require_logits)
+
     return model
 
 
@@ -112,4 +68,7 @@ def apply_v1_kernels(model: HFModel, use_v1_kernels: bool) -> HFModel:
 
 
 def apply_kernel(kernel_id: str, **kwargs) -> HFModel:
-    return KernelPlugin(kernel_id)(**kwargs)
+    if kernel_id == "auto":
+        return _apply_auto_kernels(**kwargs)
+
+    return KernelPlugin(kernel_id).apply(**kwargs)

@@ -22,10 +22,10 @@ Init Phase:
 
 import inspect
 
-from ....accelerator.helper import DeviceType
+from ....accelerator.helper import DeviceType, get_current_accelerator
 from ....utils.logging import get_logger
 from ....utils.types import HFModel
-from .base import BaseKernel
+from .base import BaseKernel, KernelPlugin
 
 
 logger = get_logger(__name__)
@@ -41,22 +41,26 @@ _LIGER_FN_BY_MODEL_TYPE: dict[str, str] = {
 }
 
 
+@KernelPlugin("liger_kernel").register()
 class LigerKernel(BaseKernel):
     """Liger Kernel for optimized model training."""
 
-    _device = [DeviceType.CUDA, DeviceType.NPU]
+    @staticmethod
+    def check_device() -> None:
+        current = get_current_accelerator().type
+        if current not in (DeviceType.CUDA, DeviceType.NPU):
+            raise RuntimeError(f"LigerKernel requires CUDA or NPU, current accelerator is {current}.")
 
-    @classmethod
-    def check_deps(cls) -> None:
+    @staticmethod
+    def check_deps() -> None:
         """Checks if the required dependencies for the kernel are available."""
-        super().check_deps()
         try:
             import liger_kernel  # noqa: F401
         except ImportError:
             raise RuntimeError("Liger kernel is not installed.") from None
 
-    @classmethod
-    def _apply(cls, **kwargs) -> "HFModel":
+    @staticmethod
+    def _apply(**kwargs) -> "HFModel":
         """Applies the Liger kernel to the model.
 
         Args:
@@ -74,11 +78,12 @@ class LigerKernel(BaseKernel):
             RuntimeError: If dependencies are not met.
         """
         model = kwargs.get("model")
-        use_kernels = kwargs.get("use_kernels", None)
-        if model is None:
-            raise ValueError(f"HFModel instance is required for {cls.__name__}.")
+        config = kwargs.get("config")
+        use_kernels = kwargs.get("use_kernels", "auto")
 
         require_logits = kwargs.get("require_logits", False)
+        if config is not None:
+            require_logits = config.get("require_logits", require_logits)
 
         model_type = getattr(model.config, "model_type", None)
 
