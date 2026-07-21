@@ -89,13 +89,9 @@ class BaseTrainer:
 
         if self.args.enable_activation_checkpointing:
             self.model.gradient_checkpointing_enable({"use_reentrant": False})
-            if not is_tokenizer(self.renderer.processor):
-                for module in self.model.modules():
-                    blocks = getattr(module, "blocks", None)
-                    if isinstance(blocks, torch.nn.ModuleList):
-                        for block in blocks:
-                            if hasattr(block, "gradient_checkpointing"):
-                                block.gradient_checkpointing = False
+            # Note: under FSDP2 bf16, encoder-tower nn.LayerNorms are made dtype-safe for the
+            # checkpoint recompute inside the FSDP2 engine (see fsdp2.py prepare_model), so the
+            # tower keeps activation checkpointing too.
 
         self._deepspeed_engine = None
         dist_name = self.args.dist_config.name if self.args.dist_config is not None else None
@@ -210,9 +206,7 @@ class BaseTrainer:
         else:
             from ..plugins.trainer_plugins.optimizer import OptimizerPlugin
 
-            self.optimizer = OptimizerPlugin(self.args.optim_config.name)(
-                self.model, self.args.optim_config, learning_rate=self.args.learning_rate
-            )
+            self.optimizer = OptimizerPlugin(self.args.optim_config.name)(self.model, self.args.optim_config)
 
     def _init_lr_scheduler(self) -> None:
         """Init lr scheduler."""
@@ -373,4 +367,3 @@ class BaseTrainer:
             logger.info_rank0(f"Model saved to {self.args.output_dir}")
 
         self.callback_handler.on_save(self.args, self.state)
-
