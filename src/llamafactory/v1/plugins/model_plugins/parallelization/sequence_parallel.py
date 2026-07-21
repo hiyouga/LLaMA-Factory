@@ -89,7 +89,10 @@ def apply_sequence_parallel(model, cp_size: int):
     set_ulysses_sequence_parallel_group(DistributedInterface().get_group(Dim.CP))
 
     try:
-        num_attention_heads, num_key_value_heads = model.config.num_attention_heads, model.config.num_attention_heads
+        num_attention_heads, num_key_value_heads = (
+            model.config.num_attention_heads,
+            model.config.num_key_value_heads,
+        )
     except AttributeError:
         num_attention_heads, num_key_value_heads = (
             model.config.text_config.num_attention_heads,

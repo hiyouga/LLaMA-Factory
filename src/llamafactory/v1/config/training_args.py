@@ -17,7 +17,11 @@ from dataclasses import dataclass, field
 from typing import Literal
 from uuid import uuid4
 
+from ..utils.logging import get_logger
 from .arg_utils import BatchingStrategy, PluginConfig, get_plugin_config
+
+
+logger = get_logger(__name__)
 
 
 @dataclass
@@ -175,6 +179,17 @@ class TrainingArguments:
             register_deepspeed_dist_config(self.dist_config)
         except ImportError:
             pass
+
+        # The optimizer learning rate has a single source of truth: ``learning_rate``.
+        # Propagate it into ``optim_config["lr"]`` so optimizer plugins (e.g. Muon) pick it up
+        # via ``optim_config.get("lr")`` without each plugin needing a separate ``learning_rate`` arg.
+        if self.optim_config is not None:
+            if "lr" in self.optim_config:
+                logger.warning_rank0(
+                    "`optim_config.lr` is overridden by `learning_rate`; set the learning rate via "
+                    "`learning_rate` instead and remove `lr` from `optim_config`."
+                )
+            self.optim_config["lr"] = self.learning_rate
 
         if str(self.batching_strategy) == str(BatchingStrategy.DYNAMIC_BATCHING):
             if self.max_steps is None or self.max_steps <= 0:

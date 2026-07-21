@@ -50,6 +50,7 @@ https://github.com/user-attachments/assets/43b700c6-a178-41db-b1f8-8190a5d3fcfc
 开始云端训练：
 - **Colab（免费）**：https://colab.research.google.com/drive/1d5KQtbemerlSDSxZIfAaWXhKr30QypiK?usp=sharing
 - **PAI-DSW（免费试用）**：https://gallery.pai-ml.com/#/preview/deepLearning/nlp/llama_factory
+- **AMD GPU Cloud (免费试用)**: https://github.com/AMD-AIM/AMD_Developers_Notebooks/blob/main/zh/AMD_developer_LLaMAFactory_note_zh.md
 
 阅读技术文档：
 - **入门教程**：https://zhuanlan.zhihu.com/p/695287607

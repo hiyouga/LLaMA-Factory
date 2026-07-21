@@ -31,6 +31,7 @@ from abc import abstractmethod
 
 import torch
 import torch.nn.functional as F
+from torch.distributed.tensor import DTensor
 
 from ..accelerator.helper import ReduceOp
 from ..accelerator.interface import Dim, DistributedInterface
@@ -199,7 +200,7 @@ class BaseTrainer:
             _trainable_params = [p for p in self.model.parameters() if p.requires_grad]
             self.optimizer = torch.optim.AdamW(_trainable_params, lr=self.args.learning_rate)
         else:
-            from ..plugins.trainer_plugins.optimizer import OptimizerPlugin
+            from ..plugins.trainer_plugins.optimizers.optimizer import OptimizerPlugin
 
             self.optimizer = OptimizerPlugin(self.args.optim_config.name)(self.model, self.args.optim_config)
 
@@ -282,12 +283,21 @@ class BaseTrainer:
                     # deepspeed: engine.step() already ran inside backward at the sync boundary
                     grad_norm = self._deepspeed_engine.get_grad_norm()
                 else:
-                    grad_norm = torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.args.max_grad_norm).item()
-
-                    if self.args.cp_size > 1:
-                        grad_norm = grad_norm**2
-                        grad_norm = DistributedInterface().all_reduce(grad_norm, op=ReduceOp.SUM, dim=Dim.CP)
-                        grad_norm = grad_norm**0.5
+                    # FSDP2 shards params/grads across the fsdp mesh, so clip_grad_norm_ returns a
+                    # per-rank local shard norm (global / sqrt(shard_size)): reported grad_norm then
+                    # scales as 1/sqrt(dp_size) and the clip coefficient is applied per-shard. Reduce
+                    # to the true global norm first, then clip with it.
+                    grads = [p.grad for p in self.model.parameters() if p.grad is not None]
+                    total_norm = torch.nn.utils.get_total_norm(grads)
+                    if isinstance(total_norm, DTensor):
+                        # full_tensor all-reduces across the fsdp mesh (spans CP under default
+                        # mp_shard=world); a separate CP reduce would over-count by sqrt(cp_size).
+                        total_norm = total_norm.full_tensor()
+                    # pass a Tensor: clip_grads_with_norm_ clamps max_norm / (total_norm + 1e-6).
+                    torch.nn.utils.clip_grads_with_norm_(
+                        self.model.parameters(), self.args.max_grad_norm, total_norm
+                    )
+                    grad_norm = total_norm.item()
 
                     if not torch.isfinite(torch.tensor(grad_norm)):  # type: ignore # pyright: ignore [reportUnknownReturnType]
                         logger.warning_rank0(f"Gradient norm is not finite: {grad_norm}")
