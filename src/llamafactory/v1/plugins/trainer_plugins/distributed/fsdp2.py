@@ -242,7 +242,7 @@ class FSDP2Engine:
             return model
 
         mp_policy = self.get_mp_policy()
-        transformer_layer_cls_to_wrap = get_transformer_layer_classes(model)
+        transformer_layer_cls_to_wrap = get_transformer_layer_cls(model)
 
         if not transformer_layer_cls_to_wrap:
             logger.warning(
