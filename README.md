@@ -589,19 +589,23 @@ To enable FlashAttention-2 on the Windows platform, please use the script from [
 
 <details><summary>For Ascend NPU users</summary>
 
-To install LLaMA Factory on Ascend NPU devices, please upgrade Python to version 3.10 or higher: `pip install -r requirements/npu.txt`. Additionally, you need to install the **Ascend CANN Toolkit and Kernels**. Please follow the [installation tutorial](https://llamafactory.readthedocs.io/en/latest/advanced/npu_installation.html).
+To install LLaMA Factory on Ascend NPU devices, please upgrade Python to version 3.10 or higher: `pip install -r requirements/npu.txt`. Additionally, you need to install the **Ascend CANN Toolkit and Kernels**. Please follow the [installation tutorial](https://llamafactory.readthedocs.io/en/latest/multibackend/npu/npu_installation.html).
 
 
 You can also download the pre-built Docker images:
 
 ```bash
 # Docker Hub
-docker pull hiyouga/llamafactory:latest-npu-a2
-docker pull hiyouga/llamafactory:latest-npu-a3
+docker pull hiyouga/llamafactory:latest-cann9.0.0-torch_npu2.7.1-A2-ubuntu-py3.11
+docker pull hiyouga/llamafactory:latest-cann9.0.0-torch_npu2.7.1-A3-ubuntu-py3.11
+docker pull hiyouga/llamafactory:latest-cann9.0.0-torch_npu2.7.1-A2-openeuler-py3.11
+docker pull hiyouga/llamafactory:latest-cann9.0.0-torch_npu2.7.1-A3-openeuler-py3.11
 
 # quay.io
-docker pull quay.io/ascend/llamafactory:latest-npu-a2
-docker pull quay.io/ascend/llamafactory:latest-npu-a3
+docker pull quay.io/ascend/llamafactory:latest-cann9.0.0-torch_npu2.7.1-A2-ubuntu-py3.11
+docker pull quay.io/ascend/llamafactory:latest-cann9.0.0-torch_npu2.7.1-A3-ubuntu-py3.11
+docker pull quay.io/ascend/llamafactory:latest-cann9.0.0-torch_npu2.7.1-A2-openeuler-py3.11
+docker pull quay.io/ascend/llamafactory:latest-cann9.0.0-torch_npu2.7.1-A3-openeuler-py3.11
 ```
 
 #### Install BitsAndBytes
@@ -682,12 +686,28 @@ docker compose up -d
 docker compose exec llamafactory bash
 ```
 
-For Ascend NPU users:
+For Ascend NPU users (A2 with Ubuntu by default):
 
 ```bash
 cd docker/docker-npu/
-docker compose up -d
-docker compose exec llamafactory bash
+docker compose up -d llamafactory-a2-ubuntu
+docker compose exec llamafactory-a2-ubuntu bash
+```
+
+Other NPU variants can be started with their corresponding profiles and services:
+
+```bash
+# A3 with Ubuntu
+docker compose --profile a3 up -d llamafactory-a3-ubuntu
+docker compose exec llamafactory-a3-ubuntu bash
+
+# A2 with openEuler
+docker compose --profile openeuler up -d llamafactory-a2-openeuler
+docker compose exec llamafactory-a2-openeuler bash
+
+# A3 with openEuler
+docker compose --profile a3-openeuler up -d llamafactory-a3-openeuler
+docker compose exec llamafactory-a3-openeuler bash
 ```
 
 For AMD ROCm users:

@@ -590,18 +590,22 @@ pip install https://github.com/jllllll/bitsandbytes-windows-webui/releases/downl
 
 <details><summary>昇腾 NPU 用户指南</summary>
 
-在昇腾 NPU 设备上安装 LLaMA Factory 时，请升级 Python 到 3.10 及以上，并需要指定额外依赖项，使用 `pip install -r requirements/npu.txt` 命令安装。此外，还需要安装 **Ascend CANN Toolkit 与 Kernels**，安装方法请参考[安装教程](https://llamafactory.readthedocs.io/zh-cn/latest/advanced/npu_installation.html)。
+在昇腾 NPU 设备上安装 LLaMA Factory 时，请升级 Python 到 3.10 及以上，并需要指定额外依赖项，使用 `pip install -r requirements/npu.txt` 命令安装。此外，还需要安装 **Ascend CANN Toolkit 与 Kernels**，安装方法请参考[安装教程](https://llamafactory.readthedocs.io/zh-cn/latest/multibackend/npu/npu_installation.html)。
 
 您可以直接下载预安装的最新docker镜像：
 
 ```bash
 # Docker Hub
-docker pull hiyouga/llamafactory:latest-npu-a2
-docker pull hiyouga/llamafactory:latest-npu-a3
+docker pull hiyouga/llamafactory:latest-cann9.0.0-torch_npu2.7.1-A2-ubuntu-py3.11
+docker pull hiyouga/llamafactory:latest-cann9.0.0-torch_npu2.7.1-A3-ubuntu-py3.11
+docker pull hiyouga/llamafactory:latest-cann9.0.0-torch_npu2.7.1-A2-openeuler-py3.11
+docker pull hiyouga/llamafactory:latest-cann9.0.0-torch_npu2.7.1-A3-openeuler-py3.11
 
 # quay.io
-docker pull quay.io/ascend/llamafactory:latest-npu-a2
-docker pull quay.io/ascend/llamafactory:latest-npu-a3
+docker pull quay.io/ascend/llamafactory:latest-cann9.0.0-torch_npu2.7.1-A2-ubuntu-py3.11
+docker pull quay.io/ascend/llamafactory:latest-cann9.0.0-torch_npu2.7.1-A3-ubuntu-py3.11
+docker pull quay.io/ascend/llamafactory:latest-cann9.0.0-torch_npu2.7.1-A2-openeuler-py3.11
+docker pull quay.io/ascend/llamafactory:latest-cann9.0.0-torch_npu2.7.1-A3-openeuler-py3.11
 ```
 
 #### 安装 BitsAndBytes
@@ -682,12 +686,28 @@ docker compose up -d
 docker compose exec llamafactory bash
 ```
 
-昇腾 NPU 用户：
+昇腾 NPU 用户（默认使用 A2 和 Ubuntu）：
 
 ```bash
 cd docker/docker-npu/
-docker compose up -d
-docker compose exec llamafactory bash
+docker compose up -d llamafactory-a2-ubuntu
+docker compose exec llamafactory-a2-ubuntu bash
+```
+
+其他 NPU 组合可以通过对应的 profile 和服务启动：
+
+```bash
+# A3 + Ubuntu
+docker compose --profile a3 up -d llamafactory-a3-ubuntu
+docker compose exec llamafactory-a3-ubuntu bash
+
+# A2 + openEuler
+docker compose --profile openeuler up -d llamafactory-a2-openeuler
+docker compose exec llamafactory-a2-openeuler bash
+
+# A3 + openEuler
+docker compose --profile a3-openeuler up -d llamafactory-a3-openeuler
+docker compose exec llamafactory-a3-openeuler bash
 ```
 
 AMD ROCm 用户：
