@@ -13,13 +13,13 @@ tools:
   - codeSearch
   - fileSearch
   - grepSearch
-  - readFile
+  - read/readFile
   - replaceStringInFile
   - createFile
   - createDirectory
   - listDir
   - getErrors
-  - runInTerminal
+  - execute/runInTerminal
 behavior:
   - "Follow LlamaFactory repository conventions and style guidance from .github/copilot-instructions.md."
   - "When editing Python, use Google-style formatting, ruff-friendly patterns, and the repo's existing package structure."
