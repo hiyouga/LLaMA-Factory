@@ -199,6 +199,10 @@ class ModelEngine:
         init_mode = self.args.init_config.name if self.args.init_config is not None else "init_on_default"
         model._init_mode = init_mode
 
+        if hasattr(model, "thinker"):
+            model = model.thinker
+            model._init_mode = init_mode
+
         if self.args.peft_config is None:
             if self.is_train:
                 logger.info_rank0("Fine-tuning mode: full tuning")

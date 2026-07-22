@@ -125,14 +125,24 @@ def _render_messages(
                 result[key] = outputs[key]
         mm_type_ids = outputs["mm_token_type_ids"][0].tolist() if "mm_token_type_ids" in outputs else None
 
-        # Audio processors (e.g. Qwen2-Audio) do not emit mm_token_type_ids. Synthesize one marking
-        # audio placeholder tokens as 3 so the downstream batching machinery (truncation alignment +
-        # FSDP dummy injection), which locates media by mm_token_type_ids, treats audio uniformly.
-        audio_token_id = getattr(processor, "audio_token_id", None)
-        if audio_token_id is not None and audio_token_id in input_ids:
+        # Some processors emit no mm_token_type_ids at all (e.g. Qwen2.5-Omni), or omit a modality
+        # (audio processors such as Qwen2-Audio). The downstream batching machinery (truncation
+        # alignment + FSDP dummy injection) locates media purely by mm_token_type_ids, so synthesize
+        # any missing marker by scanning input_ids for that modality's placeholder token id. Marker
+        # convention matches the collators (1=image, 2=video, 3=audio). Token ids may live on the
+        # processor or (Omni) only on the tokenizer, so resolve with a processor->tokenizer fallback.
+        # A modality already marked by the processor is left untouched.
+        for attr, marker in (("image_token_id", 1), ("video_token_id", 2), ("audio_token_id", 3)):
+            token_id = getattr(processor, attr, None)
+            if token_id is None:
+                token_id = getattr(tokenizer, attr, None)
+            if token_id is None or token_id not in input_ids:
+                continue
+            if mm_type_ids is not None and marker in mm_type_ids:
+                continue
             if mm_type_ids is None:
                 mm_type_ids = [0] * len(input_ids)
-            mm_type_ids = [3 if tid == audio_token_id else t for t, tid in zip(mm_type_ids, input_ids)]
+            mm_type_ids = [marker if tid == token_id else t for t, tid in zip(mm_type_ids, input_ids)]
 
         if mm_type_ids is not None:
             result["mm_token_type_ids"] = mm_type_ids
@@ -234,16 +244,16 @@ class Renderer:
 
         if modality == "image":
             media_block = {"type": "image_url", "value": _PILImage.new("RGB", (64, 64))}
-            target, presence_key, feature_keys = 1, "pixel_values", ("pixel_values", "image_grid_thw")
+            target, presence_key = 1, "pixel_values"
         elif modality == "video":
             # A minimal clip: the temporal patch size is typically 2, so provide two frames.
             media_block = {"type": "video_url", "value": np.zeros((2, 64, 64, 3), dtype=np.uint8)}
-            target, presence_key, feature_keys = 2, "pixel_values_videos", ("pixel_values_videos", "video_grid_thw")
+            target, presence_key = 2, "pixel_values_videos"
         else:
             # A short synthetic waveform at the model's sampling rate; the feature extractor pads it.
             sr = self.processor.feature_extractor.sampling_rate
             media_block = {"type": "audio_url", "value": np.zeros(sr // 10, dtype=np.float32)}
-            target, presence_key, feature_keys = 3, "input_features", ("input_features", "feature_attention_mask")
+            target, presence_key = 3, "input_features"
 
         messages: list[Message] = [
             {"role": "user", "content": [media_block]},
@@ -265,10 +275,10 @@ class Renderer:
             "input_ids": list(rendered["input_ids"][lo:hi]),
             "mm_token_type_ids": list(mm_type_ids[lo:hi]),
         }
-        for key in feature_keys:
-            fragment[key] = rendered[key]
-        if modality == "video" and "second_per_grid_ts" in rendered:
-            fragment["second_per_grid_ts"] = rendered["second_per_grid_ts"]
+
+        for key in _MULTIMODAL_PASSTHROUGH_KEYS:
+            if key in rendered:
+                fragment[key] = rendered[key]
 
         self._dummy_fragments[modality] = fragment
         return fragment

@@ -37,7 +37,8 @@ _MULTIMODAL_PASSTHROUGH_KEYS = frozenset(
         "image_grid_thw",
         "pixel_values_videos",
         "video_grid_thw",
-        "second_per_grid_ts",
+        "second_per_grid_ts",  # Qwen2.5-VL name for the video temporal grid spacing
+        "video_second_per_grid",  # Qwen2.5-Omni name for the same (fed to get_rope_index)
         "input_features",
         "feature_attention_mask",
     }
