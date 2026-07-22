@@ -2,12 +2,12 @@ from types import SimpleNamespace
 
 import torch
 
+from llamafactory.v1.plugins.trainer_plugins.distributed import fsdpturbo as fsdpturbo_module
 from llamafactory.v1.plugins.trainer_plugins.distributed.fsdp2 import get_transformer_layer_cls
 from llamafactory.v1.plugins.trainer_plugins.distributed.fsdpturbo import (
     FSDPTurboEPModelSpec,
-    get_fsdpturbo_mesh_specs,
+    FSDPTurboParallelState,
 )
-from llamafactory.v1.plugins.trainer_plugins.distributed.hub import DistributedPlugin
 
 
 class _Model(torch.nn.Module):
@@ -20,17 +20,44 @@ def test_qwen35_support_is_not_hardcoded_in_model_registry():
     assert FSDPTurboEPModelSpec.get(_Model("qwen3_5_moe")) is None
 
 
-def test_fsdpturbo_declares_expert_mesh_topology_through_plugin():
-    strategy = SimpleNamespace(dp_size=16, cp_size=1, ep_size=8)
+def test_fsdpturbo_owns_expert_mesh_topology(monkeypatch):
+    calls = []
 
-    specs = get_fsdpturbo_mesh_specs(strategy)
-    assert len(specs) == 1
-    assert specs[0].name == "fsdpturbo_expert"
-    assert specs[0].mesh_shape == (1, 2, 8, 1)
-    assert specs[0].mesh_dim_names == ("edp", "efsdp", "ep", "expert_cp")
-    assert DistributedPlugin("fsdpturbo").has_method("mesh_specs")
+    class _Mesh:
+        def __init__(self, name="expert"):
+            self.name = name
 
-    assert get_fsdpturbo_mesh_specs(SimpleNamespace(dp_size=16, cp_size=1, ep_size=1)) == ()
+        def __getitem__(self, name):
+            return _Mesh(name)
+
+    def _init_device_mesh(**kwargs):
+        calls.append(kwargs)
+        return _Mesh()
+
+    class _DistributedInterface:
+        current_device = torch.device("cpu")
+        strategy = SimpleNamespace(cp_size=1)
+
+        def get_world_size(self, dim):
+            return 16
+
+        def get_device_mesh(self, dim):
+            return _Mesh("dp")
+
+    monkeypatch.setattr(fsdpturbo_module, "init_device_mesh", _init_device_mesh)
+    state = FSDPTurboParallelState()
+    state.initialize(_DistributedInterface(), {"ep_size": 8})
+
+    assert calls == [
+        {
+            "device_type": "cpu",
+            "mesh_shape": (1, 2, 8, 1),
+            "mesh_dim_names": ("edp", "efsdp", "ep", "expert_cp"),
+        }
+    ]
+    assert state.ep_mesh.name == "ep"
+    assert state.efsdp_mesh.name == "efsdp"
+    assert state.expert_cp_mesh.name == "expert_cp"
 
 
 def test_transformer_layer_prefers_nested_language_model_over_vision_blocks():

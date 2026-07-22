@@ -36,20 +36,21 @@ FSDPTurbo EFSDP plan，而是继续由 LlamaFactory 外层 FSDP2 管理。
 
 ## 2. Mesh 初始化
 
-所有通信 Mesh 都由 `DistributedInterface` 在模型构建前初始化，避免插件在模型包装阶段临时创建
-ProcessGroup。distributed plugin 只声明拓扑，不直接操作全局通信状态。
+LlamaFactory 的 `DistributedInterface` 只初始化自身原有的 model/data mesh。它不感知 EP、EFSDP，
+也不为 distributed plugin 提供额外 mesh 注册接口。FSDPTurbo 的专家拓扑由插件文件内的
+`FSDPTurboParallelState` 独立创建和持有：
 
 ```text
 run_sft / run_dpo / run_rm
-  -> initialize_distributed_interface(dist_config)
-     -> DistributedPlugin("fsdpturbo").mesh_specs(strategy)
-        -> get_fsdpturbo_mesh_specs(strategy)
-     -> DistributedInterface(dist_config, mesh_spec_factory=...)
-        -> 初始化 LlamaFactory model/data mesh
-        -> _init_extra_meshes(mesh_specs)
+  -> DistributedInterface(dist_config)
+     -> 初始化 LlamaFactory model/data mesh
+  -> DistributedPlugin("fsdpturbo")
+     -> FSDPTurboFSDP2Engine.__init__()
+        -> FSDPTurboParallelState.initialize()
+           -> 初始化并保存 expert parent mesh 及其子 mesh
 ```
 
-`get_fsdpturbo_mesh_specs()` 声明专家侧四维父 Mesh：
+`FSDPTurboParallelState` 创建专家侧四维父 Mesh：
 
 ```text
 (edp, efsdp, ep, expert_cp)
@@ -64,8 +65,9 @@ edp_size      = dp_size / (ep_size * ep_fsdp_size)
 mesh_shape    = (edp_size, ep_fsdp_size, ep_size, cp_size)
 ```
 
-`DistributedInterface` 保存父 Mesh 的生命周期，并通过 `Dim.EP` 和 `Dim.EFSDP` 暴露对应子 Mesh。
-FSDPTurbo plugin 只通过 `get_device_mesh()` 获取它们，不重复创建通信域。
+状态对象保存 `edp_mesh`、`efsdp_mesh`、`ep_mesh` 和 `expert_cp_mesh`。插件内部模型切分和梯度范数
+都从这个状态对象读取专家通信域；LlamaFactory 其他 backend 不需要实现或感知这些接口。状态初始化
+会校验 `ep_size` 为正数且能够整除 `dp_size`，重复初始化时也会拒绝拓扑发生变化。
 
 ## 3. 模型切分顺序
 
@@ -108,15 +110,18 @@ LlamaFactory 不依赖 `fsdp_turbo.distributed` 下的内部文件路径。
 `fsdpturbo` plugin 按参数所属 Mesh 分组计算局部 p 次方和：
 
 - 非专家参数沿 DP 和 CP group 汇总。
-- 专家参数沿 EFSDP、EP 和 CP group 汇总。
+- 专家参数沿 `FSDPTurboParallelState` 保存的 EFSDP、EP 和 expert-CP group 汇总。
 - 汇总得到全局范数后，对所有本地梯度应用同一个 clipping coefficient。
 
 启动阶段会执行一次零梯度 warmup，使相关 collective 在正式训练前完成初始化。
+当前这是 `fsdpturbo` backend 的专用实现；其他 backend 继续保留原有梯度范数路径，等待上游
+distributed plugin 解耦后再统一公共接口。
 
 ## 6. 权重加载
 
-LlamaFactory 保留 `init_on_meta` 和 safetensors 加载流程。FSDPTurbo engine 的 `_copy_weights()`
-支持包含多个 `Shard` placement 的 DTensor，按各 Mesh 维度依次计算当前 rank 对应的本地切片。
+LlamaFactory 保留 `init_on_meta` 和 safetensors 加载流程。父类 `FSDP2Engine` 的加载器通过
+`self._copy_weights(...)` 动态调用 FSDPTurbo engine 的覆写实现，因此该方法不是未使用代码。
+它支持包含多个 `Shard` placement 的 DTensor，按各 Mesh 维度依次计算当前 rank 对应的本地切片。
 模型保存和 checkpoint 接口继续复用 LlamaFactory FSDP2 实现。
 
 ## 7. Kernel plugin
@@ -153,16 +158,22 @@ FSDPTurbo EP 组合使用。
 attention mask；只有二维 position IDs 才参与 packed-sequence 检测。Qwen3.5 mRoPE 等多轴 position IDs
 已经在 rotary embedding 中消费，不应传入 FlashAttention 的 packed-sequence 检测逻辑。
 
-Qwen3.5-35B-A3B 已在 8 die A3 上完成 10 步 full SFT smoke：
+当前 `FSDPTurboParallelState` 重构已在 8 die A3 上用 Qwen3.5-35B-A3B 完成两组 full SFT smoke：
 
 ```text
-world_size=8, cp_size=2, ep_size=4, efsdp_size=1, edp_size=1
-FlashAttention2 + FLA, activation checkpointing enabled, cutoff_len=128
+1. world_size=8, cp_size=1, ep_size=4, efsdp_size=2, edp_size=1
+   AdamW + auto kernels, activation checkpointing enabled, cutoff_len=128, max_steps=3
+   loss: 1.5504 -> 1.4024 -> 1.2399
+
+2. world_size=8, cp_size=2, ep_size=2, efsdp_size=2, edp_size=1
+   SGD + FlashAttention2 + auto kernels, activation checkpointing enabled, cutoff_len=128, max_steps=3
+   loss: 1.8852 -> 1.7149 -> 1.6229
 ```
 
-训练连续产生 loss 和全局 grad norm，完成第 10 步并成功聚合、保存模型。该运行验证了非平凡 CP 与 EP
-组合的 forward、backward、混合 Mesh 梯度范数和保存通路。由于 8 die 下 AdamW 双状态缓存超出单卡显存，
-smoke 使用无状态 SGD；这不改变模型并行和通信通路，但不构成 AdamW 容量验证。
+两组训练都连续产生有限的全局 grad norm，并完成模型聚合与保存。第一组验证正式 AdamW 下的 EP、EFSDP
+及 mixed-mesh grad norm；第二组验证非平凡 CP 下 `expert_cp_mesh` 参与 forward、backward 和梯度范数通信。
+由于 `cp_size=2` 将外层 DP 缩小到 4，第二组使用无状态 SGD 控制 8 die 显存占用；这不改变本次需要验证的
+模型切分与通信通路，但不构成 CP=2 场景的 AdamW 容量验证。
 
 当前尺寸公式在合法整除时令 `edp_size=1`，因此非平凡 EDP 尚未验证。EFSDP 还要求被切分参数的目标
 维度可被 `efsdp_size` 整除；例如 `efsdp_size=3` 不能切分形状为 `[256, 2048]` 的目标维度。后续扩展

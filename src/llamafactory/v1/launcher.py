@@ -70,9 +70,7 @@ def launch():
             env["TORCH_NCCL_AVOID_RECORD_STREAMS"] = "1"
 
         torchrun_args = [
-            sys.executable,
-            "-m",
-            "torch.distributed.run",
+            "torchrun",
             "--nproc-per-node",
             nproc_per_node,
         ]

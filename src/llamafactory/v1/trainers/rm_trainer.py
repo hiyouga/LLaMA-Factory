@@ -22,7 +22,6 @@ from ..config.arg_utils import ModelClass
 from ..core.base_trainer import BaseTrainer
 from ..core.data_engine import DataEngine
 from ..core.model_engine import ModelEngine
-from ..plugins.trainer_plugins.distributed.hub import initialize_distributed_interface
 from ..utils import logging
 from ..utils.types import BatchInput, HFModel, Tensor
 
@@ -164,7 +163,7 @@ class RMTrainer(BaseTrainer):
 def run_rm(args: InputArgument = None):
     model_args, data_args, training_args, _ = get_args(args)
     model_args.model_class = ModelClass.CLS
-    initialize_distributed_interface(training_args.dist_config)
+    DistributedInterface(training_args.dist_config)
     train_dataset = DataEngine(data_args.train_dataset)
     _validate_rm_dataset_format(train_dataset, data_args.train_dataset)
     model_engine = ModelEngine(model_args, is_train=True)

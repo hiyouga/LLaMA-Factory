@@ -156,35 +156,6 @@ def load_checkpoint(model: HFModel, optimizer: torch.optim.Optimizer, ckpt_dir: 
     set_optimizer_state_dict(model, optimizer, optim_state, options=options)
 
 
-def clip_grad_norm_(model: HFModel, max_norm: float, **kwargs) -> float:
-    from torch.distributed._tensor import DTensor
-    from torch.nn.utils import get_total_norm
-
-    dist_interface = DistributedInterface()
-    cp_size = getattr(dist_interface.strategy, "cp_size", 1)
-
-    parameters = [p for p in model.parameters() if p.grad is not None]
-    if not parameters:
-        return 0.0
-
-    grads = [p.grad for p in parameters]
-    total_norm = get_total_norm(grads, 2.0)
-    if isinstance(total_norm, DTensor):
-        total_norm = total_norm.full_tensor()
-
-    if cp_size > 1:
-        total_norm = total_norm * cp_size
-
-    total_norm_val = float(total_norm.item())
-    clip_coef = min(max_norm / (total_norm_val + 1e-6), 1.0)
-
-    if clip_coef < 1.0:
-        for grad in grads:
-            grad.detach().mul_(clip_coef)
-
-    return total_norm_val
-
-
 class FSDP2Engine:
     def __init__(self, dist_config: dict, bf16: bool = False):
         self.dist_interface = DistributedInterface()

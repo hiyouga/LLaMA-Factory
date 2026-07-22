@@ -15,9 +15,9 @@
 from collections.abc import Callable
 
 import torch
-from torch.distributed.device_mesh import DeviceMesh
+from torch.distributed.device_mesh import DeviceMesh, init_device_mesh
 
-from ....accelerator.interface import DeviceMeshSpec, Dim, DistributedStrategy
+from ....accelerator.interface import Dim, DistributedInterface
 from ....utils.logging import get_logger
 from ....utils.types import HFModel
 from .fsdp2 import FSDP2Engine
@@ -26,21 +26,78 @@ from .fsdp2 import FSDP2Engine
 logger = get_logger(__name__)
 
 
-def get_fsdpturbo_mesh_specs(strategy: DistributedStrategy) -> tuple[DeviceMeshSpec, ...]:
-    """Describe the expert topology while leaving communicator creation to the accelerator layer."""
-    if strategy.ep_size <= 1:
-        return ()
+class FSDPTurboParallelState:
+    """Own FSDPTurbo's expert topology without extending LlamaFactory's global interface."""
 
-    ep_fsdp_size = strategy.dp_size // strategy.ep_size
-    edp_size = strategy.dp_size // (strategy.ep_size * ep_fsdp_size)
-    return (
-        DeviceMeshSpec(
-            name="fsdpturbo_expert",
-            mesh_shape=(edp_size, ep_fsdp_size, strategy.ep_size, strategy.cp_size),
-            mesh_dim_names=("edp", Dim.EFSDP.value, Dim.EP.value, "expert_cp"),
-            exposed_dims=(Dim.EP, Dim.EFSDP),
-        ),
-    )
+    EDP = "edp"
+    EFSDP = "efsdp"
+    EP = "ep"
+    EXPERT_CP = "expert_cp"
+
+    def __init__(self) -> None:
+        self._initialized = False
+        self.dp_size = 1
+        self.cp_size = 1
+        self.ep_size = 1
+        self.efsdp_size = 1
+        self.edp_size = 1
+        self.expert_mesh: DeviceMesh | None = None
+        self.edp_mesh: DeviceMesh | None = None
+        self.efsdp_mesh: DeviceMesh | None = None
+        self.ep_mesh: DeviceMesh | None = None
+        self.expert_cp_mesh: DeviceMesh | None = None
+
+    @property
+    def initialized(self) -> bool:
+        return self._initialized
+
+    def initialize(self, dist_interface: DistributedInterface, dist_config: dict) -> None:
+        dp_size = dist_interface.get_world_size(Dim.DP)
+        cp_size = dist_interface.strategy.cp_size
+        ep_size = int(dist_config.get("ep_size", 1))
+
+        if ep_size < 1:
+            raise ValueError(f"ep_size must be positive, got {ep_size}.")
+        if dp_size % ep_size != 0:
+            raise ValueError(f"dp_size must be divisible by ep_size, got {dp_size} % {ep_size} != 0.")
+
+        topology = (dp_size, cp_size, ep_size)
+        if self._initialized:
+            current_topology = (self.dp_size, self.cp_size, self.ep_size)
+            if topology != current_topology:
+                raise RuntimeError(
+                    f"FSDPTurbo parallel state is already initialized with {current_topology}, got {topology}."
+                )
+            return
+
+        self.dp_size = dp_size
+        self.cp_size = cp_size
+        self.ep_size = ep_size
+
+        if ep_size > 1:
+            self.efsdp_size = dp_size // ep_size
+            self.edp_size = dp_size // (ep_size * self.efsdp_size)
+            if dist_interface.get_device_mesh(Dim.DP) is None:
+                raise RuntimeError("FSDPTurbo expert parallelism requires an initialized distributed device mesh.")
+
+            self.expert_mesh = init_device_mesh(
+                device_type=dist_interface.current_device.type,
+                mesh_shape=(self.edp_size, self.efsdp_size, self.ep_size, self.cp_size),
+                mesh_dim_names=(self.EDP, self.EFSDP, self.EP, self.EXPERT_CP),
+            )
+            self.edp_mesh = self.expert_mesh[self.EDP]
+            self.efsdp_mesh = self.expert_mesh[self.EFSDP]
+            self.ep_mesh = self.expert_mesh[self.EP]
+            self.expert_cp_mesh = self.expert_mesh[self.EXPERT_CP]
+
+        self._initialized = True
+
+
+_FSDPTURBO_PARALLEL_STATE = FSDPTurboParallelState()
+
+
+def get_fsdpturbo_parallel_state() -> FSDPTurboParallelState:
+    return _FSDPTURBO_PARALLEL_STATE
 
 
 def _grad_to_local_fp32(grad: torch.Tensor) -> torch.Tensor:
@@ -77,15 +134,22 @@ def clip_grad_norm_(model: HFModel, max_norm: float, **kwargs) -> float:
     """
     from torch.distributed._tensor import DTensor
 
-    from ....accelerator.interface import Dim, DistributedInterface
-
     norm_type = float(kwargs.get("norm_type", 2.0))
     dist_interface = DistributedInterface()
+    parallel_state = get_fsdpturbo_parallel_state()
+    if not parallel_state.initialized:
+        raise RuntimeError("FSDPTurbo parallel state must be initialized before clipping gradients.")
+
     device = dist_interface.current_device
     dp_group = dist_interface.get_group(Dim.DP)
     cp_group = dist_interface.get_group(Dim.CP) if dist_interface.strategy.cp_size > 1 else None
-    ep_group = dist_interface.get_group(Dim.EP) if dist_interface.strategy.ep_size > 1 else None
-    efsdp_group = dist_interface.get_group(Dim.EFSDP) if dist_interface.strategy.ep_size > 1 else None
+    ep_group = parallel_state.ep_mesh.get_group() if parallel_state.ep_mesh is not None else None
+    efsdp_group = parallel_state.efsdp_mesh.get_group() if parallel_state.efsdp_mesh is not None else None
+    expert_cp_group = (
+        parallel_state.expert_cp_mesh.get_group()
+        if parallel_state.expert_cp_mesh is not None and parallel_state.cp_size > 1
+        else None
+    )
 
     ep_params: list[torch.nn.Parameter] = []
     non_ep_params: list[torch.nn.Parameter] = []
@@ -95,7 +159,9 @@ def clip_grad_norm_(model: HFModel, max_norm: float, **kwargs) -> float:
             continue
 
         mesh_names = set(getattr(getattr(grad, "device_mesh", None), "mesh_dim_names", ()) or ())
-        is_ep_side = isinstance(grad, DTensor) and bool(mesh_names & {Dim.EP.value, Dim.EFSDP.value})
+        is_ep_side = isinstance(grad, DTensor) and bool(
+            mesh_names & {parallel_state.EP, parallel_state.EFSDP}
+        )
         if is_ep_side:
             ep_params.append(param)
         else:
@@ -110,7 +176,7 @@ def clip_grad_norm_(model: HFModel, max_norm: float, **kwargs) -> float:
         total_pth = total_pth + _allreduce_sum_(non_ep_pth, [dp_group, cp_group])
     if ep_params:
         ep_pth = _local_pth_sum(ep_params, norm_type, device)
-        total_pth = total_pth + _allreduce_sum_(ep_pth, [efsdp_group, ep_group, cp_group])
+        total_pth = total_pth + _allreduce_sum_(ep_pth, [efsdp_group, ep_group, expert_cp_group])
 
     total_norm = total_pth.pow(1.0 / norm_type)
     clip_coef = min(max_norm / (float(total_norm.item()) + 1e-6), 1.0)
@@ -206,8 +272,10 @@ class FSDPTurboFSDP2Engine(FSDP2Engine):
     def __init__(self, dist_config: dict, bf16: bool = False):
         self.dist_config = dist_config
         super().__init__(dist_config, bf16=bf16)
-        self.ep_size = self.dist_config.get("ep_size", 1)
-        self.ep_fsdp_size = self.dist_interface.get_world_size(Dim.EFSDP) if self.ep_size > 1 else 1
+        self.parallel_state = get_fsdpturbo_parallel_state()
+        self.parallel_state.initialize(self.dist_interface, self.dist_config)
+        self.ep_size = self.parallel_state.ep_size
+        self.ep_fsdp_size = self.parallel_state.efsdp_size
         dp_mesh = self.dist_interface.get_device_mesh(Dim.DP)
         if dp_mesh is not None:
             self.fsdp_mesh = dp_mesh
@@ -230,17 +298,8 @@ class FSDPTurboFSDP2Engine(FSDP2Engine):
                 ep_fsdp_modules.append(module)
         return ep_fsdp_modules
 
-    def _get_external_ep_meshes(self) -> tuple[DeviceMesh, DeviceMesh | None]:
-        """Reuse plugin-declared meshes created by DistributedInterface."""
-        ep_mesh = self.dist_interface.get_device_mesh(Dim.EP)
-        efsdp_mesh = self.dist_interface.get_device_mesh(Dim.EFSDP)
-        if ep_mesh is None:
-            raise RuntimeError("Expert EP mesh is not initialized in DistributedInterface.")
-        if self.ep_fsdp_size > 1 and efsdp_mesh is None:
-            raise RuntimeError("Expert EFSDP mesh is not initialized in DistributedInterface.")
-        return ep_mesh, efsdp_mesh
-
     def _copy_weights(self, param, loaded_tensor):
+        """Copy full checkpoint tensors into mixed-mesh DTensors from the inherited loader."""
         from torch.distributed._tensor import DTensor, Shard
 
         if loaded_tensor.dtype != param.dtype:
@@ -314,7 +373,7 @@ class FSDPTurboFSDP2Engine(FSDP2Engine):
                 apply_efsdp_modules=self._get_ep_fsdp_modules(model, ep_modules),
             )
             ep_plan._gradient_divide_factor = float(
-                self.ep_size * self.dist_interface.get_world_size(Dim.EFSDP)
+                self.ep_size * self.parallel_state.efsdp_size
             )
             fsdp_plan = FSDPPlanConfig(
                 # FSDPTurbo uses this plan only to place EFSDP hooks and select its
@@ -323,7 +382,12 @@ class FSDPTurboFSDP2Engine(FSDP2Engine):
                 hook_modules=self.dist_config.get("hook_modules", []),
                 fsdp_implementation=self.dist_config.get("fsdp_implementation", "native"),
             )
-            ep_mesh, efsdp_mesh = self._get_external_ep_meshes()
+            ep_mesh = self.parallel_state.ep_mesh
+            efsdp_mesh = self.parallel_state.efsdp_mesh
+            if ep_mesh is None:
+                raise RuntimeError("FSDPTurbo EP mesh is not initialized.")
+            if self.ep_fsdp_size > 1 and efsdp_mesh is None:
+                raise RuntimeError("FSDPTurbo EFSDP mesh is not initialized.")
             if self.rank == 0:
                 logger.info("Applying FSDPTurbo EP backend.")
                 logger.info(f"FSDPTurbo EP apply patterns: {ep_modules}")
