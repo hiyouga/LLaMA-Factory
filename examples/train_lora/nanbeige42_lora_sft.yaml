@@ -1,5 +1,7 @@
 ### model
-# Nanbeige4.2 is a Looped Transformer (model_type=nanbeige); remote code is required.
+# Nanbeige4.2-Instruct (Chat). Looped Transformer (model_type=nanbeige); remote code required.
+# For Base continued pre-training see nanbeige42_base_lora_pretrain.yaml.
+# For Base → chat SFT (adds ChatML specials) see nanbeige42_base_lora_sft.yaml.
 model_name_or_path: Nanbeige/Nanbeige4.2-3B
 trust_remote_code: true
 use_fast_tokenizer: false

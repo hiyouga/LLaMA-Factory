@@ -2181,7 +2181,9 @@ register_model_group(
 )
 
 
-# Nanbeige4.2 uses a custom Looped Transformer (model_type=nanbeige, trust_remote_code required).
+# Nanbeige4.2 Looped Transformer (model_type=nanbeige, trust_remote_code required).
+# Instruct gets default template=nanbeige; Base does not (no ChatML specials in tokenizer).
+# Base chat SFT: add_special_tokens + template nanbeige (see examples/train_lora/nanbeige42_base_lora_sft.yaml).
 register_model_group(
     models={
         "Nanbeige4.2-3B-Base": {
