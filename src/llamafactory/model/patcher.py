@@ -391,6 +391,21 @@ def patch_config(
         for dtype_name, dtype in [("fp16", torch.float16), ("bf16", torch.bfloat16), ("fp32", torch.float32)]:
             setattr(config, dtype_name, model_args.compute_dtype == dtype)
 
+    # Nanbeige remote code (modeling_nanbeige.py) expects rope_scaling=None or {"type","factor"}.
+    # transformers>=5 injects {"rope_type": "default", ...} which breaks NanbeigeAttention._init_rope.
+    if getattr(config, "model_type", None) == "nanbeige":
+        rope_scaling = getattr(config, "rope_scaling", None)
+        if isinstance(rope_scaling, dict) and "type" not in rope_scaling:
+            rope_type = rope_scaling.get("rope_type", "default")
+            if rope_type == "default" or "factor" not in rope_scaling:
+                setattr(config, "rope_scaling", None)
+            else:
+                setattr(config, "rope_scaling", {"type": rope_type, "factor": rope_scaling["factor"]})
+
+        # Remote code indexes attention by _attn_implementation; leave a safe default when unset.
+        if getattr(config, "_attn_implementation", None) is None:
+            setattr(config, "_attn_implementation", "eager")
+
     if getattr(config, "model_type", None) == "minicpmo":
         setattr(config, "init_audio", True)
         setattr(config, "init_tts", False)
