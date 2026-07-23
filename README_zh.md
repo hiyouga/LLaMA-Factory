@@ -23,7 +23,7 @@
 
 <div align="center" markdown="1">
 
-### 欢迎关注我们全新的开源项目：🐧 [PenguinHarness](https://github.com/Prism-Shadow/penguin-harness)：只需 0.02 美元的 Token，即可自动构建 Agent 的桌面级 Agent！
+### 欢迎关注我们全新的开源项目——<br>🐧 [PenguinHarness](https://github.com/Prism-Shadow/penguin-harness)：只需 0.02 美元的 Token，即可自动构建 Agent 的桌面级 Agent！
 
 </div>
 
