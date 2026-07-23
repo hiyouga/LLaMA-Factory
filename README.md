@@ -19,6 +19,8 @@
 [![Open in Studios](https://img.shields.io/badge/ModelScope-Open%20in%20Studios-blue)](https://modelscope.cn/studios/hiyouga/LLaMA-Board)
 [![Open in Novita](https://img.shields.io/badge/Novita-Deploy%20Template-blue)](https://novita.ai/templates-library/105981?sharer=88115474-394e-4bda-968e-b88e123d0c47)
 
+----
+
 <div align="center" markdown="1">
 
 ### 🐧 Meet [PenguinHarness](https://github.com/Prism-Shadow/penguin-harness): our new agent harness — let Agents autonomously build better Agents for just $0.02 of tokens!
@@ -26,6 +28,8 @@
 </div>
 
 https://github.com/user-attachments/assets/9b7033e8-f08a-4c3f-bd33-547896664e6e
+
+----
 
 ### Used by [Amazon](https://aws.amazon.com/cn/blogs/machine-learning/how-apoidea-group-enhances-visual-information-extraction-from-banking-documents-with-multimodal-models-using-llama-factory-on-amazon-sagemaker-hyperpod/), [NVIDIA](https://developer.nvidia.com/rtx/ai-toolkit), [Aliyun](https://help.aliyun.com/zh/pai/use-cases/fine-tune-a-llama-3-model-with-llama-factory), etc.
 
