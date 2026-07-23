@@ -37,6 +37,7 @@ LlamaFactory 文档
    advanced/distributed/fsdp
    advanced/distributed/deepspeed
    advanced/distributed/parallel-dp-tp-ep-sp-cp
+   advanced/distributed/fsdpturbo-ep-efsdp
    advanced/custom-kernels/triton
    advanced/custom-kernels/fused-operators
 

@@ -1,6 +1,6 @@
 # FSDPTurbo EP/EFSDP 与 LlamaFactory FSDP2/CP 设计说明
 
-English version: [EP_CP_MESH_DESIGN_EN.md](EP_CP_MESH_DESIGN_EN.md)
+English version: [FSDPTurbo EP/EFSDP and LlamaFactory FSDP2/CP Design](../../../en/advanced/distributed/fsdpturbo-ep-efsdp.md)
 
 本文描述 `fsdpturbo` distributed plugin 的当前实现。核心原则是保持两侧职责清晰：
 
@@ -185,14 +185,3 @@ attention mask；只有二维 position IDs 才参与 packed-sequence 检测。Qw
 | `fla_ep16_fused_100_20260723.log` | 1 | 16 | 1 | 关闭 | FLA（chunk size 16）/ fused | 100 | 1.3367 -> 0.1326 | 1.95 s/it | 通过并完成保存 |
 | `fsdpturbo_refactor_cp2_ep4_efsdp2_adamw_20step.log` | 2 | 4 | 2 | 开启 | auto kernels（含 FLA）/ eager | 20 | 1.8095 -> 1.4910 | 6.74 s/it | 通过并完成保存 |
 | `fsdpturbo_cp2_ep4_efsdp2_eager_noac_100_20260723.log` | 2 | 4 | 2 | 关闭 | auto kernels（含 FLA）/ eager | 100 | 1.8095 -> 0.6139 | 5.77 s/it | 通过并完成保存 |
-
-四组训练均持续产生有限的 loss 和全局 grad norm，没有出现 NaN、Inf 或运行时错误，并完成模型聚合与保存。
-EP16 下 eager 与 fused 的训练步性能接近，说明该短序列配置的主要瓶颈不在 dispatcher。相同 CP/EP/EFSDP
-拓扑下，关闭 activation checkpointing 后从 6.74 s/it 降至 5.77 s/it，训练步吞吐约提升 14.4%；100 步
-loss 的整体下降也证明非平凡 CP、EP、EFSDP 组合可以稳定执行 forward、backward、AdamW 更新和
-mixed-mesh 梯度通信。
-
-这些结果用于功能、数值和阶段性性能验证，不代表严格的跨配置基准：EP16 两组使用 `cutoff_len=256` 和
-显式 FLA kernel，CP2/EP4/EFSDP2 两组使用 `cutoff_len=128` 和 auto kernels，因此前后两类数据不应直接
-比较。EFSDP 还要求被切分参数的目标维度可被 `efsdp_size` 整除；例如 `efsdp_size=3` 不能切分形状为
-`[256, 2048]` 的目标维度，创建 Mesh 前应显式校验该约束。

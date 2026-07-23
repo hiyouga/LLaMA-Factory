@@ -1,6 +1,6 @@
 # FSDPTurbo EP/EFSDP and LlamaFactory FSDP2/CP Design
 
-Chinese version: [EP_CP_MESH_DESIGN.md](EP_CP_MESH_DESIGN.md)
+Chinese version: [FSDPTurbo EP/EFSDP 与 LlamaFactory FSDP2/CP 设计说明](../../../zh/advanced/distributed/fsdpturbo-ep-efsdp.md)
 
 This document describes the current implementation of the `fsdpturbo` distributed plugin. Its core principle is a clear separation of responsibilities:
 
@@ -158,7 +158,3 @@ As of 2026-07-23, the current implementation has completed the following four BF
 | `fla_ep16_fused_100_20260723.log` | 1 | 16 | 1 | Off | FLA (chunk size 16) / fused | 100 | 1.3367 -> 0.1326 | 1.95 s/it | Passed and saved |
 | `fsdpturbo_refactor_cp2_ep4_efsdp2_adamw_20step.log` | 2 | 4 | 2 | On | auto kernels (including FLA) / eager | 20 | 1.8095 -> 1.4910 | 6.74 s/it | Passed and saved |
 | `fsdpturbo_cp2_ep4_efsdp2_eager_noac_100_20260723.log` | 2 | 4 | 2 | Off | auto kernels (including FLA) / eager | 100 | 1.8095 -> 0.6139 | 5.77 s/it | Passed and saved |
-
-All four runs continuously produced finite loss and global gradient norms, encountered no NaN, Inf, or runtime errors, and completed model aggregation and saving. Eager and fused have nearly identical step performance in the EP16 runs, indicating that the dispatcher is not the primary bottleneck for this short-sequence configuration. With the same CP/EP/EFSDP topology, disabling activation checkpointing reduced step time from 6.74 s/it to 5.77 s/it, improving training-step throughput by approximately 14.4%. The overall loss decrease across 100 steps also demonstrates that the nontrivial CP, EP, and EFSDP combination can stably execute forward, backward, AdamW updates, and mixed-mesh gradient communication.
-
-These results validate functionality, numerical behavior, and interim performance; they are not a strict cross-configuration benchmark. The two EP16 runs use `cutoff_len=256` and explicit FLA kernels, whereas the two CP2/EP4/EFSDP2 runs use `cutoff_len=128` and auto kernels, so the two groups should not be compared directly. EFSDP also requires the target dimension of each sharded parameter to be divisible by `efsdp_size`. For example, `efsdp_size=3` cannot shard a target dimension with shape `[256, 2048]`; this constraint should be validated explicitly before creating the mesh.
