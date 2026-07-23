@@ -6,6 +6,11 @@
 - LlamaFactory 负责进程初始化、基础 DeviceMesh、外层 FSDP2、CP、模型初始化与权重加载。
 - LlamaFactory 的集成层负责把两套参数布局组合起来，并处理跨 Mesh 的梯度范数。
 
+本文对应以下已提交版本：
+
+- LlamaFactory `fsdpturbo_plugin`：`4033d57c`
+- FSDPTurbo `fsdpturbo_plugin`：`744c5e7`
+
 ## 1. 配置边界
 
 训练入口使用一个 `dist_config`：
@@ -33,6 +38,10 @@ dist_config:
 
 EFSDP 的目标由 `ep_fsdp_modules` 决定。Attention、Embedding、LM Head 等非专家参数不进入
 FSDPTurbo EFSDP plan，而是继续由 LlamaFactory 外层 FSDP2 管理。
+
+模型相关的默认适配由 `FSDPTurboEPModelSpec` 注册表管理。注册项可以提供默认 `ep_modules`、
+`ep_fsdp_modules` 和模型准备函数；YAML 显式配置始终优先。当前只内置了 `qwen3_moe` 适配，
+Qwen3.5 MoE 使用示例中的显式模块模式，避免把单一模型的特殊处理固化到通用分布式入口。
 
 ## 2. Mesh 初始化
 
@@ -86,6 +95,11 @@ DistributedPlugin("fsdpturbo")
 
 这样可以避免同一专家参数同时被 EFSDP 和外层 FSDP2 管理。外层 FSDP2 仍复用 LlamaFactory
 原有的初始化、checkpoint 和保存流程。
+
+`ep_dispatcher` 支持 FSDPTurbo 提供的 `eager`、`fused`、`mc2` 和 `domino`。当前正式示例和
+精度验证使用 `eager`：它选择注册表中的可移植 PyTorch 实现，张量仍在当前加速设备上计算；
+`fused`、`mc2` 和 `domino` 会选择相应的设备融合或通信计算重叠实现，并要求运行环境满足对应
+算子及 dtype 约束。
 
 ## 4. FSDPTurbo 公共入口
 
@@ -148,8 +162,10 @@ ModelEngine
 
 `chunk_size` 当前支持 `16`、`32` 和 `64`，默认值为 `64`。Kernel plugin 与 distributed plugin
 彼此独立。显式选择 `flash-linear-attention` 时只安装所列 FLA 算子；使用 `name: auto` 和
-`include_kernels: auto` 时，FLA 可以与自动发现的 RMSNorm/MoE kernel 一起应用，并与
-FSDPTurbo EP 组合使用。
+`include_kernels: auto` 时，LlamaFactory 会在分布式切分前依次应用所有已注册且依赖满足的默认
+kernel，因此 FLA、RMSNorm 等非专家算子可以与 FSDPTurbo EP 组合使用。FSDPTurbo 随后会替换
+目标专家模块的 `forward`，所以专家计算的最终路径由 `ep_dispatcher` 决定；auto 阶段发现的 MoE
+kernel 不会作为独立的第二条专家执行路径保留下来。
 
 ## 8. CP 运行约束与验证范围
 
@@ -158,23 +174,25 @@ FSDPTurbo EP 组合使用。
 attention mask；只有二维 position IDs 才参与 packed-sequence 检测。Qwen3.5 mRoPE 等多轴 position IDs
 已经在 rotary embedding 中消费，不应传入 FlashAttention 的 packed-sequence 检测逻辑。
 
-当前 `FSDPTurboParallelState` 重构已在 8 die A3 上用 Qwen3.5-35B-A3B 完成两组 full SFT smoke：
+当前 `FSDPTurboParallelState` 重构已在 16 die A3 上用 Qwen3.5-35B-A3B 完成两组 20 步 full SFT
+验证。两组均使用 `world_size=16`、`cp_size=2`、`ep_size=4`、`efsdp_size=2`、`edp_size=1`，
+并启用 BF16、AdamW、activation checkpointing、`ep_dispatcher=eager` 和 auto kernels：
 
 ```text
-1. world_size=8, cp_size=1, ep_size=4, efsdp_size=2, edp_size=1
-   AdamW + auto kernels, activation checkpointing enabled, cutoff_len=128, max_steps=3
-   loss: 1.5504 -> 1.4024 -> 1.2399
+1. 混合样本，cutoff_len=128，max_steps=20
+   loss: 1.8095 -> 1.4910；20 步均为有限值，训练步阶段约 6.7 s/it
 
-2. world_size=8, cp_size=2, ep_size=2, efsdp_size=2, edp_size=1
-   SGD + FlashAttention2 + auto kernels, activation checkpointing enabled, cutoff_len=128, max_steps=3
-   loss: 1.8852 -> 1.7149 -> 1.6229
+2. DP 各副本使用相同样本，cutoff_len=128，max_steps=20
+   loss: 1.3708 -> 13.6265（早期过冲）-> 0.2915 -> 0.0000
+   第 14 至 20 步保持 0.0000，训练步阶段约 7.6 s/it
 ```
 
-两组训练都连续产生有限的全局 grad norm，并完成模型聚合与保存。第一组验证正式 AdamW 下的 EP、EFSDP
-及 mixed-mesh grad norm；第二组验证非平凡 CP 下 `expert_cp_mesh` 参与 forward、backward 和梯度范数通信。
-由于 `cp_size=2` 将外层 DP 缩小到 4，第二组使用无状态 SGD 控制 8 die 显存占用；这不改变本次需要验证的
-模型切分与通信通路，但不构成 CP=2 场景的 AdamW 容量验证。
+两组训练都连续产生有限的全局 grad norm，并完成模型聚合与保存。混合样本结果说明非平凡 CP、EP、
+EFSDP 组合能够稳定完成正式 AdamW 更新；loss 会随不同 batch 波动，不能用相邻单步判断收敛。重复样本
+实验进一步证明同一拓扑下 forward、backward、参数更新及 mixed-mesh 梯度通信能够将固定样本拟合到零。
+这两组是功能和精度验证配置，不代表吞吐最优配置；短序列 CP、EFSDP 通信以及 `eager` 下每 rank 的
+多个本地专家都会增加单步开销。
 
-当前尺寸公式在合法整除时令 `edp_size=1`，因此非平凡 EDP 尚未验证。EFSDP 还要求被切分参数的目标
-维度可被 `efsdp_size` 整除；例如 `efsdp_size=3` 不能切分形状为 `[256, 2048]` 的目标维度。后续扩展
-EDP 或自动拓扑选择时，应在创建 Mesh 前显式校验这些约束。
+当前尺寸公式在合法整除时恒令 `edp_size=1`，因此当前实现尚不支持配置非平凡 EDP，而不只是缺少验证。
+EFSDP 还要求被切分参数的目标维度可被 `efsdp_size` 整除；例如 `efsdp_size=3` 不能切分形状为
+`[256, 2048]` 的目标维度。后续扩展 EDP 或自动拓扑选择时，应在创建 Mesh 前显式校验这些约束。
