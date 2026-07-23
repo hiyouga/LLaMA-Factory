@@ -34,6 +34,17 @@ from ...model_plugins.deepspeed_utils import infer_deepspeed_mixed_precision
 logger = get_logger(__name__)
 
 
+# ZeRO-3 bucket sizes that accelerate derives from the model's hidden size, paired with the exact
+# formulas it uses (see accelerate ``Accelerator._prepare_deepspeed``). We reproduce them to fill the
+# ``auto`` entries ourselves for multimodal models, whose hidden size lives on a nested text config
+# that accelerate's top-level ``model.config.hidden_size`` lookup misses.
+_ZERO3_BUCKET_FORMULAS = {
+    "reduce_bucket_size": lambda hidden: hidden * hidden,
+    "stage3_prefetch_bucket_size": lambda hidden: int(0.9 * hidden * hidden),
+    "stage3_param_persistence_threshold": lambda hidden: 10 * hidden,
+}
+
+
 class DeepSpeedEngine:
     """DeepSpeed integration using accelerate's built-in capabilities.
 
@@ -84,6 +95,7 @@ class DeepSpeedEngine:
 
         Internally calls deepspeed.initialize() and wraps the returned objects.
         """
+        self._fill_zero3_bucket_sizes(model)
         if lr_scheduler is not None:
             model, optimizer, lr_scheduler = self.accelerator.prepare(model, optimizer, lr_scheduler)
         else:
@@ -93,6 +105,31 @@ class DeepSpeedEngine:
 
         logger.info_rank0("Model, optimizer, and lr_scheduler prepared via accelerate")
         return model, optimizer, lr_scheduler
+
+    def _fill_zero3_bucket_sizes(self, model: HFModel) -> None:
+        """Fill ZeRO-3 ``auto`` bucket sizes that accelerate cannot infer for multimodal models.
+
+        accelerate derives these from ``model.config.hidden_size`` and raises "Can find neither
+        model.config.hidden_size nor model.config.hidden_sizes" for VLM/omni models, which keep the
+        hidden size on a nested text config. ``get_text_config()`` is the canonical way to reach it
+        (returning the config itself for plain LLMs), so we resolve it and pre-fill the ``auto``
+        entries -- turning them concrete makes accelerate skip its own lookup. Left untouched if no
+        hidden size is found (accelerate then raises its descriptive error) or for non-ZeRO-3 configs.
+        """
+        zero_config = self.accelerator.state.deepspeed_plugin.deepspeed_config.get("zero_optimization", {})
+        auto_keys = [key for key in _ZERO3_BUCKET_FORMULAS if zero_config.get(key) == "auto"]
+        if not auto_keys:
+            return
+
+        config = model.config
+        text_config = config.get_text_config() if hasattr(config, "get_text_config") else config
+        hidden_size = getattr(text_config, "hidden_size", None)
+        if hidden_size is None:
+            return
+
+        for key in auto_keys:
+            zero_config[key] = _ZERO3_BUCKET_FORMULAS[key](hidden_size)
+        logger.info_rank0(f"Resolved ZeRO-3 {auto_keys} from text-config hidden_size={hidden_size}.")
 
     def backward(self, loss: torch.Tensor) -> None:
         """Backward pass using accelerate.
