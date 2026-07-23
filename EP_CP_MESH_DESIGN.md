@@ -1,5 +1,7 @@
 # FSDPTurbo EP/EFSDP 与 LlamaFactory FSDP2/CP 设计说明
 
+English version: [EP_CP_MESH_DESIGN_EN.md](EP_CP_MESH_DESIGN_EN.md)
+
 本文描述 `fsdpturbo` distributed plugin 的当前实现。核心原则是保持两侧职责清晰：
 
 - FSDPTurbo 负责专家并行（EP）、专家参数分片（EFSDP）和设备算子注册。
@@ -9,7 +11,7 @@
 本文对应以下已提交版本：
 
 - LlamaFactory `fsdpturbo_plugin`：`4033d57c`
-- FSDPTurbo `fsdpturbo_plugin`：`744c5e7`
+- FSDPTurbo `fsdpturbo_plugin`：`19f187a`
 
 ## 1. 配置边界
 
@@ -174,25 +176,23 @@ kernel 不会作为独立的第二条专家执行路径保留下来。
 attention mask；只有二维 position IDs 才参与 packed-sequence 检测。Qwen3.5 mRoPE 等多轴 position IDs
 已经在 rotary embedding 中消费，不应传入 FlashAttention 的 packed-sequence 检测逻辑。
 
-当前 `FSDPTurboParallelState` 重构已在 16 die A3 上用 Qwen3.5-35B-A3B 完成两组 20 步 full SFT
-验证。两组均使用 `world_size=16`、`cp_size=2`、`ep_size=4`、`efsdp_size=2`、`edp_size=1`，
-并启用 BF16、AdamW、activation checkpointing、`ep_dispatcher=eager` 和 auto kernels：
+截至 2026-07-23，当前实现已在 16 die A3 上用 Qwen3.5-35B-A3B 完成以下四组 BF16、AdamW full SFT
+验证。表中性能按相邻训练日志步的时间戳计算，不包含首步前的初始化、编译和训练后的模型保存时间：
 
-```text
-1. 混合样本，cutoff_len=128，max_steps=20
-   loss: 1.8095 -> 1.4910；20 步均为有限值，训练步阶段约 6.7 s/it
+| 日志 | CP | EP | EFSDP | Checkpoint | Kernel / Dispatcher | 步数 | Loss（首步 -> 末步） | 性能 | 结果 |
+| --- | ---: | ---: | ---: | --- | --- | ---: | --- | ---: | --- |
+| `fla_ep16_eager_100_20260723.log` | 1 | 16 | 1 | 关闭 | FLA（chunk size 16）/ eager | 100 | 1.3345 -> 0.1205 | 1.93 s/it | 通过并完成保存 |
+| `fla_ep16_fused_100_20260723.log` | 1 | 16 | 1 | 关闭 | FLA（chunk size 16）/ fused | 100 | 1.3367 -> 0.1326 | 1.95 s/it | 通过并完成保存 |
+| `fsdpturbo_refactor_cp2_ep4_efsdp2_adamw_20step.log` | 2 | 4 | 2 | 开启 | auto kernels（含 FLA）/ eager | 20 | 1.8095 -> 1.4910 | 6.74 s/it | 通过并完成保存 |
+| `fsdpturbo_cp2_ep4_efsdp2_eager_noac_100_20260723.log` | 2 | 4 | 2 | 关闭 | auto kernels（含 FLA）/ eager | 100 | 1.8095 -> 0.6139 | 5.77 s/it | 通过并完成保存 |
 
-2. DP 各副本使用相同样本，cutoff_len=128，max_steps=20
-   loss: 1.3708 -> 13.6265（早期过冲）-> 0.2915 -> 0.0000
-   第 14 至 20 步保持 0.0000，训练步阶段约 7.6 s/it
-```
+四组训练均持续产生有限的 loss 和全局 grad norm，没有出现 NaN、Inf 或运行时错误，并完成模型聚合与保存。
+EP16 下 eager 与 fused 的训练步性能接近，说明该短序列配置的主要瓶颈不在 dispatcher。相同 CP/EP/EFSDP
+拓扑下，关闭 activation checkpointing 后从 6.74 s/it 降至 5.77 s/it，训练步吞吐约提升 14.4%；100 步
+loss 的整体下降也证明非平凡 CP、EP、EFSDP 组合可以稳定执行 forward、backward、AdamW 更新和
+mixed-mesh 梯度通信。
 
-两组训练都连续产生有限的全局 grad norm，并完成模型聚合与保存。混合样本结果说明非平凡 CP、EP、
-EFSDP 组合能够稳定完成正式 AdamW 更新；loss 会随不同 batch 波动，不能用相邻单步判断收敛。重复样本
-实验进一步证明同一拓扑下 forward、backward、参数更新及 mixed-mesh 梯度通信能够将固定样本拟合到零。
-这两组是功能和精度验证配置，不代表吞吐最优配置；短序列 CP、EFSDP 通信以及 `eager` 下每 rank 的
-多个本地专家都会增加单步开销。
-
-当前尺寸公式在合法整除时恒令 `edp_size=1`，因此当前实现尚不支持配置非平凡 EDP，而不只是缺少验证。
-EFSDP 还要求被切分参数的目标维度可被 `efsdp_size` 整除；例如 `efsdp_size=3` 不能切分形状为
-`[256, 2048]` 的目标维度。后续扩展 EDP 或自动拓扑选择时，应在创建 Mesh 前显式校验这些约束。
+这些结果用于功能、数值和阶段性性能验证，不代表严格的跨配置基准：EP16 两组使用 `cutoff_len=256` 和
+显式 FLA kernel，CP2/EP4/EFSDP2 两组使用 `cutoff_len=128` 和 auto kernels，因此前后两类数据不应直接
+比较。EFSDP 还要求被切分参数的目标维度可被 `efsdp_size` 整除；例如 `efsdp_size=3` 不能切分形状为
+`[256, 2048]` 的目标维度，创建 Mesh 前应显式校验该约束。
