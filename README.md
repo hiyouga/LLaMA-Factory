@@ -25,7 +25,7 @@
 
 ### Check our new open-source project —<br>🐧 [PenguinHarness](https://github.com/Prism-Shadow/penguin-harness): Your desktop agent that automatically builds agents for just $0.02 of tokens!
 
-Click to follow the project: https://github.com/Prism-Shadow/penguin-harness
+Follow our project: https://github.com/Prism-Shadow/penguin-harness
 
 </div>
 
