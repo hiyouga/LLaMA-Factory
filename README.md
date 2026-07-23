@@ -23,7 +23,7 @@
 
 <div align="center" markdown="1">
 
-### 🐧 Meet [PenguinHarness](https://github.com/Prism-Shadow/penguin-harness): our new agent harness — let Agents autonomously build better Agents for just $0.02 of tokens!
+### Check our new open-source project: 🐧 [PenguinHarness](https://github.com/Prism-Shadow/penguin-harness): Your desktop agent that automatically builds agents for just $0.02 of tokens!
 
 </div>
 
