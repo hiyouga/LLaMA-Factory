@@ -19,6 +19,14 @@
 [![Open in Studios](https://img.shields.io/badge/ModelScope-Open%20in%20Studios-blue)](https://modelscope.cn/studios/hiyouga/LLaMA-Board)
 [![Open in Novita](https://img.shields.io/badge/Novita-Deploy%20Template-blue)](https://novita.ai/templates-library/105981?sharer=88115474-394e-4bda-968e-b88e123d0c47)
 
+<div align="center" markdown="1">
+
+### 🐧 来认识 [PenguinHarness](https://github.com/Prism-Shadow/penguin-harness)：我们全新的 Agent 框架——只需 0.02 美元的 Token，让 Agent 自主构建更强的 Agent！
+
+</div>
+
+https://github.com/user-attachments/assets/9b7033e8-f08a-4c3f-bd33-547896664e6e
+
 ### 获得[亚马逊](https://aws.amazon.com/cn/blogs/china/a-one-stop-code-free-model-fine-tuning-deployment-platform-based-on-sagemaker-and-llama-factory/)、[英伟达](https://developer.nvidia.cn/rtx/ai-toolkit)、[阿里云](https://help.aliyun.com/zh/pai/use-cases/fine-tune-a-llama-3-model-with-llama-factory)等的应用。
 
 <div align="center" markdown="1">
@@ -32,7 +40,7 @@
 
 ### 使用零代码[命令行](#快速开始)与 [Web UI](#llama-board-可视化微调由-gradio-驱动) 轻松微调百余种大模型
 
-![GitHub Trend](https://trendshift.io/api/badge/repositories/4535)
+![GitHub Trend](https://trendshift.io/api/badge/repositories/17371)
 
 </div>
 
