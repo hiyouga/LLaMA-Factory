@@ -8,11 +8,6 @@ This document describes the current implementation of the `fsdpturbo` distribute
 - LlamaFactory owns process initialization, the base DeviceMesh, outer FSDP2, CP, model initialization, and weight loading.
 - The LlamaFactory integration layer combines the two parameter layouts and handles gradient norms across meshes.
 
-This document corresponds to the following committed revisions:
-
-- LlamaFactory `fsdpturbo_plugin`: `4033d57c`
-- FSDPTurbo `fsdpturbo_plugin`: `19f187a`
-
 ## 1. Configuration Boundaries
 
 Training uses a single `dist_config` entry:
@@ -30,13 +25,17 @@ dist_config:
     - model.language_model.layers.{*}.mlp
 ```
 
-The fields have the following responsibilities:
+The fields used by the minimal example have the following responsibilities:
 
 - `ep_modules`: expert modules parallelized by FSDPTurbo EP.
 - `ep_fsdp_modules`: expert containers sharded by FSDPTurbo EFSDP.
-- `fsdp_ignored_modules`: modules explicitly excluded from the outer LlamaFactory FSDP2 path.
-- `hook_modules` and `fsdp_implementation`: optional hook and implementation settings for FSDPTurbo EFSDP.
 - `param_dtype`: parameter dtype used during model initialization for FSDPTurbo full tuning.
+
+The following advanced fields are optional and are therefore omitted from the minimal YAML example above:
+
+- `fsdp_ignored_modules`: additional modules excluded from the outer LlamaFactory FSDP2 path. Expert parameters selected by `ep_modules` are automatically added to the ignored set by the integration layer, so normal configurations do not need to repeat them here.
+- `hook_modules`: optional module patterns for FSDPTurbo EFSDP hooks. The default is an empty list.
+- `fsdp_implementation`: the FSDPTurbo EFSDP implementation, either `native` or `custom`. The default is `native`.
 
 `ep_fsdp_modules` determines the EFSDP targets. Non-expert parameters such as attention, embeddings, and the LM head do not enter the FSDPTurbo EFSDP plan. They remain managed by the outer LlamaFactory FSDP2 layer.
 
@@ -90,7 +89,16 @@ DistributedPlugin("fsdpturbo")
 
 This prevents the same expert parameter from being managed by both EFSDP and outer FSDP2. Outer FSDP2 continues to reuse LlamaFactory's model initialization, checkpoint, and save flows.
 
-`ep_dispatcher` supports the FSDPTurbo implementations `eager`, `fused`, `mc2`, and `domino`. The official example and numerical validation currently use `eager`, which selects the portable PyTorch implementation from the registry while tensors remain on the current accelerator. `fused`, `mc2`, and `domino` select the corresponding device fusion or communication-computation overlap implementations and require their operator and dtype constraints to be satisfied by the runtime environment.
+The LlamaFactory integration layer accepts `eager`, `fused`, `mc2`, and `domino` and forwards the selected value unchanged to FSDPTurbo. Their implementation boundaries and current validation status differ:
+
+| Dispatcher | Main path | Additional requirements | Validation in this PR |
+| --- | --- | --- | --- |
+| `eager` | Uses PyTorch implementations of permute, unpermute, and grouped matmul while tensors remain on the current accelerator, with standard AllToAll for token dispatch and combine | Minimal dependencies; serves as the reference implementation | End-to-end numerical and performance validation completed on Ascend A3 |
+| `fused` | Keeps the same AllToAll topology while replacing permute, unpermute, and grouped matmul with device-fused operators | Requires matching device operators, dtypes, and layouts; local operators may fall back to eager when an expert receives no tokens | End-to-end numerical and performance validation completed on Ascend A3 |
+| `mc2` | Uses dedicated operators that fuse AllToAllV with grouped matmul to reduce intermediate communication-computation overhead | Requires the MC2 NPU operators, an HCCL communicator, and their shape and dtype constraints | Implemented by FSDPTurbo but not validated end to end in this PR |
+| `domino` | Splits the first dimension of the expert-module input into two slices and uses a separate communication stream and events to overlap AllToAll with expert computation | Requires asynchronous stream/event support and enough token work in both slices to amortize scheduling overhead | Implemented by FSDPTurbo but not validated end to end in this PR |
+
+Only `eager` and `fused` are validated here because they cover the reference path and the commonly used A3 device-fused path, respectively, and therefore isolate and establish the correctness of the EP/EFSDP integration between LlamaFactory and FSDPTurbo. The current experiment matrix was not extended to `mc2` and `domino`: they add operator, communication-scheduling, and input-shape constraints that require separate numerical comparisons, long-run stability tests, and profiler analysis. They are accepted configuration choices, but the results in this PR should not be interpreted as evidence that they have reached the same stability, numerical, or performance level.
 
 ## 4. FSDPTurbo Public Entry Point
 

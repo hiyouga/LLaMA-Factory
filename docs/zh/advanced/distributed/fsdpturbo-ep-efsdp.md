@@ -8,11 +8,6 @@ English version: [FSDPTurbo EP/EFSDP and LlamaFactory FSDP2/CP Design](../../../
 - LlamaFactory 负责进程初始化、基础 DeviceMesh、外层 FSDP2、CP、模型初始化与权重加载。
 - LlamaFactory 的集成层负责把两套参数布局组合起来，并处理跨 Mesh 的梯度范数。
 
-本文对应以下已提交版本：
-
-- LlamaFactory `fsdpturbo_plugin`：`4033d57c`
-- FSDPTurbo `fsdpturbo_plugin`：`19f187a`
-
 ## 1. 配置边界
 
 训练入口使用一个 `dist_config`：
@@ -30,13 +25,18 @@ dist_config:
     - model.language_model.layers.{*}.mlp
 ```
 
-字段职责如下：
+最小示例中的字段职责如下：
 
 - `ep_modules`：交给 FSDPTurbo 执行 EP 的专家模块。
 - `ep_fsdp_modules`：交给 FSDPTurbo 执行 EFSDP 的专家容器。
-- `fsdp_ignored_modules`：需要显式排除在 LlamaFactory 外层 FSDP2 之外的模块。
-- `hook_modules`、`fsdp_implementation`：FSDPTurbo EFSDP 的可选 hook 和实现配置。
 - `param_dtype`：FSDPTurbo full tuning 在模型初始化阶段使用的参数 dtype。
+
+以下高级字段为可选项，因此没有写入上面的最小 YAML 示例：
+
+- `fsdp_ignored_modules`：额外排除在 LlamaFactory 外层 FSDP2 之外的模块。由
+  `ep_modules` 选中的专家参数会被集成层自动加入忽略集合，普通配置无需重复填写。
+- `hook_modules`：FSDPTurbo EFSDP hook 的可选模块模式，默认为空列表。
+- `fsdp_implementation`：FSDPTurbo EFSDP 实现，可选 `native` 或 `custom`，默认为 `native`。
 
 EFSDP 的目标由 `ep_fsdp_modules` 决定。Attention、Embedding、LM Head 等非专家参数不进入
 FSDPTurbo EFSDP plan，而是继续由 LlamaFactory 外层 FSDP2 管理。
@@ -98,10 +98,20 @@ DistributedPlugin("fsdpturbo")
 这样可以避免同一专家参数同时被 EFSDP 和外层 FSDP2 管理。外层 FSDP2 仍复用 LlamaFactory
 原有的初始化、checkpoint 和保存流程。
 
-`ep_dispatcher` 支持 FSDPTurbo 提供的 `eager`、`fused`、`mc2` 和 `domino`。当前正式示例和
-精度验证使用 `eager`：它选择注册表中的可移植 PyTorch 实现，张量仍在当前加速设备上计算；
-`fused`、`mc2` 和 `domino` 会选择相应的设备融合或通信计算重叠实现，并要求运行环境满足对应
-算子及 dtype 约束。
+LlamaFactory 集成层接受 `eager`、`fused`、`mc2` 和 `domino`，并将选项原样传给
+FSDPTurbo。这四种模式的实现边界和当前验证状态不同：
+
+| Dispatcher | 主要路径 | 额外要求 | 本 PR 验证状态 |
+| --- | --- | --- | --- |
+| `eager` | 使用 PyTorch 实现 permute、unpermute 和 grouped matmul，张量仍在当前加速设备上，通过标准 AllToAll 完成 token dispatch/combine | 依赖最少，用作参考实现 | 已在 A3 上完成精度和性能验证 |
+| `fused` | 保持相同的 AllToAll 拓扑，将 permute、unpermute 和 grouped matmul 切换为设备融合算子 | 需要对应的设备算子、dtype 和 layout 支持；存在空专家时可回退到 eager 局部算子 | 已在 A3 上完成精度和性能验证 |
+| `mc2` | 使用专用算子融合 AllToAllV 和 grouped matmul，减少通信与计算之间的中间开销 | 依赖 MC2 NPU 算子、HCCL communicator 以及对应的 shape/dtype 约束 | FSDPTurbo 提供实现，本 PR 未做端到端验证 |
+| `domino` | 将专家模块输入的第一维分成两片，使用独立通信流和 event 重叠 AllToAll 与专家计算 | 需要异步 stream/event 支持，且两个分片都要有足够的 token 工作量才能覆盖调度开销 | FSDPTurbo 提供实现，本 PR 未做端到端验证 |
+
+当前只验证 `eager` 和 `fused`，是因为它们分别覆盖参考实现和 A3 常用设备融合路径，可用于隔离并验证
+LlamaFactory 与 FSDPTurbo 之间的 EP/EFSDP 集成正确性。本次实验矩阵没有继续扩展到 `mc2` 和
+`domino`：它们还引入了额外的算子、通信调度和输入形状约束，需要独立比较数值、长步稳定性和 profiler 结果。
+因此，它们在配置接口上可选，但不应从本 PR 的实验结果推断为已达到相同的稳定性、精度或性能水平。
 
 ## 4. FSDPTurbo 公共入口
 
