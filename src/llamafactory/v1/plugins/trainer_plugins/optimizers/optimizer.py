@@ -19,6 +19,7 @@ from typing import TYPE_CHECKING
 from ....utils import logging
 from ....utils.plugin import BasePlugin
 
+
 if TYPE_CHECKING:
     from ....config.arg_utils import PluginConfig
     from ....utils.types import HFModel

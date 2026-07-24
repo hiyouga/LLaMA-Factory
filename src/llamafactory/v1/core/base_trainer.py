@@ -294,9 +294,7 @@ class BaseTrainer:
                         # mp_shard=world); a separate CP reduce would over-count by sqrt(cp_size).
                         total_norm = total_norm.full_tensor()
                     # pass a Tensor: clip_grads_with_norm_ clamps max_norm / (total_norm + 1e-6).
-                    torch.nn.utils.clip_grads_with_norm_(
-                        self.model.parameters(), self.args.max_grad_norm, total_norm
-                    )
+                    torch.nn.utils.clip_grads_with_norm_(self.model.parameters(), self.args.max_grad_norm, total_norm)
                     grad_norm = total_norm.item()
 
                     if not torch.isfinite(torch.tensor(grad_norm)):  # type: ignore # pyright: ignore [reportUnknownReturnType]
