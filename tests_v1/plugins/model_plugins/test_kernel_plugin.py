@@ -30,13 +30,13 @@ def _apply_kernel(rank) -> None:
             if k.startswith("llamafactory.v1.plugins.model_plugins.kernels"):
                 del sys.modules[k]
 
-        from llamafactory.v1.plugins.model_plugins.kernels.interface import apply_default_kernels
+        from llamafactory.v1.plugins.model_plugins.kernels.interface import apply_kernels
 
         model = AutoModelForCausalLM.from_pretrained("llamafactory/tiny-random-qwen3")
         original_rmsnorm_forward = model.model.layers[0].input_layernorm.forward
         original_swiglu_forward = model.model.layers[0].mlp.forward
 
-        model = apply_default_kernels(model=model, include_kernels="npu_fused_rmsnorm")
+        model = apply_kernels(model=model, config={"name": "npu_fused_rmsnorm"})
 
         assert model.model.layers[0].input_layernorm.forward.__func__ is not original_rmsnorm_forward.__func__
         assert model.model.layers[0].mlp.forward.__func__ is original_swiglu_forward.__func__
@@ -53,13 +53,13 @@ def _apply_all_kernels(rank) -> None:
             if k.startswith("llamafactory.v1.plugins.model_plugins.kernels"):
                 del sys.modules[k]
 
-        from llamafactory.v1.plugins.model_plugins.kernels.interface import apply_default_kernels
+        from llamafactory.v1.plugins.model_plugins.kernels.interface import apply_kernels
 
         model = AutoModelForCausalLM.from_pretrained("llamafactory/tiny-random-qwen3")
         original_rmsnorm_forward = model.model.layers[0].input_layernorm.forward
         original_swiglu_forward = model.model.layers[0].mlp.forward
 
-        model = apply_default_kernels(model=model, include_kernels=True)
+        model = apply_kernels(model=model, config={"name": "auto"})
 
         assert model.model.layers[0].input_layernorm.forward.__func__ is not original_rmsnorm_forward.__func__
         assert model.model.layers[0].mlp.forward.__func__ is not original_swiglu_forward.__func__

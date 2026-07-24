@@ -18,6 +18,7 @@ import torch.multiprocessing as mp
 
 from llamafactory.v1.accelerator.interface import DistributedInterface
 from llamafactory.v1.config.model_args import ModelArguments
+from llamafactory.v1.config.training_args import TrainingArguments
 from llamafactory.v1.core.model_engine import ModelEngine
 from llamafactory.v1.plugins.model_plugins.parallelization.sequence_parallel import (
     SequenceParallelModelPlugin,
@@ -33,15 +34,14 @@ def _test_sequence_parallel_loss(
     with dist_env(local_rank, world_size, master_port):
         model_args = ModelArguments(model="llamafactory/tiny-random-qwen3")
 
-        # Initialize distributed interface with config
-        dist_config = {"cp_mode": "ulysses", "cp_size": cp_size, "dp_size": dp_size}
-        DistributedInterface(dist_config)
+        training_args = TrainingArguments(cp_mode="ulysses", cp_size=cp_size, dp_size=dp_size)
+        DistributedInterface(training_args)
 
         # Now create model engine
         model_engine = ModelEngine(model_args=model_args)
 
         # Apply sequence parallel plugin
-        SequenceParallelModelPlugin(dist_config.get("cp_mode", "ulysses"))(model_engine.model, dist_config)
+        SequenceParallelModelPlugin(training_args.cp_mode)(model_engine.model, training_args.cp_size)
 
         input_ids = torch.arange(1, batch_size * 5 + 1, dtype=torch.long).view(batch_size, 5)
         model_inputs = {

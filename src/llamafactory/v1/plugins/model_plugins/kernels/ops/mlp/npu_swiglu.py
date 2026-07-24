@@ -25,10 +25,9 @@ import types
 
 import torch
 
-from ......accelerator.helper import DeviceType
+from ......accelerator.helper import DeviceType, get_current_accelerator
 from ......utils.types import HFModel
-from ...base import BaseKernel
-from ...registry import register_kernel
+from ...base import BaseKernel, KernelPlugin
 
 
 try:
@@ -86,7 +85,7 @@ def _npu_swiglu_gemma3ntext_forward(self, hidden_states):
     return down_proj
 
 
-@register_kernel
+@KernelPlugin("npu_fused_swiglu").register()
 class NpuSwiGluKernel(BaseKernel):
     """NPU Kernel for fused SwiGLU activation."""
 
@@ -121,11 +120,14 @@ class NpuSwiGluKernel(BaseKernel):
         }
     )
 
-    _kernel_id = "npu_fused_swiglu"
-    _device = DeviceType.NPU
+    @staticmethod
+    def check_device() -> None:
+        current = get_current_accelerator().type
+        if current != DeviceType.NPU:
+            raise RuntimeError(f"NpuSwiGluKernel requires NPU, current accelerator is {current}.")
 
-    @classmethod
-    def apply(cls, **kwargs) -> "HFModel":
+    @staticmethod
+    def _apply(**kwargs) -> "HFModel":
         """Applies the NPU fused SwiGLU kernel to the model.
 
         Args:
@@ -139,11 +141,6 @@ class NpuSwiGluKernel(BaseKernel):
             RuntimeError: If dependencies are not met.
         """
         model = kwargs.get("model", None)
-        if model is None:
-            raise ValueError(f"HFModel instance is required for {cls.__name__}.")
-
-        if not cls.check_deps():
-            raise RuntimeError("torch_npu is not available but NpuSwiGluKernel was called.")
 
         # Mapping of specific mlp modules to their corresponding kernel implementations
         kernel_mapping = {
@@ -158,7 +155,7 @@ class NpuSwiGluKernel(BaseKernel):
             # Match any module whose class name contains "MLP"
             if (
                 re.search(swiglu_pattern, module.__class__.__name__)
-                and module.__class__.__name__ in cls.expect_modules
+                and module.__class__.__name__ in NpuSwiGluKernel.expect_modules
             ):
                 # Bind function as an instance method to preserve `self` semantics
                 # and replace the original forward

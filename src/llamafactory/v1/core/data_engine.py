@@ -137,9 +137,7 @@ class DataEngine(Dataset):
         messages = sample.get("messages")
         if not messages:
             return [None]
-        cuts = [
-            i + 1 for i, m in enumerate(messages) if m["role"] == "assistant" and m.get("loss_weight", 1.0) > 1e-6
-        ]
+        cuts = [i + 1 for i, m in enumerate(messages) if m["role"] == "assistant" and m.get("loss_weight", 1.0) > 1e-6]
         return cuts or [None]
 
     def _convert_data_sample(self, raw_sample: dict[str, Any], dataset_name: str) -> Sample:
