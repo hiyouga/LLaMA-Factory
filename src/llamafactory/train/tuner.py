@@ -90,9 +90,7 @@ def _training_function(config: dict[str, Any]) -> None:
 
     if finetuning_args.stage in ["pt", "sft"] and finetuning_args.use_hyper_parallel:
         if not is_hyper_parallel_available():
-            raise ImportError(
-                "hyper_parallel is not installed. Please install it with `pip install hyper_parallel`."
-            )
+            raise ImportError("hyper_parallel is not installed. Please install it with `pip install hyper_parallel`.")
         if finetuning_args.stage == "pt":
             from .hyper_parallel import run_pt as run_pt_hp
 

@@ -198,12 +198,16 @@ def _setup_lora_tuning(
                 pass  # already loaded via load_unsloth_peft_model in loader.py
             else:
                 if model_args.use_unsloth:
-                    peft_model = load_unsloth_peft_model(config, model_args, finetuning_args, is_trainable=is_trainable)
+                    peft_model = load_unsloth_peft_model(
+                        config, model_args, finetuning_args, is_trainable=is_trainable
+                    )
                     if peft_model is not None:
                         model = peft_model
 
                 if not model_args.use_unsloth:  # unsloth was disabled or fell back
-                    model = PeftModel.from_pretrained(model, adapter_to_resume, is_trainable=is_trainable, **init_kwargs)
+                    model = PeftModel.from_pretrained(
+                        model, adapter_to_resume, is_trainable=is_trainable, **init_kwargs
+                    )
 
         logger.info_rank0("Loaded adapter(s): {}".format(",".join(model_args.adapter_name_or_path)))
 

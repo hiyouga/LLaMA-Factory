@@ -112,7 +112,7 @@ ignore = [
     "D105",  # no doc magic method
     "D107",  # no doc __init__
 ]
-extend-select = [
+select = [
     "C",      # complexity
     "E",      # error
     "F",      # pyflakes
