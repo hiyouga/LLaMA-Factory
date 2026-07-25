@@ -43,6 +43,8 @@ Conventions
 from typing import TYPE_CHECKING, Optional
 
 import torch
+import torch.distributed as dist
+import torch.distributed.nn  # noqa: F401  required for `dist.nn.all_gather` (autograd-friendly)
 import torch.nn as nn
 import torch.nn.functional as F
 
@@ -231,19 +233,26 @@ def compute_mtp_loss(
     labels: torch.Tensor,
     loss_weights: torch.Tensor,
     ignore_index: int = -100,
+    cp_group: Optional[dist.ProcessGroup] = None,
 ) -> torch.Tensor:
-    """Compute the averaged MTP loss across all heads (non context-parallel path).
+    """Compute the averaged MTP loss across all heads.
 
     Each head ``k`` predicts token ``p + k + 2`` from position ``p``. The loss of head
     ``k`` is the ``loss_weights``-weighted cross-entropy mean over valid positions. The
     returned scalar is the plain mean over the ``K`` heads (the caller applies the
     MTP loss scaling factor, matching MindSpeed-LLM).
 
+    When ``cp_group`` is not ``None`` (context parallelism / Ulysses), the per-head loss
+    is computed on the full sequence by all-gathering labels / loss_weights / log-probs
+    across the CP group, exactly like the single-head ``sequence_parallel_loss`` plugin.
+
     Args:
-        mtp_logits: List of ``K`` tensors, each ``(batch, seq_len, vocab_size)``.
-        labels: ``(batch, seq_len)``.
-        loss_weights: ``(batch, seq_len)``.
+        mtp_logits: List of ``K`` tensors, each ``(batch, seq_len, vocab_size)``. The
+            sequence dimension is the *local* chunk under CP.
+        labels: ``(batch, seq_len)`` (local chunk under CP).
+        loss_weights: ``(batch, seq_len)`` (local chunk under CP).
         ignore_index: Label index to ignore (defaults to -100).
+        cp_group: Context-parallel process group, or ``None`` for the non-CP path.
 
     Returns:
         Scalar MTP loss (mean over heads).
@@ -252,10 +261,15 @@ def compute_mtp_loss(
     if num_heads == 0:
         return torch.tensor(0.0, device=labels.device, dtype=torch.float32)
 
+    cp_size = dist.get_world_size(cp_group) if (cp_group is not None and dist.is_initialized()) else 1
+
     total_loss = None
     for k, logits_k in enumerate(mtp_logits):
         shift = k + 2
-        head_loss = _local_head_loss(logits_k, labels, loss_weights, shift, ignore_index)
+        if cp_size > 1:
+            head_loss = _cp_head_loss(logits_k, labels, loss_weights, shift, ignore_index, cp_group, cp_size)
+        else:
+            head_loss = _local_head_loss(logits_k, labels, loss_weights, shift, ignore_index)
         total_loss = head_loss if total_loss is None else total_loss + head_loss
 
     return total_loss / num_heads
@@ -280,6 +294,56 @@ def _local_head_loss(
     log_probs = -F.cross_entropy(pred, tgt, reduction="none", ignore_index=ignore_index).view(batch_size, -1)
     weights = weights.view(batch_size, -1)
     return (-log_probs * weights).sum() / (weights.sum() + 1e-6)
+
+
+def _cp_head_loss(
+    logits_k: torch.Tensor,
+    labels: torch.Tensor,
+    loss_weights: torch.Tensor,
+    shift: int,
+    ignore_index: int,
+    cp_group: dist.ProcessGroup,
+    cp_size: int,
+) -> torch.Tensor:
+    """Per-head weighted CE mean for the Ulysses context-parallel path.
+
+    Mirrors ``sequence_parallel_loss`` but for an MTP head whose target is shifted by
+    ``shift`` positions. Local ``logits_k`` cover the local sequence chunk; labels and
+    loss_weights are all-gathered to the full sequence, shifted, and re-chunked so that
+    each local logit is aligned with its (globally shifted) target.
+    """
+    batch_size, local_len, vocab_size = logits_k.shape
+
+    # All-gather labels and loss_weights across the CP group to reconstruct the full seq.
+    global_labels = [torch.empty_like(labels) for _ in range(cp_size)]
+    dist.all_gather(global_labels, labels, group=cp_group)
+    global_labels = torch.cat(global_labels, dim=1).contiguous()
+
+    global_loss_weights = [torch.empty_like(loss_weights) for _ in range(cp_size)]
+    dist.all_gather(global_loss_weights, loss_weights, group=cp_group)
+    global_loss_weights = torch.cat(global_loss_weights, dim=1).contiguous()
+
+    cp_rank = dist.get_rank(cp_group)
+    full_len = global_labels.size(1)
+
+    # Shift labels by ``shift`` to obtain targets for head k, pad to ``full_len`` and
+    # take the local chunk so that it aligns one-to-one with the local logits.
+    shift_labels = global_labels[:, shift:]
+    shift_labels = F.pad(shift_labels, (0, shift), value=ignore_index)
+    shift_labels = torch.chunk(shift_labels, chunks=cp_size, dim=1)[cp_rank].contiguous()
+
+    shift_logits = logits_k.float().reshape(-1, vocab_size)
+    shift_labels = shift_labels.reshape(-1)
+    log_probs = -F.cross_entropy(shift_logits, shift_labels, reduction="none", ignore_index=ignore_index)
+    log_probs = log_probs.view(batch_size, local_len)
+
+    # All-gather log_probs across the CP group and trim to the valid prefix.
+    global_log_probs = dist.nn.all_gather(log_probs, group=cp_group)
+    global_log_probs = torch.cat(global_log_probs, dim=1).contiguous()
+    global_log_probs = global_log_probs[:, : full_len - shift].contiguous()
+
+    weights = global_loss_weights[:, shift:].contiguous()
+    return (-global_log_probs * weights).sum() / (weights.sum() + 1e-6)
 
 
 class MTPModelPlugin(BasePlugin):

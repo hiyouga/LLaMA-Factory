@@ -62,3 +62,35 @@ MTP currently targets Llama/Qwen3/Mistral-style models that expose `model.model.
 `model.model.rotary_emb`, `model.model.norm` and `model.lm_head`. The MTP heads are
 randomly initialized; loading a base checkpoint that does not contain `mtp.*` keys will
 leave them at their initialization (missing-key warnings are expected).
+
+## Context Parallelism (MTP + CP)
+
+MTP also works under Ulysses context parallelism (CP). CP requires
+`dist_config.name: fsdp2` and `flash_attn: flash_attention_2` (the same constraints as
+non-MTP CP). When MTP and CP are both enabled:
+
+- The MTP decoder layers go through the same globally-patched `_flash_attention_forward`
+  as the main model, so they participate in Ulysses attention automatically.
+- `BaseTrainer.fit` routes to the `sequence_parallel_mtp_loss` plugin, which computes the
+  main-head CP loss (unchanged) plus the scaled MTP loss. The per-head MTP loss is
+  computed on the full sequence by all-gathering `labels` / `loss_weights` / `log_probs`
+  across the CP group (see `compute_mtp_loss` with `cp_group` in `mtp.py`), mirroring the
+  single-head `sequence_parallel_loss` plugin.
+
+```yaml
+mtp_config:
+  name: mtp
+  num_layers: 1
+  loss_scale: 0.3
+
+flash_attn: flash_attention_2
+
+dist_config:
+  name: fsdp2
+  dcp_path: null
+  cp_mode: ulysses
+  cp_size: 2
+```
+
+See `examples/v1/train_full/train_full_mtp_ulysses_cp.yaml`. CP is not supported with
+DeepSpeed (use FSDP2).

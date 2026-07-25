@@ -280,7 +280,10 @@ class BaseTrainer:
                             SequenceParallelLossPlugin,
                         )
 
-                        loss = SequenceParallelLossPlugin("sequence_parallel_loss")(self.model, micro_batch)
+                        if self._has_mtp():
+                            loss = SequenceParallelLossPlugin("sequence_parallel_mtp_loss")(self.model, micro_batch)
+                        else:
+                            loss = SequenceParallelLossPlugin("sequence_parallel_loss")(self.model, micro_batch)
                     else:
                         loss = self.compute_loss(micro_batch)
                     mini_step_valid_tokens = compute_valid_tokens([micro_batch])
