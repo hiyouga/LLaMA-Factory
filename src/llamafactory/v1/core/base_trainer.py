@@ -223,6 +223,11 @@ class BaseTrainer:
                 self.optimizer, self.num_training_steps, self.args.lr_scheduler_config
             )
 
+    def _has_mtp(self) -> bool:
+        """Whether the (possibly wrapped) model carries an MTP block."""
+        model = self.model.module if hasattr(self.model, "module") else self.model
+        return getattr(model, "mtp", None) is not None
+
     def compute_log_probs(self, model: HFModel, batch: BatchInput) -> Tensor:
         """Compute log probs.
 

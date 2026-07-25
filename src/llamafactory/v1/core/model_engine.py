@@ -225,6 +225,11 @@ class ModelEngine:
 
             model = apply_kernels(model, self.args.kernel_config, require_logits=self.is_train)
 
+        if self.args.mtp_config is not None:
+            from ..plugins.model_plugins.mtp import MTPModelPlugin
+
+            model = MTPModelPlugin(self.args.mtp_config.name)(model, self.args.mtp_config)
+
         return model
 
 
