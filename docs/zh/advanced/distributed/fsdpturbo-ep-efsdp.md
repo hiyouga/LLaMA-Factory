@@ -186,12 +186,14 @@ kernel 不会作为独立的第二条专家执行路径保留下来。
 attention mask；只有二维 position IDs 才参与 packed-sequence 检测。Qwen3.5 mRoPE 等多轴 position IDs
 已经在 rotary embedding 中消费，不应传入 FlashAttention 的 packed-sequence 检测逻辑。
 
-当前实现已在 16 die A3 上用 Qwen3.5-35B-A3B 完成以下四组 BF16、AdamW full SFT
-验证。表中性能按相邻训练日志步的时间戳计算，不包含首步前的初始化、编译和训练后的模型保存时间：
+当前实现已在 Atlas 900 A3 SuperPoD 和 Atlas 950 SuperPoD 上用 Qwen3.5-35B-A3B 完成以下
+BF16、AdamW full SFT 验证。表中性能按相邻训练日志步的时间戳计算，不包含首步前的初始化、编译和
+训练后的模型保存时间：
 
-| CP | EP | EFSDP | Checkpoint | Kernel / Dispatcher | 步数 | Loss（首步 -> 末步） | 性能 | 结果 |
-| ---: | ---: | ---: | --- | --- | ---: | --- | ---: | --- |
-| 1 | 16 | 1 | 关闭 | FLA（chunk size 16）/ eager | 100 | 1.3345 -> 0.1205 | 1.93 s/it | 通过并完成保存 |
-| 1 | 16 | 1 | 关闭 | FLA（chunk size 16）/ fused | 100 | 1.3367 -> 0.1326 | 1.95 s/it | 通过并完成保存 |
-| 2 | 4 | 2 | 开启 | auto kernels（含 FLA）/ eager | 20 | 1.8095 -> 1.4910 | 6.74 s/it | 通过并完成保存 |
-| 2 | 4 | 2 | 关闭 | auto kernels（含 FLA）/ eager | 100 | 1.8095 -> 0.6139 | 5.77 s/it | 通过并完成保存 |
+| 机器型号 | CP | EP | EFSDP | Checkpoint | Kernel / Dispatcher | 步数 | Loss（首步 -> 末步） | 性能 | 结果 |
+| --- | ---: | ---: | ---: | --- | --- | ---: | --- | ---: | --- |
+| Atlas 900 A3 SuperPoD | 1 | 16 | 1 | 关闭 | FLA（chunk size 16）/ eager | 100 | 1.3345 -> 0.1205 | 1.93 s/it | 通过并完成保存 |
+| Atlas 900 A3 SuperPoD | 1 | 16 | 1 | 关闭 | FLA（chunk size 16）/ fused | 100 | 1.3367 -> 0.1326 | 1.95 s/it | 通过并完成保存 |
+| Atlas 900 A3 SuperPoD | 2 | 4 | 2 | 开启 | auto kernels（含 FLA）/ eager | 20 | 1.8095 -> 1.4910 | 6.74 s/it | 通过并完成保存 |
+| Atlas 900 A3 SuperPoD | 2 | 4 | 2 | 关闭 | auto kernels（含 FLA）/ eager | 100 | 1.8095 -> 0.6139 | 5.77 s/it | 通过并完成保存 |
+| Atlas 950 SuperPoD | 1 | 8 | 1 | 关闭 | 未配置 kernel plugin / eager | 100 | 1.3561 -> 0.5941 | 2.58 s/it | 通过（跳过模型保存） |

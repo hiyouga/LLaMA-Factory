@@ -158,11 +158,12 @@ ModelEngine
 
 When `init_on_meta` constructs the model, it must propagate `attn_implementation` in the same way as the `from_pretrained` path. Otherwise, the model falls back to a non-FlashAttention implementation and Ulysses CP cannot start. Before calling Hugging Face FlashAttention, Ulysses reconstructs the global attention mask. Only two-dimensional position IDs participate in packed-sequence detection. Multi-axis position IDs such as Qwen3.5 mRoPE have already been consumed by rotary embedding and must not be passed to the FlashAttention packed-sequence detection logic.
 
-The current implementation has completed the following four BF16 AdamW full SFT validations with Qwen3.5-35B-A3B on 16 Ascend A3 dies. Performance is calculated from timestamps of consecutive logged training steps and excludes initialization and compilation before the first step as well as model saving after training:
+The current implementation has completed the following BF16 AdamW full SFT validations with Qwen3.5-35B-A3B on Atlas 900 A3 SuperPoD and Atlas 950 SuperPoD systems. Performance is calculated from timestamps of consecutive logged training steps and excludes initialization and compilation before the first step as well as model saving after training:
 
-| CP | EP | EFSDP | Checkpoint | Kernel / Dispatcher | Steps | Loss (first -> last) | Performance | Result |
-| ---: | ---: | ---: | --- | --- | ---: | --- | ---: | --- |
-| 1 | 16 | 1 | Off | FLA (chunk size 16) / eager | 100 | 1.3345 -> 0.1205 | 1.93 s/it | Passed and saved |
-| 1 | 16 | 1 | Off | FLA (chunk size 16) / fused | 100 | 1.3367 -> 0.1326 | 1.95 s/it | Passed and saved |
-| 2 | 4 | 2 | On | auto kernels (including FLA) / eager | 20 | 1.8095 -> 1.4910 | 6.74 s/it | Passed and saved |
-| 2 | 4 | 2 | Off | auto kernels (including FLA) / eager | 100 | 1.8095 -> 0.6139 | 5.77 s/it | Passed and saved |
+| Machine | CP | EP | EFSDP | Checkpoint | Kernel / Dispatcher | Steps | Loss (first -> last) | Performance | Result |
+| --- | ---: | ---: | ---: | --- | --- | ---: | --- | ---: | --- |
+| Atlas 900 A3 SuperPoD | 1 | 16 | 1 | Off | FLA (chunk size 16) / eager | 100 | 1.3345 -> 0.1205 | 1.93 s/it | Passed and saved |
+| Atlas 900 A3 SuperPoD | 1 | 16 | 1 | Off | FLA (chunk size 16) / fused | 100 | 1.3367 -> 0.1326 | 1.95 s/it | Passed and saved |
+| Atlas 900 A3 SuperPoD | 2 | 4 | 2 | On | auto kernels (including FLA) / eager | 20 | 1.8095 -> 1.4910 | 6.74 s/it | Passed and saved |
+| Atlas 900 A3 SuperPoD | 2 | 4 | 2 | Off | auto kernels (including FLA) / eager | 100 | 1.8095 -> 0.6139 | 5.77 s/it | Passed and saved |
+| Atlas 950 SuperPoD | 1 | 8 | 1 | Off | no kernel plugin configured / eager | 100 | 1.3561 -> 0.5941 | 2.58 s/it | Passed (model saving skipped) |
