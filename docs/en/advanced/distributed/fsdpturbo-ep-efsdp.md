@@ -164,6 +164,6 @@ The current implementation has completed the following BF16 AdamW full SFT valid
 | --- | ---: | ---: | ---: | --- | --- | ---: | --- | ---: | --- |
 | Atlas 900 A3 SuperPoD | 1 | 16 | 1 | Off | FLA (chunk size 16) / eager | 100 | 1.3345 -> 0.1205 | 1.93 s/it | Passed and saved |
 | Atlas 900 A3 SuperPoD | 1 | 16 | 1 | Off | FLA (chunk size 16) / fused | 100 | 1.3367 -> 0.1326 | 1.95 s/it | Passed and saved |
-| Atlas 900 A3 SuperPoD | 2 | 4 | 2 | On | auto kernels (including FLA) / eager | 20 | 1.8095 -> 1.4910 | 6.74 s/it | Passed and saved |
+| Atlas 900 A3 SuperPoD | 2 | 4 | 2 | Off | auto kernels (including FLA) / fused | 100 | 1.8095 -> 0.6986 | 5.80 s/it | Passed and saved |
 | Atlas 900 A3 SuperPoD | 2 | 4 | 2 | Off | auto kernels (including FLA) / eager | 100 | 1.8095 -> 0.6139 | 5.77 s/it | Passed and saved |
 | Atlas 950 SuperPoD | 1 | 8 | 1 | Off | no kernel plugin configured / eager | 100 | 1.3561 -> 0.5941 | 2.58 s/it | Passed (model saving skipped) |
