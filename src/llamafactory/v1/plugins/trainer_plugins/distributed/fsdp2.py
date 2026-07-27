@@ -75,7 +75,6 @@ def _make_safetensor_loader(checkpoint_file: str, tensor_key: str):
 
 def _cast_norm_input_to_weight_dtype(module: nn.Module, args: tuple):
     """forward-pre-hook: cast a norm layer's input to its weight dtype."""
-
     if not args:
         return None
     x = args[0]
@@ -87,7 +86,6 @@ def _cast_norm_input_to_weight_dtype(module: nn.Module, args: tuple):
 
 def _make_norms_dtype_safe(model: HFModel) -> int:
     """Register the dtype-safe hook on every dtype-strict ``nn.LayerNorm`` in the model."""
-
     n = 0
     for module in model.modules():
         if isinstance(module, nn.LayerNorm):

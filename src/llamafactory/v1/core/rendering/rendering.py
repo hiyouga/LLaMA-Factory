@@ -13,9 +13,16 @@
 # limitations under the License.
 
 """Rendering: turn a v1 ``Sample`` into a tokenized ``ModelInput``.
+
+This module is the orchestration + public API (``Renderer``). The mechanical pieces live in
+sibling modules:
+  - ``format``  -- v1<->HF message conversion
+  - ``escape``  -- special-token escaping (prompt-injection hardening)
+
 Note: ``position_ids`` are assigned by ``process_samples`` (1-based); multimodal (mrope) position
 ids are expected to be recomputed by the model/trainer.
 """
+
 
 import json
 
@@ -291,9 +298,6 @@ class Renderer:
                     range(1, len(rejected_input["input_ids"]) + 1)
                 )
 
-                # Carry multimodal features. Chosen tokens precede rejected ones in the concatenated
-                # sequence, so concatenate their pixel features in the same order to keep the
-                # token<->pixel correspondence intact.
                 for key in _MULTIMODAL_PASSTHROUGH_KEYS:
                     tensors = [inp[key] for inp in (chosen_input, rejected_input) if key in inp]
                     if tensors:

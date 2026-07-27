@@ -105,7 +105,6 @@ class DeepSpeedEngine:
 
     def _fill_zero3_bucket_sizes(self, model: HFModel) -> None:
         """Fill ZeRO-3 ``auto`` bucket sizes that accelerate cannot infer for multimodal models."""
-
         zero_config = self.accelerator.state.deepspeed_plugin.deepspeed_config.get("zero_optimization", {})
         auto_keys = [key for key in _ZERO3_BUCKET_FORMULAS if zero_config.get(key) == "auto"]
         if not auto_keys:
