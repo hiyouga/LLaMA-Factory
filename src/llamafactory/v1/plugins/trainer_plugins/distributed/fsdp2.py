@@ -74,14 +74,8 @@ def _make_safetensor_loader(checkpoint_file: str, tensor_key: str):
 
 
 def _cast_norm_input_to_weight_dtype(module: nn.Module, args: tuple):
-    """forward-pre-hook: cast a norm layer's input to its weight dtype.
+    """forward-pre-hook: cast a norm layer's input to its weight dtype."""
 
-    Makes a dtype-strict ``nn.LayerNorm`` tolerate a dtype mismatch the same way ``RMSNorm`` does by
-    upcasting internally. Under FSDP2 bf16 + non-reentrant activation checkpointing, backward
-    recompute can feed a tower ``LayerNorm`` saved fp32 activations against re-gathered bf16 weights
-    (crash: "expected scalar type Float but found BFloat16"). Aligning the input to the weight dtype
-    here is a no-op in the normal forward (both bf16) and only kicks in on the mismatched recompute.
-    """
     if not args:
         return None
     x = args[0]
@@ -91,23 +85,15 @@ def _cast_norm_input_to_weight_dtype(module: nn.Module, args: tuple):
     return None
 
 
-def _make_tower_norms_dtype_safe(model: HFModel) -> int:
-    """Register the dtype-safe hook on every ``nn.LayerNorm`` inside an encoder tower.
+def _make_norms_dtype_safe(model: HFModel) -> int:
+    """Register the dtype-safe hook on every dtype-strict ``nn.LayerNorm`` in the model."""
 
-    A tower is identified by its ``.blocks`` stack (the LLM decoder uses ``.layers``); this keeps the
-    hook off the LLM, whose ``RMSNorm`` already self-upcasts. Pure LLMs have no such ``LayerNorm`` so
-    this is a no-op for them. Returns the number of norms patched.
-    """
-    norms: set[nn.LayerNorm] = set()
+    n = 0
     for module in model.modules():
-        blocks = getattr(module, "blocks", None)
-        if isinstance(blocks, nn.ModuleList):
-            for sub in module.modules():
-                if isinstance(sub, nn.LayerNorm):
-                    norms.add(sub)
-    for norm in norms:
-        norm.register_forward_pre_hook(_cast_norm_input_to_weight_dtype)
-    return len(norms)
+        if isinstance(module, nn.LayerNorm):
+            module.register_forward_pre_hook(_cast_norm_input_to_weight_dtype)
+            n += 1
+    return n
 
 
 def get_transformer_layer_cls(model: HFModel) -> set[type[nn.Module]]:
@@ -304,15 +290,10 @@ class FSDP2Engine:
 
                 model.get_input_embeddings().register_forward_hook(make_inputs_require_grad)
 
-            # Under bf16 mixed precision, non-reentrant checkpoint recompute can feed an encoder
-            # tower's dtype-strict nn.LayerNorm saved fp32 activations against re-gathered bf16
-            # weights ("expected scalar type Float but found BFloat16"). Make those LayerNorms
-            # dtype-safe so recompute matches the forward; keeps checkpointing ON for the tower.
-            # Self-scoping: a pure LLM (RMSNorm, .layers) has no such LayerNorm -> no-op.
             if self.mixed_precision == "bf16":
-                n_patched = _make_tower_norms_dtype_safe(model)
+                n_patched = _make_norms_dtype_safe(model)
                 if self.rank == 0 and n_patched:
-                    logger.info(f"Made {n_patched} encoder-tower LayerNorm(s) dtype-safe for bf16 checkpointing.")
+                    logger.info(f"Made {n_patched} nn.LayerNorm(s) dtype-safe for bf16 checkpointing.")
 
         fully_shard(
             model,

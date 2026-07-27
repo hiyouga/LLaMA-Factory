@@ -13,23 +13,6 @@
 # limitations under the License.
 
 """Rendering: turn a v1 ``Sample`` into a tokenized ``ModelInput``.
-
-This module is the orchestration + public API (``Renderer``). The mechanical pieces live in
-sibling modules:
-  - ``format``    -- v1<->HF message conversion, media extraction, placeholder-count guard
-  - ``escape``    -- special-token escaping (prompt-injection hardening)
-  - ``collation`` -- batch padding/truncation/MM alignment (consumed by the batch generators)
-
-Assistant supervision is located WITHOUT a per-model marker table: a training sample is rendered
-so that its last message is the supervised assistant turn, and that turn's token span is recovered
-by a single prompt/full difference -- encode the prompt (everything up to and including the
-assistant role header, via ``add_generation_prompt=True``) and the full sequence, then the tail of
-the full sequence that the prompt does not cover is exactly this turn. Multi-turn conversations are
-split into one sample per supervised turn (see ``process_samples``) so the supervised turn is always
-the last one; this keeps the diff on the only boundary that is prefix-stable across chat templates
-(appending the final assistant turn never restripts earlier turns), so models with reasoning-history
-stripping (e.g. Qwen3 ``<think>``) are handled correctly without hard-coding role markers.
-
 Note: ``position_ids`` are assigned by ``process_samples`` (1-based); multimodal (mrope) position
 ids are expected to be recomputed by the model/trainer.
 """
@@ -125,13 +108,6 @@ def _render_messages(
                 result[key] = outputs[key]
         mm_type_ids = outputs["mm_token_type_ids"][0].tolist() if "mm_token_type_ids" in outputs else None
 
-        # Some processors emit no mm_token_type_ids at all (e.g. Qwen2.5-Omni), or omit a modality
-        # (audio processors such as Qwen2-Audio). The downstream batching machinery (truncation
-        # alignment + FSDP dummy injection) locates media purely by mm_token_type_ids, so synthesize
-        # any missing marker by scanning input_ids for that modality's placeholder token id. Marker
-        # convention matches the collators (1=image, 2=video, 3=audio). Token ids may live on the
-        # processor or (Omni) only on the tokenizer, so resolve with a processor->tokenizer fallback.
-        # A modality already marked by the processor is left untouched.
         for attr, marker in (("image_token_id", 1), ("video_token_id", 2), ("audio_token_id", 3)):
             token_id = getattr(processor, attr, None)
             if token_id is None:
@@ -220,13 +196,7 @@ class Renderer:
         Returns:
             ModelInput with input_ids, attention_mask, labels, and loss_weights.
         """
-        return _render_messages(
-            self.processor,
-            messages,
-            tools,
-            is_generate,
-            **kwargs,
-        )
+        return _render_messages(self.processor, messages, tools, is_generate, **kwargs)
 
     def get_dummy_media_fragment(self, modality: str) -> dict:
         """Build (and cache) a minimal valid media fragment for ``modality`` ("image"|"video"|"audio")."""
@@ -292,6 +262,7 @@ class Renderer:
 
         Args:
             samples: The samples to process.
+
         Returns:
             List of processed model inputs.
         """
