@@ -27,10 +27,9 @@ def test_get_args_from_yaml(tmp_path: Path):
         model_class: llm
         kernel_config:
             name: auto
-            include_kernels: auto # choice: null/true/false/auto/kernel_id1,kernel_id2,kernel_id3, default is null
         peft_config:
             name: lora
-            lora_rank: 0.8
+            r: 8
         quant_config: null
 
         ### data
@@ -60,9 +59,8 @@ def test_get_args_from_yaml(tmp_path: Path):
         assert data_args.train_dataset == "llamafactory/v1-sft-demo"
         assert model_args.model == "llamafactory/tiny-random-qwen3"
         assert model_args.kernel_config.name == "auto"
-        assert model_args.kernel_config.get("include_kernels") == "auto"
         assert model_args.peft_config.name == "lora"
-        assert model_args.peft_config.get("lora_rank") == 0.8
+        assert model_args.peft_config.get("r") == 8
         assert training_args.output_dir == "outputs/test_run"
         assert training_args.micro_batch_size == 1
         assert training_args.global_batch_size == 1

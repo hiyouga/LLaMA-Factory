@@ -31,6 +31,7 @@ from abc import abstractmethod
 
 import torch
 import torch.nn.functional as F
+from torch.distributed.tensor import DTensor
 
 from ..accelerator.helper import ReduceOp
 from ..accelerator.interface import Dim, DistributedInterface
@@ -97,9 +98,12 @@ class BaseTrainer:
         dist_name = self.args.dist_config.name if self.args.dist_config is not None else None
 
         if dist_name == "deepspeed":
-            from ..plugins.trainer_plugins.distributed.hub import DistributedPlugin
+            if self.args.cp_size > 1:
+                raise ValueError("Context parallelism currently requires `dist_config.name: fsdp2`.")
 
-            self._deepspeed_engine = DistributedPlugin("deepspeed")(
+            from ..plugins.trainer_plugins.distributed.interface import DistributedPlugin
+
+            self._deepspeed_engine = DistributedPlugin("deepspeed").shard_model(
                 self.model,
                 self.args.dist_config,
                 num_micro_batch=self.train_batch_generator.num_micro_batch,
@@ -142,7 +146,7 @@ class BaseTrainer:
         self.state.global_step = self.global_step
         self.state.epoch = self._resume_epoch
 
-        if self.args.dist_config is not None and self.args.dist_config.get("cp_size", 1) > 1:
+        if self.args.cp_size > 1:
             # qwen3.5 is not supported because of the different attention implementation, which will be supported in the future.
             if model.config.model_type == "qwen3_5":
                 raise RuntimeError(
@@ -155,7 +159,7 @@ class BaseTrainer:
                     "Sequence parallelism requires flash attention. Please set `flash_attn: flash_attention_2`."
                 )
 
-            SequenceParallelModelPlugin(self.args.dist_config.get("cp_mode", "ulysses"))(model, self.args.dist_config)
+            SequenceParallelModelPlugin(self.args.cp_mode)(model, self.args.cp_size)
 
     def _create_batch_generator(self) -> None:
         if (
@@ -190,9 +194,9 @@ class BaseTrainer:
                 find_unused = not is_tokenizer(self.renderer.processor)
                 self.model = DDP(self.model, device_ids=device_ids, find_unused_parameters=find_unused)
         else:
-            from ..plugins.trainer_plugins.distributed.hub import DistributedPlugin
+            from ..plugins.trainer_plugins.distributed.interface import DistributedPlugin
 
-            self.model = DistributedPlugin(self.args.dist_config.name)(
+            self.model = DistributedPlugin(self.args.dist_config.name).shard_model(
                 self.model,
                 self.args.dist_config,
                 bf16=self.args.bf16,
@@ -204,7 +208,7 @@ class BaseTrainer:
             _trainable_params = [p for p in self.model.parameters() if p.requires_grad]
             self.optimizer = torch.optim.AdamW(_trainable_params, lr=self.args.learning_rate)
         else:
-            from ..plugins.trainer_plugins.optimizer import OptimizerPlugin
+            from ..plugins.trainer_plugins.optimizers.optimizer import OptimizerPlugin
 
             self.optimizer = OptimizerPlugin(self.args.optim_config.name)(self.model, self.args.optim_config)
 
@@ -266,7 +270,7 @@ class BaseTrainer:
                 step_valid_tokens = DistributedInterface().all_reduce(step_valid_tokens, op=ReduceOp.SUM)
                 num_micro = len(micro_batches)
                 for i, micro_batch in enumerate(micro_batches):
-                    if self.args.dist_config and self.args.dist_config.get("cp_size", 1) > 1:
+                    if self.args.cp_size > 1:
                         from ..plugins.model_plugins.parallelization.sequence_parallel import (
                             SequenceParallelLossPlugin,
                         )
@@ -290,12 +294,19 @@ class BaseTrainer:
                     # deepspeed: engine.step() already ran inside backward at the sync boundary
                     grad_norm = self._deepspeed_engine.get_grad_norm()
                 else:
-                    grad_norm = torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.args.max_grad_norm).item()
-
-                    if self.args.dist_config and self.args.dist_config.get("cp_size", 1) > 1:
-                        grad_norm = grad_norm**2
-                        grad_norm = DistributedInterface().all_reduce(grad_norm, op=ReduceOp.SUM, dim=Dim.CP)
-                        grad_norm = grad_norm**0.5
+                    # FSDP2 shards params/grads across the fsdp mesh, so clip_grad_norm_ returns a
+                    # per-rank local shard norm (global / sqrt(shard_size)): reported grad_norm then
+                    # scales as 1/sqrt(dp_size) and the clip coefficient is applied per-shard. Reduce
+                    # to the true global norm first, then clip with it.
+                    grads = [p.grad for p in self.model.parameters() if p.grad is not None]
+                    total_norm = torch.nn.utils.get_total_norm(grads)
+                    if isinstance(total_norm, DTensor):
+                        # full_tensor all-reduces across the fsdp mesh (spans CP under default
+                        # mp_shard=world); a separate CP reduce would over-count by sqrt(cp_size).
+                        total_norm = total_norm.full_tensor()
+                    # pass a Tensor: clip_grads_with_norm_ clamps max_norm / (total_norm + 1e-6).
+                    torch.nn.utils.clip_grads_with_norm_(self.model.parameters(), self.args.max_grad_norm, total_norm)
+                    grad_norm = total_norm.item()
 
                     if not torch.isfinite(torch.tensor(grad_norm)):  # type: ignore # pyright: ignore [reportUnknownReturnType]
                         logger.warning_rank0(f"Gradient norm is not finite: {grad_norm}")
@@ -353,7 +364,7 @@ class BaseTrainer:
     def save_model(self) -> None:
         """Save the model."""
         if self.args.dist_config is not None and self.args.dist_config.name in ("deepspeed", "fsdp2"):
-            from ..plugins.trainer_plugins.distributed.hub import DistributedPlugin
+            from ..plugins.trainer_plugins.distributed.interface import DistributedPlugin
 
             DistributedPlugin(self.args.dist_config.name).save_model(
                 self.model, self.args.output_dir, self.renderer.processor

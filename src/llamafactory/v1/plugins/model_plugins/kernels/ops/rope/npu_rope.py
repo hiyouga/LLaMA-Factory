@@ -24,11 +24,10 @@ import sys
 
 import torch
 
-from ......accelerator.helper import DeviceType
+from ......accelerator.helper import DeviceType, get_current_accelerator
 from ......utils.logging import get_logger
 from ......utils.types import HFModel
-from ...base import BaseKernel
-from ...registry import register_kernel
+from ...base import BaseKernel, KernelPlugin
 
 
 logger = get_logger(__name__)
@@ -125,15 +124,18 @@ def _apply_multimodal_rotary_pos_emb_qwen25_vl(q, k, cos, sin, mrope_section, un
     return _apply_npu_rotary_emb(q, k, cos, sin)
 
 
-@register_kernel
+@KernelPlugin("npu_fused_rope").register()
 class NpuRoPEKernel(BaseKernel):
     """NPU Kernel for Rotary Position Embedding."""
 
-    _kernel_id = "npu_fused_rope"
-    _device = DeviceType.NPU
+    @staticmethod
+    def check_device() -> None:
+        current = get_current_accelerator().type
+        if current != DeviceType.NPU:
+            raise RuntimeError(f"NpuRoPEKernel requires NPU, current accelerator is {current}.")
 
-    @classmethod
-    def apply(cls, **kwargs) -> "HFModel":
+    @staticmethod
+    def _apply(**kwargs) -> "HFModel":
         """Apply RoPE acceleration by monkey-patching ``apply_rotary_pos_emb``.
 
         Iterates through the model's modules to find attention layers, identifies
@@ -151,12 +153,7 @@ class NpuRoPEKernel(BaseKernel):
             RuntimeError: If ``torch_npu`` is not available.
             ValueError: If the model is not provided.
         """
-        if not cls.check_deps():
-            raise RuntimeError(f"torch_npu is not available but {cls.__name__} was called.")
-
         model = kwargs.get("model", None)
-        if model is None:
-            raise ValueError(f"HFModel instance is required for {cls.__name__}.")
 
         _modules = set()
         for module in model.modules():

@@ -37,8 +37,8 @@ logger = logging.get_logger(__name__)
 
 
 class SequenceParallelModelPlugin(BasePlugin):
-    def __call__(self, model, model_args):
-        return super().__call__(model, model_args)
+    def __call__(self, model, cp_size: int):
+        return super().__call__(model, cp_size)
 
 
 class SequenceParallelLossPlugin(BasePlugin):
@@ -82,15 +82,17 @@ def new_flash_attn_forward(
 
 
 @SequenceParallelModelPlugin("ulysses").register()
-def apply_sequence_parallel(model, model_args):
+def apply_sequence_parallel(model, cp_size: int):
     # Replace _flash_attention_forward with new_flash_attn_forward
     module = sys.modules[model.__module__]
-    cp_size = model_args.get("cp_size", 1)
 
     set_ulysses_sequence_parallel_group(DistributedInterface().get_group(Dim.CP))
 
     try:
-        num_attention_heads, num_key_value_heads = model.config.num_attention_heads, model.config.num_attention_heads
+        num_attention_heads, num_key_value_heads = (
+            model.config.num_attention_heads,
+            model.config.num_key_value_heads,
+        )
     except AttributeError:
         num_attention_heads, num_key_value_heads = (
             model.config.text_config.num_attention_heads,
