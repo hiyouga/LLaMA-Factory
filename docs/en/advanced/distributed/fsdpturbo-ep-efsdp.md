@@ -10,15 +10,15 @@ This document describes the current implementation of the `fsdpturbo` distribute
 
 ## 1. Configuration Boundaries
 
-Training uses a single `dist_config` entry:
+Common parallel topology belongs to `TrainingArguments`, while FSDPTurbo-only settings remain in `dist_config`:
 
 ```yaml
+cp_size: 1
+
 dist_config:
   name: fsdpturbo
-  cp_size: 1
   ep_size: 16
   ep_dispatcher: eager
-  param_dtype: bf16
   ep_modules:
     - model.language_model.layers.{*}.mlp.experts
   ep_fsdp_modules:
@@ -29,7 +29,10 @@ The fields used by the minimal example have the following responsibilities:
 
 - `ep_modules`: expert modules parallelized by FSDPTurbo EP.
 - `ep_fsdp_modules`: expert containers sharded by FSDPTurbo EFSDP.
-- `param_dtype`: parameter dtype used during model initialization for FSDPTurbo full tuning.
+
+`dp_size`, `cp_size`, `cp_mode`, `mp_replicate_size`, `mp_shard_size`, and `dist_timeout` are common topology fields and therefore remain at the top level. `dist_config` is parsed strictly as `FSDPTurboParams`; putting a common topology field inside it is rejected instead of being silently ignored.
+
+The top-level training option `bf16` controls FSDPTurbo parameter storage and compute dtype. The backend casts the model before FSDP materialization, so `ModelEngine` does not need to read distributed-backend configuration.
 
 The following advanced fields are optional and are therefore omitted from the minimal YAML example above:
 
@@ -47,9 +50,9 @@ LlamaFactory's `DistributedInterface` initializes only its existing model and da
 
 ```text
 run_sft / run_dpo / run_rm
-  -> DistributedInterface(dist_config)
+  -> DistributedInterface(training_args)
      -> initialize LlamaFactory model/data meshes
-  -> DistributedPlugin("fsdpturbo")
+  -> DistributedPlugin("fsdpturbo").shard_model(...)
      -> FSDPTurboFSDP2Engine.__init__()
         -> FSDPTurboParallelState.initialize()
            -> initialize and retain the expert parent mesh and submeshes
@@ -136,7 +139,7 @@ FLA operators do not belong in the distributed configuration. Operator selection
 
 ```yaml
 kernel_config:
-  name: flash-linear-attention
+  name: auto, flash-linear-attention
   include_kernels: chunk_gated_delta_rule, fused_recurrent_gated_delta_rule
   chunk_size: 32
 ```
@@ -145,14 +148,15 @@ The call path is:
 
 ```text
 ModelEngine
-  -> KernelPlugin("flash-linear-attention")
-     -> LlamaFactory kernel registry
+  -> apply_kernels("auto, flash-linear-attention")
+     -> accelerator-specific LlamaFactory auto kernels
+     -> KernelPlugin("flash-linear-attention").apply(...)
         -> fsdp_turbo.ops.apply_fla_ops()
            -> FSDPTurbo device operator registry
               -> FLA backend implementation
 ```
 
-`chunk_size` accepts `16`, `32`, and `64`, with a default of `64`. The kernel plugin and distributed plugin are independent. Explicitly selecting `flash-linear-attention` installs only the listed FLA operators. With `name: auto` and `include_kernels: auto`, LlamaFactory applies every registered default kernel whose dependencies are available before distributed sharding. This allows FLA, RMSNorm, and other non-expert operators to work together with FSDPTurbo EP. FSDPTurbo subsequently replaces the target expert module's `forward`, so the final expert execution path is selected by `ep_dispatcher`; an MoE kernel discovered during the auto stage is not retained as a separate second expert execution path.
+`chunk_size` accepts `16`, `32`, and `64`, with a default of `64`. The kernel plugin and distributed plugin are independent. `name: flash-linear-attention` installs only the selected FLA operators. The comma-separated `name: auto, flash-linear-attention` form composes LlamaFactory's accelerator-specific automatic kernels with the FLA plugin before distributed sharding. FLA stays explicit because it has optional external dependencies and is not part of the built-in `auto` set. FSDPTurbo subsequently replaces the target expert module's `forward`, so the final expert execution path is selected by `ep_dispatcher`; an MoE kernel applied during the auto stage is not retained as a separate second expert execution path.
 
 ## 8. CP Runtime Constraints and Validation Scope
 
@@ -164,6 +168,6 @@ The current implementation has completed the following BF16 AdamW full SFT valid
 | --- | ---: | ---: | ---: | --- | --- | ---: | --- | ---: | --- |
 | Atlas 900 A3 SuperPoD | 1 | 16 | 1 | Off | FLA (chunk size 16) / eager | 100 | 1.3345 -> 0.1205 | 1.93 s/it | Passed and saved |
 | Atlas 900 A3 SuperPoD | 1 | 16 | 1 | Off | FLA (chunk size 16) / fused | 100 | 1.3367 -> 0.1326 | 1.95 s/it | Passed and saved |
-| Atlas 900 A3 SuperPoD | 2 | 4 | 2 | Off | auto kernels (including FLA) / fused | 100 | 1.8095 -> 0.6986 | 5.80 s/it | Passed and saved |
-| Atlas 900 A3 SuperPoD | 2 | 4 | 2 | Off | auto kernels (including FLA) / eager | 100 | 1.8095 -> 0.6139 | 5.77 s/it | Passed and saved |
+| Atlas 900 A3 SuperPoD | 2 | 4 | 2 | Off | auto + FLA / fused | 100 | 1.8095 -> 0.6986 | 5.80 s/it | Passed and saved |
+| Atlas 900 A3 SuperPoD | 2 | 4 | 2 | Off | auto + FLA / eager | 100 | 1.8095 -> 0.6139 | 5.77 s/it | Passed and saved |
 | Atlas 950 SuperPoD | 1 | 8 | 1 | Off | no kernel plugin configured / eager | 100 | 1.3561 -> 0.5941 | 2.58 s/it | Passed (model saving skipped) |

@@ -1,12 +1,18 @@
 from types import SimpleNamespace
 
+import pytest
 import torch
 
 from llamafactory.v1.plugins.trainer_plugins.distributed import fsdpturbo as fsdpturbo_module
 from llamafactory.v1.plugins.trainer_plugins.distributed.fsdp2 import get_transformer_layer_cls
 from llamafactory.v1.plugins.trainer_plugins.distributed.fsdpturbo import (
     FSDPTurboEPModelSpec,
+    FSDPTurboFSDP2Engine,
     FSDPTurboParallelState,
+)
+from llamafactory.v1.plugins.trainer_plugins.distributed.interface import (
+    DistributedPlugin,
+    FSDPTurboParams,
 )
 
 
@@ -18,6 +24,28 @@ class _Model(torch.nn.Module):
 
 def test_qwen35_support_is_not_hardcoded_in_model_registry():
     assert FSDPTurboEPModelSpec.get(_Model("qwen3_5_moe")) is None
+
+
+def test_fsdpturbo_uses_class_plugin_and_strict_backend_params():
+    plugin = DistributedPlugin("fsdpturbo")
+    params = plugin.parse_params({"name": "fsdpturbo", "ep_size": 4}, FSDPTurboParams)
+
+    assert params.ep_size == 4
+    assert callable(plugin.shard_model)
+    assert callable(plugin.clip_grad_norm)
+    with pytest.raises(ValueError, match="Unknown params"):
+        plugin.parse_params({"name": "fsdpturbo", "cp_size": 2}, FSDPTurboParams)
+
+
+def test_fsdpturbo_sets_storage_dtype_inside_backend(monkeypatch):
+    from llamafactory.v1.plugins.trainer_plugins.distributed.fsdp2 import FSDP2Engine
+
+    monkeypatch.setattr(FSDP2Engine, "shard_model", lambda self, model: model)
+    engine = object.__new__(FSDPTurboFSDP2Engine)
+    engine.mixed_precision = "bf16"
+    model = torch.nn.Linear(2, 2, dtype=torch.float32)
+
+    assert engine.shard_model(model).weight.dtype == torch.bfloat16
 
 
 def test_fsdpturbo_owns_expert_mesh_topology(monkeypatch):

@@ -60,7 +60,13 @@ def create_eval_tab(engine: "Engine") -> dict[str, "Component"]:
 
     input_elems.update({max_new_tokens, top_p, temperature, eval_seed, output_dir})
     elem_dict.update(
-        dict(max_new_tokens=max_new_tokens, top_p=top_p, temperature=temperature, eval_seed=eval_seed, output_dir=output_dir)
+        dict(
+            max_new_tokens=max_new_tokens,
+            top_p=top_p,
+            temperature=temperature,
+            eval_seed=eval_seed,
+            output_dir=output_dir,
+        )
     )
 
     with gr.Row():

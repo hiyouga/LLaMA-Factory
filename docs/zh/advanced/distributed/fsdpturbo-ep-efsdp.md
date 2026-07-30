@@ -10,15 +10,15 @@ English version: [FSDPTurbo EP/EFSDP and LlamaFactory FSDP2/CP Design](../../../
 
 ## 1. 配置边界
 
-训练入口使用一个 `dist_config`：
+公共并行拓扑放在 `TrainingArguments` 顶层，FSDPTurbo 私有参数保留在 `dist_config`：
 
 ```yaml
+cp_size: 1
+
 dist_config:
   name: fsdpturbo
-  cp_size: 1
   ep_size: 16
   ep_dispatcher: eager
-  param_dtype: bf16
   ep_modules:
     - model.language_model.layers.{*}.mlp.experts
   ep_fsdp_modules:
@@ -29,7 +29,13 @@ dist_config:
 
 - `ep_modules`：交给 FSDPTurbo 执行 EP 的专家模块。
 - `ep_fsdp_modules`：交给 FSDPTurbo 执行 EFSDP 的专家容器。
-- `param_dtype`：FSDPTurbo full tuning 在模型初始化阶段使用的参数 dtype。
+
+`dp_size`、`cp_size`、`cp_mode`、`mp_replicate_size`、`mp_shard_size` 和 `dist_timeout`
+属于公共拓扑字段，继续放在顶层。`dist_config` 会被严格解析为 `FSDPTurboParams`；如果把公共拓扑
+字段误放进去，会直接报错，而不是静默忽略。
+
+顶层训练参数 `bf16` 同时控制 FSDPTurbo 的参数存储和计算 dtype。backend 会在 FSDP materialization
+前完成模型 dtype 转换，因此 `ModelEngine` 不需要读取 distributed backend 配置。
 
 以下高级字段为可选项，因此没有写入上面的最小 YAML 示例：
 
@@ -53,9 +59,9 @@ LlamaFactory 的 `DistributedInterface` 只初始化自身原有的 model/data m
 
 ```text
 run_sft / run_dpo / run_rm
-  -> DistributedInterface(dist_config)
+  -> DistributedInterface(training_args)
      -> 初始化 LlamaFactory model/data mesh
-  -> DistributedPlugin("fsdpturbo")
+  -> DistributedPlugin("fsdpturbo").shard_model(...)
      -> FSDPTurboFSDP2Engine.__init__()
         -> FSDPTurboParallelState.initialize()
            -> 初始化并保存 expert parent mesh 及其子 mesh
@@ -156,7 +162,7 @@ FLA 算子不属于 distributed config。算子选择通过独立的 `kernel_con
 
 ```yaml
 kernel_config:
-  name: flash-linear-attention
+  name: auto, flash-linear-attention
   include_kernels: chunk_gated_delta_rule, fused_recurrent_gated_delta_rule
   chunk_size: 32
 ```
@@ -165,19 +171,20 @@ kernel_config:
 
 ```text
 ModelEngine
-  -> KernelPlugin("flash-linear-attention")
-     -> LlamaFactory kernel registry
+  -> apply_kernels("auto, flash-linear-attention")
+     -> LlamaFactory 当前加速器对应的 auto kernels
+     -> KernelPlugin("flash-linear-attention").apply(...)
         -> fsdp_turbo.ops.apply_fla_ops()
            -> FSDPTurbo device operator registry
               -> FLA backend implementation
 ```
 
 `chunk_size` 当前支持 `16`、`32` 和 `64`，默认值为 `64`。Kernel plugin 与 distributed plugin
-彼此独立。显式选择 `flash-linear-attention` 时只安装所列 FLA 算子；使用 `name: auto` 和
-`include_kernels: auto` 时，LlamaFactory 会在分布式切分前依次应用所有已注册且依赖满足的默认
-kernel，因此 FLA、RMSNorm 等非专家算子可以与 FSDPTurbo EP 组合使用。FSDPTurbo 随后会替换
-目标专家模块的 `forward`，所以专家计算的最终路径由 `ep_dispatcher` 决定；auto 阶段发现的 MoE
-kernel 不会作为独立的第二条专家执行路径保留下来。
+彼此独立。`name: flash-linear-attention` 只安装所选 FLA 算子；逗号分隔的
+`name: auto, flash-linear-attention` 会在分布式切分前组合 LlamaFactory 当前加速器的 auto kernels
+与 FLA plugin。FLA 依赖可选的外部三方件，因此保持显式选择，不属于内置 `auto` 集合。FSDPTurbo
+随后会替换目标专家模块的 `forward`，所以专家计算的最终路径由 `ep_dispatcher` 决定；auto 阶段
+应用的 MoE kernel 不会作为独立的第二条专家执行路径保留下来。
 
 ## 8. CP 运行约束与验证范围
 
@@ -194,6 +201,6 @@ BF16、AdamW full SFT 验证。表中性能按相邻训练日志步的时间戳�
 | --- | ---: | ---: | ---: | --- | --- | ---: | --- | ---: | --- |
 | Atlas 900 A3 SuperPoD | 1 | 16 | 1 | 关闭 | FLA（chunk size 16）/ eager | 100 | 1.3345 -> 0.1205 | 1.93 s/it | 通过并完成保存 |
 | Atlas 900 A3 SuperPoD | 1 | 16 | 1 | 关闭 | FLA（chunk size 16）/ fused | 100 | 1.3367 -> 0.1326 | 1.95 s/it | 通过并完成保存 |
-| Atlas 900 A3 SuperPoD | 2 | 4 | 2 | 关闭 | auto kernels（含 FLA）/ fused | 100 | 1.8095 -> 0.6986 | 5.80 s/it | 通过并完成保存 |
-| Atlas 900 A3 SuperPoD | 2 | 4 | 2 | 关闭 | auto kernels（含 FLA）/ eager | 100 | 1.8095 -> 0.6139 | 5.77 s/it | 通过并完成保存 |
+| Atlas 900 A3 SuperPoD | 2 | 4 | 2 | 关闭 | auto + FLA / fused | 100 | 1.8095 -> 0.6986 | 5.80 s/it | 通过并完成保存 |
+| Atlas 900 A3 SuperPoD | 2 | 4 | 2 | 关闭 | auto + FLA / eager | 100 | 1.8095 -> 0.6139 | 5.77 s/it | 通过并完成保存 |
 | Atlas 950 SuperPoD | 1 | 8 | 1 | 关闭 | 未配置 kernel plugin / eager | 100 | 1.3561 -> 0.5941 | 2.58 s/it | 通过（跳过模型保存） |

@@ -2,19 +2,20 @@ model: Qwen/Qwen3.5-35B-A3B
 model_class: llm
 
 kernel_config:
-  name: auto
-  include_kernels: auto
+  name: auto, flash-linear-attention
+  include_kernels: chunk_gated_delta_rule, fused_recurrent_gated_delta_rule
+  chunk_size: 64
 
 dist_config:
   name: fsdpturbo
-  cp_size: 1
   ep_size: 16
   ep_dispatcher: eager
-  param_dtype: bf16
   ep_modules:
     - model.language_model.layers.{*}.mlp.experts
   ep_fsdp_modules:
     - model.language_model.layers.{*}.mlp
+
+cp_size: 1
 
 init_config:
   name: init_on_meta

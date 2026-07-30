@@ -72,6 +72,7 @@ def _render_messages(
             tools_parsed = [tools_parsed]
     if not is_generate and hf_messages and hf_messages[-1].get("reasoning_content"):
         kwargs["enable_thinking"] = True
+
     def _encode(msgs: list[dict], add_generation_prompt: bool, **template_kwargs) -> list[int]:
         render_kwargs = {**kwargs, **template_kwargs}
         text = tokenizer.apply_chat_template(
@@ -160,13 +161,7 @@ class Renderer:
         Returns:
             ModelInput with input_ids, attention_mask, labels, and loss_weights.
         """
-        return _render_messages(
-            self.processor,
-            messages,
-            tools,
-            is_generate,
-            **kwargs
-        )
+        return _render_messages(self.processor, messages, tools, is_generate, **kwargs)
 
     def process_samples(self, samples: list[Sample]) -> list[ModelInput]:
         """Process samples to model input.

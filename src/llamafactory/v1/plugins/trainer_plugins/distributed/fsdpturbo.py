@@ -159,9 +159,7 @@ def clip_grad_norm_(model: HFModel, max_norm: float, **kwargs) -> float:
             continue
 
         mesh_names = set(getattr(getattr(grad, "device_mesh", None), "mesh_dim_names", ()) or ())
-        is_ep_side = isinstance(grad, DTensor) and bool(
-            mesh_names & {parallel_state.EP, parallel_state.EFSDP}
-        )
+        is_ep_side = isinstance(grad, DTensor) and bool(mesh_names & {parallel_state.EP, parallel_state.EFSDP})
         if is_ep_side:
             ep_params.append(param)
         else:
@@ -253,9 +251,7 @@ def _prepare_qwen3_moe_for_ep(model: HFModel) -> HFModel:
         prepared += 1
 
     if prepared:
-        logger.info_rank0(
-            f"FSDPTurbo EP adapter: prepared {prepared} sparse expert modules for Transformers 5.x."
-        )
+        logger.info_rank0(f"FSDPTurbo EP adapter: prepared {prepared} sparse expert modules for Transformers 5.x.")
     else:
         logger.info_rank0("FSDPTurbo EP adapter did not find a sparse expert module requiring preparation.")
     return model
@@ -298,6 +294,13 @@ class FSDPTurboFSDP2Engine(FSDP2Engine):
                 ep_fsdp_modules.append(module)
         return ep_fsdp_modules
 
+    def shard_model(self, model: HFModel) -> HFModel:
+        """Set storage dtype before FSDP materialization without leaking backend config into ModelEngine."""
+        param_dtype = torch.bfloat16 if self.mixed_precision == "bf16" else torch.float32
+        model = model.to(param_dtype)
+        logger.info_rank0(f"Using {param_dtype} for FSDPTurbo full tuning.")
+        return super().shard_model(model)
+
     def _copy_weights(self, param, loaded_tensor):
         """Copy full checkpoint tensors into mixed-mesh DTensors from the inherited loader."""
         from torch.distributed._tensor import DTensor, Shard
@@ -307,7 +310,9 @@ class FSDPTurboFSDP2Engine(FSDP2Engine):
 
         if isinstance(param, DTensor):
             local_tensor = param.to_local()
-            shard_placements = [(i, placement) for i, placement in enumerate(param.placements) if isinstance(placement, Shard)]
+            shard_placements = [
+                (i, placement) for i, placement in enumerate(param.placements) if isinstance(placement, Shard)
+            ]
 
             if not shard_placements:
                 local_tensor.copy_(loaded_tensor)
@@ -372,9 +377,7 @@ class FSDPTurboFSDP2Engine(FSDP2Engine):
                 dispatcher=self.dist_config.get("ep_dispatcher", "eager"),
                 apply_efsdp_modules=self._get_ep_fsdp_modules(model, ep_modules),
             )
-            ep_plan._gradient_divide_factor = float(
-                self.ep_size * self.parallel_state.efsdp_size
-            )
+            ep_plan._gradient_divide_factor = float(self.ep_size * self.parallel_state.efsdp_size)
             fsdp_plan = FSDPPlanConfig(
                 # FSDPTurbo uses this plan only to place EFSDP hooks and select its
                 # implementation. EFSDP targets come from ep_plan.apply_efsdp_modules.

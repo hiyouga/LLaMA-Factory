@@ -12,13 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Flash Linear Attention adapters backed by FSDPTurbo's device operator registry."""
+"""Flash Linear Attention kernel plugin backed by FSDPTurbo's operator registry."""
 
-from ......accelerator.helper import DeviceType
+from ......accelerator.helper import DeviceType, get_current_accelerator
 from ......utils import logging
 from ......utils.types import HFModel
-from ...base import BaseKernel
-from ...registry import register_kernel
+from ...base import BaseKernel, KernelPlugin
 
 
 logger = logging.get_logger(__name__)
@@ -32,48 +31,52 @@ FLASH_LINEAR_ATTENTION_KERNELS = (
 SUPPORTED_CHUNK_SIZES = (16, 32, 64)
 
 
-class _FlashLinearAttentionOpKernel(BaseKernel):
-    _device = [DeviceType.CUDA, DeviceType.NPU]
-    _op_name = ""
+@KernelPlugin("flash-linear-attention").register()
+class FlashLinearAttentionKernel(BaseKernel):
+    """Install selected FLA callables through FSDPTurbo's device operator registry."""
 
-    @classmethod
-    def check_deps(cls) -> bool:
+    @staticmethod
+    def check_device() -> None:
+        current = get_current_accelerator().type
+        if current not in (DeviceType.CUDA, DeviceType.NPU):
+            raise RuntimeError(f"FlashLinearAttentionKernel requires CUDA or NPU, current accelerator is {current}.")
+
+    @staticmethod
+    def check_deps() -> None:
         try:
             import fla.ops.gated_delta_rule  # noqa: F401
             from fsdp_turbo.ops import apply_fla_ops  # noqa: F401
-        except ImportError:
-            return False
+        except ImportError as exc:
+            raise RuntimeError("Flash Linear Attention and FSDPTurbo are required for this kernel.") from exc
 
-        return super().check_deps()
+    @staticmethod
+    def _apply(**kwargs) -> HFModel:
+        model = kwargs["model"]
+        config = kwargs.get("config") or {}
+        include_kernels = config.get("include_kernels", "auto")
+        chunk_size = config.get("chunk_size", 64)
 
-    @classmethod
-    def apply(cls, **kwargs) -> HFModel:
-        model = kwargs.get("model")
-        strict = kwargs.get("strict", False)
-        if model is None:
-            raise ValueError(f"HFModel instance is required for {cls.__name__}.")
-        if not cls.check_deps():
-            if strict:
-                raise RuntimeError(f"Dependencies for {cls.__name__} are unavailable.")
-            return model
+        if include_kernels == "auto" or include_kernels is True:
+            selected = list(FLASH_LINEAR_ATTENTION_KERNELS)
+        elif isinstance(include_kernels, str):
+            selected = [name.strip() for name in include_kernels.split(",") if name.strip()]
+        else:
+            raise TypeError("kernel_config.include_kernels must be 'auto' or a comma-separated string.")
+
+        if not selected:
+            raise ValueError("kernel_config.include_kernels must select at least one FLA kernel.")
+
+        unsupported = set(selected).difference(FLASH_LINEAR_ATTENTION_KERNELS)
+        if unsupported:
+            raise ValueError(f"Unsupported Flash Linear Attention kernels: {sorted(unsupported)}")
+        if isinstance(chunk_size, bool) or not isinstance(chunk_size, int) or chunk_size not in SUPPORTED_CHUNK_SIZES:
+            raise ValueError(f"chunk_size must be one of {SUPPORTED_CHUNK_SIZES}, got {chunk_size!r}.")
 
         from fsdp_turbo.ops import apply_fla_ops
 
-        configured_kwargs = kwargs.get("op_kwargs")
-        op_kwargs = {cls._op_name: configured_kwargs} if configured_kwargs else None
-        patched = apply_fla_ops(model, [cls._op_name], op_kwargs=op_kwargs, strict=strict)
-        if patched:
-            logger.info_rank0(f"Kernel {cls.get_kernel_id()} updated {patched} module callables.")
+        op_kwargs = None
+        if CHUNK_GATED_DELTA_RULE in selected:
+            op_kwargs = {CHUNK_GATED_DELTA_RULE: {"chunk_size": chunk_size}}
+        patched = apply_fla_ops(model, selected, op_kwargs=op_kwargs, strict=True)
+        logger.info_rank0(f"Flash Linear Attention kernels updated {patched} module callables: {selected}.")
         return model
-
-
-@register_kernel
-class ChunkGatedDeltaRuleKernel(_FlashLinearAttentionOpKernel):
-    _kernel_id = CHUNK_GATED_DELTA_RULE
-    _op_name = CHUNK_GATED_DELTA_RULE
-
-
-@register_kernel
-class FusedRecurrentGatedDeltaRuleKernel(_FlashLinearAttentionOpKernel):
-    _kernel_id = FUSED_RECURRENT_GATED_DELTA_RULE
-    _op_name = FUSED_RECURRENT_GATED_DELTA_RULE

@@ -32,11 +32,10 @@ try:
 except ImportError:
     pass
 
-from ......accelerator.helper import DeviceType
+from ......accelerator.helper import DeviceType, get_current_accelerator
 from ......utils.packages import is_transformers_version_greater_than
 from ......utils.types import HFModel
-from ...base import BaseKernel
-from ...registry import register_kernel
+from ...base import BaseKernel, KernelPlugin
 
 
 class GmmFunction(torch.autograd.Function):
@@ -334,15 +333,18 @@ else:
     }
 
 
-@register_kernel
+@KernelPlugin("npu_fused_moe").register()
 class NpuFusedMoEKernel(BaseKernel):
     """NPU Fused MoE Kernel implementation."""
 
-    _kernel_id = "npu_fused_moe"
-    _device = DeviceType.NPU
+    @staticmethod
+    def check_device() -> None:
+        current = get_current_accelerator().type
+        if current != DeviceType.NPU:
+            raise RuntimeError(f"NpuFusedMoEKernel requires NPU, current accelerator is {current}.")
 
-    @classmethod
-    def apply(cls, **kwargs) -> HFModel:
+    @staticmethod
+    def _apply(**kwargs) -> HFModel:
         """Applies the NPU fused MoE kernel to the model.
 
         Args:
@@ -356,11 +358,6 @@ class NpuFusedMoEKernel(BaseKernel):
             RuntimeError: If dependencies are not met.
         """
         model = kwargs.get("model", None)
-        if model is None:
-            raise ValueError(f"HFModel instance is required for {cls.__name__}.")
-
-        if not cls.check_deps():
-            raise RuntimeError("torch_npu is not available but NpuMoEFusedMoEKernel was called.")
 
         archs = getattr(model.config, "architectures", None) or []
         target_moe_mapping = None

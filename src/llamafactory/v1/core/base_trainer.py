@@ -94,9 +94,12 @@ class BaseTrainer:
         dist_name = self.args.dist_config.name if self.args.dist_config is not None else None
 
         if dist_name == "deepspeed":
-            from ..plugins.trainer_plugins.distributed.hub import DistributedPlugin
+            if self.args.cp_size > 1:
+                raise ValueError("Context parallelism currently requires `dist_config.name: fsdp2`.")
 
-            self._deepspeed_engine = DistributedPlugin("deepspeed")(
+            from ..plugins.trainer_plugins.distributed.interface import DistributedPlugin
+
+            self._deepspeed_engine = DistributedPlugin("deepspeed").shard_model(
                 self.model,
                 self.args.dist_config,
                 num_micro_batch=self.train_batch_generator.num_micro_batch,
@@ -139,7 +142,7 @@ class BaseTrainer:
         self.state.global_step = self.global_step
         self.state.epoch = self._resume_epoch
 
-        if self.args.dist_config is not None and self.args.dist_config.get("cp_size", 1) > 1:
+        if self.args.cp_size > 1:
             # qwen3.5 is not supported because of the different attention implementation, which will be supported in the future.
             if model.config.model_type == "qwen3_5":
                 raise RuntimeError(
@@ -152,7 +155,7 @@ class BaseTrainer:
                     "Sequence parallelism requires flash attention. Please set `flash_attn: flash_attention_2`."
                 )
 
-            SequenceParallelModelPlugin(self.args.dist_config.get("cp_mode", "ulysses"))(model, self.args.dist_config)
+            SequenceParallelModelPlugin(self.args.cp_mode)(model, self.args.cp_size)
 
     def _create_batch_generator(self) -> None:
         if (
@@ -183,9 +186,9 @@ class BaseTrainer:
                 device_ids = None if self.device.type == "cpu" else [self.device.index]
                 self.model = DDP(self.model, device_ids=device_ids)
         else:
-            from ..plugins.trainer_plugins.distributed.hub import DistributedPlugin
+            from ..plugins.trainer_plugins.distributed.interface import DistributedPlugin
 
-            self.model = DistributedPlugin(self.args.dist_config.name)(
+            self.model = DistributedPlugin(self.args.dist_config.name).shard_model(
                 self.model,
                 self.args.dist_config,
                 bf16=self.args.bf16,
@@ -256,7 +259,7 @@ class BaseTrainer:
                 step_valid_tokens = DistributedInterface().all_reduce(step_valid_tokens, op=ReduceOp.SUM)
                 num_micro = len(micro_batches)
                 for i, micro_batch in enumerate(micro_batches):
-                    if self.args.dist_config and self.args.dist_config.get("cp_size", 1) > 1:
+                    if self.args.cp_size > 1:
                         from ..plugins.model_plugins.parallelization.sequence_parallel import (
                             SequenceParallelLossPlugin,
                         )
@@ -282,15 +285,17 @@ class BaseTrainer:
                 else:
                     dist_name = self.args.dist_config.name if self.args.dist_config else None
                     if dist_name == "fsdpturbo":
-                        from ..plugins.trainer_plugins.distributed.hub import DistributedPlugin
+                        from ..plugins.trainer_plugins.distributed.interface import DistributedPlugin
 
                         grad_norm = DistributedPlugin(dist_name).clip_grad_norm(self.model, self.args.max_grad_norm)
                     else:
-                        # FSDP2 shards params/grads across the fsdp mesh, so a local shard norm is not
-                        # the true global norm. Materialize a DTensor norm before applying clipping.
+                        # FSDP2 shards params/grads across the fsdp mesh, so clip_grad_norm_ returns a
+                        # per-rank local shard norm. Materialize the true global norm before clipping.
                         grads = [p.grad for p in self.model.parameters() if p.grad is not None]
                         total_norm = torch.nn.utils.get_total_norm(grads)
                         if isinstance(total_norm, DTensor):
+                            # full_tensor all-reduces across the fsdp mesh (spans CP under default
+                            # mp_shard=world); a separate CP reduce would over-count by sqrt(cp_size).
                             total_norm = total_norm.full_tensor()
                         torch.nn.utils.clip_grads_with_norm_(
                             self.model.parameters(), self.args.max_grad_norm, total_norm
@@ -352,12 +357,8 @@ class BaseTrainer:
 
     def save_model(self) -> None:
         """Save the model."""
-        if self.args.dist_config is not None and self.args.dist_config.name in (
-            "deepspeed",
-            "fsdp2",
-            "fsdpturbo",
-        ):
-            from ..plugins.trainer_plugins.distributed.hub import DistributedPlugin
+        if self.args.dist_config is not None and self.args.dist_config.name in ("deepspeed", "fsdp2", "fsdpturbo"):
+            from ..plugins.trainer_plugins.distributed.interface import DistributedPlugin
 
             DistributedPlugin(self.args.dist_config.name).save_model(
                 self.model, self.args.output_dir, self.renderer.processor

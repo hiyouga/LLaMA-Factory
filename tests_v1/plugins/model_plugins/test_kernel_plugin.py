@@ -32,13 +32,13 @@ def _apply_kernel(rank) -> None:
             if k.startswith("llamafactory.v1.plugins.model_plugins.kernels"):
                 del sys.modules[k]
 
-        from llamafactory.v1.plugins.model_plugins.kernels.interface import apply_default_kernels
+        from llamafactory.v1.plugins.model_plugins.kernels.interface import apply_kernels
 
         model = AutoModelForCausalLM.from_pretrained("llamafactory/tiny-random-qwen3")
         original_rmsnorm_forward = model.model.layers[0].input_layernorm.forward
         original_swiglu_forward = model.model.layers[0].mlp.forward
 
-        model = apply_default_kernels(model=model, include_kernels="npu_fused_rmsnorm")
+        model = apply_kernels(model=model, config={"name": "npu_fused_rmsnorm"})
 
         assert model.model.layers[0].input_layernorm.forward.__func__ is not original_rmsnorm_forward.__func__
         assert model.model.layers[0].mlp.forward.__func__ is original_swiglu_forward.__func__
@@ -55,13 +55,13 @@ def _apply_all_kernels(rank) -> None:
             if k.startswith("llamafactory.v1.plugins.model_plugins.kernels"):
                 del sys.modules[k]
 
-        from llamafactory.v1.plugins.model_plugins.kernels.interface import apply_default_kernels
+        from llamafactory.v1.plugins.model_plugins.kernels.interface import apply_kernels
 
         model = AutoModelForCausalLM.from_pretrained("llamafactory/tiny-random-qwen3")
         original_rmsnorm_forward = model.model.layers[0].input_layernorm.forward
         original_swiglu_forward = model.model.layers[0].mlp.forward
 
-        model = apply_default_kernels(model=model, include_kernels=True)
+        model = apply_kernels(model=model, config={"name": "auto"})
 
         assert model.model.layers[0].input_layernorm.forward.__func__ is not original_rmsnorm_forward.__func__
         assert model.model.layers[0].mlp.forward.__func__ is not original_swiglu_forward.__func__
@@ -78,49 +78,58 @@ def test_apply_all_kernels():
 def test_flash_linear_attention_kernels_compose_with_auto(monkeypatch):
     import fsdp_turbo.ops as fla_ops
 
-    from llamafactory.v1.plugins.model_plugins.kernels.interface import apply_default_kernels, get_default_kernels
-    from llamafactory.v1.plugins.model_plugins.kernels.ops.linear_attention.fla import _FlashLinearAttentionOpKernel
+    from llamafactory.v1.plugins.model_plugins.kernels import interface
+    from llamafactory.v1.plugins.model_plugins.kernels.ops.linear_attention.fla import (
+        FlashLinearAttentionKernel,
+    )
 
     model = nn.Sequential(nn.Linear(2, 2))
-    selected = "fused_recurrent_gated_delta_rule, chunk_gated_delta_rule"
-    calls = []
+    auto_calls = []
+    fla_calls = []
 
-    assert set(selected.replace(" ", "").split(",")).issubset(get_default_kernels())
-    monkeypatch.setattr(_FlashLinearAttentionOpKernel, "check_deps", classmethod(lambda cls: True))
+    monkeypatch.setattr(
+        interface,
+        "_apply_auto_kernels",
+        lambda model, **kwargs: auto_calls.append((model, kwargs)) or model,
+    )
+    monkeypatch.setattr(FlashLinearAttentionKernel, "check_device", staticmethod(lambda: None))
+    monkeypatch.setattr(FlashLinearAttentionKernel, "check_deps", staticmethod(lambda: None))
     monkeypatch.setattr(
         fla_ops,
         "apply_fla_ops",
         lambda received_model, received_names, op_kwargs=None, strict=True: (
-            calls.append((received_model, received_names, op_kwargs, strict)) or 1
+            fla_calls.append((received_model, received_names, op_kwargs, strict)) or 2
         ),
     )
 
-    assert apply_default_kernels(model, include_kernels=selected) is model
-    assert calls == [
-        (model, ["fused_recurrent_gated_delta_rule"], None, False),
-        (model, ["chunk_gated_delta_rule"], None, False),
+    config = {
+        "name": "auto, flash-linear-attention",
+        "include_kernels": "fused_recurrent_gated_delta_rule, chunk_gated_delta_rule",
+        "chunk_size": 32,
+    }
+    assert interface.apply_kernels(model, config) is model
+    assert auto_calls == [(model, {"config": config, "require_logits": False})]
+    assert fla_calls == [
+        (
+            model,
+            ["fused_recurrent_gated_delta_rule", "chunk_gated_delta_rule"],
+            {"chunk_gated_delta_rule": {"chunk_size": 32}},
+            True,
+        ),
     ]
 
 
-def test_flash_linear_attention_plugin_uses_strict_standard_kernels(monkeypatch):
-    from llamafactory.v1.plugins.model_plugins.kernels import interface
-
-    model = nn.Sequential(nn.Linear(2, 2))
-    calls = []
-    monkeypatch.setattr(
-        interface,
-        "apply_kernel",
-        lambda kernel, **kwargs: calls.append((kernel, kwargs)),
+def test_flash_linear_attention_kernel_validates_config(monkeypatch):
+    from llamafactory.v1.plugins.model_plugins.kernels.ops.linear_attention.fla import (
+        FlashLinearAttentionKernel,
     )
 
-    assert interface.apply_flash_linear_attention_kernels(model, include_kernels="auto", chunk_size=32) is model
-    assert calls == [
-        ("chunk_gated_delta_rule", {"model": model, "strict": True, "op_kwargs": {"chunk_size": 32}}),
-        ("fused_recurrent_gated_delta_rule", {"model": model, "strict": True}),
-    ]
+    model = nn.Sequential(nn.Linear(2, 2))
+    monkeypatch.setattr(FlashLinearAttentionKernel, "check_device", staticmethod(lambda: None))
+    monkeypatch.setattr(FlashLinearAttentionKernel, "check_deps", staticmethod(lambda: None))
 
     with pytest.raises(ValueError, match="chunk_size"):
-        interface.apply_flash_linear_attention_kernels(model, include_kernels="auto", chunk_size=48)
+        FlashLinearAttentionKernel.apply(model=model, config={"include_kernels": "auto", "chunk_size": 48})
 
     with pytest.raises(ValueError, match="Unsupported Flash Linear Attention kernels"):
-        interface.apply_flash_linear_attention_kernels(model, include_kernels="not_a_kernel")
+        FlashLinearAttentionKernel.apply(model=model, config={"include_kernels": "not_a_kernel"})

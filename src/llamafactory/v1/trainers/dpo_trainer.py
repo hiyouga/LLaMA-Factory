@@ -62,10 +62,7 @@ def compute_sigmoid_dpo_loss(
     chosen_logratios = policy_chosen_logps - ref_chosen_logps
     rejected_logratios = policy_rejected_logps - ref_rejected_logps
     logits = chosen_logratios - rejected_logratios
-    return (
-        -F.logsigmoid(beta * logits) * (1 - label_smoothing)
-        - F.logsigmoid(-beta * logits) * label_smoothing
-    )
+    return -F.logsigmoid(beta * logits) * (1 - label_smoothing) - F.logsigmoid(-beta * logits) * label_smoothing
 
 
 def _validate_dpo_dataset_format(train_dataset: DataEngine, dataset_path: str) -> None:
@@ -97,8 +94,7 @@ class DPOTrainer(BaseTrainer):
         train_dataset,
         callbacks=None,
     ) -> None:
-        cp_size = args.dist_config.get("cp_size", 1) if args.dist_config is not None else 1
-        if cp_size > 1:
+        if args.cp_size > 1:
             raise NotImplementedError("DPO trainer currently only supports cp_size == 1.")
 
         self.pref_loss = args.pref_loss
@@ -378,7 +374,9 @@ class DPOTrainer(BaseTrainer):
 
         # Raw logits means (for logging)
         chosen_logits_mean = (shift_logits.mean(dim=-1) * chosen_logit_mask).sum() / (chosen_logit_mask.sum() + 1e-6)
-        rejected_logits_mean = (shift_logits.mean(dim=-1) * rejected_logit_mask).sum() / (rejected_logit_mask.sum() + 1e-6)
+        rejected_logits_mean = (shift_logits.mean(dim=-1) * rejected_logit_mask).sum() / (
+            rejected_logit_mask.sum() + 1e-6
+        )
 
         if self.pref_loss == "sigmoid":
             if not self._use_lora_ref and self.ref_model is None:
@@ -431,7 +429,7 @@ def run_dpo(args: InputArgument = None):
     model_args, data_args, training_args, _ = get_args(args)
     if getattr(training_args, "use_cpu", False):
         os.environ["FORCE_V1_CPU"] = "1"
-    DistributedInterface(training_args.dist_config)
+    DistributedInterface(training_args)
     train_dataset = DataEngine(data_args.train_dataset)
     _validate_dpo_dataset_format(train_dataset, data_args.train_dataset)
     model_engine = ModelEngine(model_args, is_train=True)

@@ -482,6 +482,21 @@ class FinetuningArguments(
             )
         },
     )
+    use_megatron_bridge: bool = field(
+        default=False,
+        metadata={
+            "help": (
+                "Whether or not to use Megatron Bridge training backend. "
+                "Controlled by USE_MEGATRON_BRIDGE environment variable."
+            )
+        },
+    )
+    megatron_bridge_args: Any = field(
+        default=None,
+        init=False,
+        repr=False,
+        metadata={"help": "Megatron Bridge specific arguments, set when USE_MEGATRON_BRIDGE=1."},
+    )
     use_hyper_parallel: bool = field(
         default=False,
         metadata={
