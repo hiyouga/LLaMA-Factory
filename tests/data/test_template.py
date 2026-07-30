@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
 import os
 from typing import TYPE_CHECKING
 
@@ -19,7 +20,7 @@ import pytest
 from transformers import AutoTokenizer
 
 from llamafactory.data import get_template_and_fix_tokenizer
-from llamafactory.data.template import parse_template
+from llamafactory.data.template import TEMPLATES, parse_template
 from llamafactory.extras.packages import is_transformers_version_greater_than
 from llamafactory.hparams import DataArguments
 
@@ -46,6 +47,34 @@ MESSAGES_WITH_THOUGHT = [
     {"role": "user", "content": "你好"},
     {"role": "assistant", "content": "<think>\n模型思考内容\n</think>\n\n很高兴认识你！"},
 ]
+
+TOOLS = [
+    {
+        "type": "function",
+        "function": {
+            "name": "search",
+            "description": "search docs",
+            "parameters": {
+                "type": "object",
+                "properties": {"query": {"type": "string"}},
+                "required": ["query"],
+            },
+        },
+    }
+]
+
+
+class CharTokenizer:
+    eos_token_id = 0
+
+    def encode(self, text: str, add_special_tokens: bool = False) -> list[int]:
+        return [ord(char) for char in text]
+
+    def decode(self, input_ids: list[int]) -> str:
+        return "".join(chr(input_id) for input_id in input_ids)
+
+    def convert_tokens_to_ids(self, token: str) -> int:
+        return ord(token[0])
 
 
 def _check_tokenization(
@@ -89,6 +118,23 @@ def _check_template(
     assert content_str == prompt_str + answer_str
     assert content_ids == prompt_ids + answer_ids
     _check_tokenization(tokenizer, (prompt_ids, answer_ids), (prompt_str, answer_str))
+
+
+@pytest.mark.runs_on(["cpu", "mps"])
+@pytest.mark.parametrize("template_name", ["qwen3_5", "qwen3_5_nothink", "qwen3_6"])
+def test_qwen35_tools_precede_system(template_name: str):
+    tokenizer = CharTokenizer()
+    template = TEMPLATES[template_name]
+    prompt_ids, _ = template.encode_oneturn(
+        tokenizer,
+        messages=[{"role": "user", "content": "query"}, {"role": "assistant", "content": "answer"}],
+        system="system content",
+        tools=json.dumps(TOOLS, ensure_ascii=False),
+    )
+    prompt = tokenizer.decode(prompt_ids)
+
+    assert prompt.index("# Tools") < prompt.index("system content")
+    assert "</IMPORTANT>\n\nsystem content<|im_end|>" in prompt
 
 
 @pytest.mark.runs_on(["cpu", "mps"])
