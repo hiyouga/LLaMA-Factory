@@ -84,6 +84,9 @@ class HuggingfaceEngine(BaseEngine):
         audios: Optional[list["AudioInput"]] = None,
         input_kwargs: Optional[dict[str, Any]] = {},
     ) -> tuple[dict[str, Any], int]:
+        if not messages:
+            raise ValueError("Messages must not be empty")
+
         mm_input_dict = {"images": [], "videos": [], "audios": [], "imglens": [0], "vidlens": [0], "audlens": [0]}
         if images is not None:
             mm_input_dict.update({"images": images, "imglens": [len(images)]})
