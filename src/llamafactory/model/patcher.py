@@ -483,8 +483,10 @@ def patch_model(
         if getattr(model.config, "model_type", None) in ["qwen3_5", "qwen3_5_moe"]:
             if is_torch_npu_available():
                 patch_qwen3_5_forward_npu(model)
-            elif is_torch_cuda_available() and model_args.flash_attn == "fa2":
+            elif is_torch_cuda_available() and model_args.flash_attn == "fa2" and not model_args.use_unsloth:
                 # this is the patch for packing/neat_packing for GPU GDN. And when setting packing, flash_attn must be fa2.
+                # Unsloth compiles its own Qwen3.5 forward methods before this point; replacing them here breaks its
+                # optimized forward path and can produce incorrect training loss.
                 patch_qwen3_5_forward_gpu(model)
 
     if not model_args.use_unsloth:
