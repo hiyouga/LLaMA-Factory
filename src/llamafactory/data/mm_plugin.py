@@ -480,16 +480,6 @@ class MossVLPlugin(BasePlugin):
     time_eos_token: str = "<|time_end|>"
 
     @staticmethod
-    def get_media_order(messages: list[dict[str, str]]) -> list[str]:
-        r"""Record the original interleaved media order before placeholder expansion."""
-        placeholder_pattern = re.compile(f"({re.escape(IMAGE_PLACEHOLDER)}|{re.escape(VIDEO_PLACEHOLDER)})")
-        return [
-            "image" if match.group(0) == IMAGE_PLACEHOLDER else "video"
-            for message in messages
-            for match in placeholder_pattern.finditer(message["content"])
-        ]
-
-    @staticmethod
     def _split_pixel_values(
         pixel_values: "torch.Tensor",
         grid_thw: "torch.Tensor",
@@ -636,7 +626,6 @@ class MossVLPlugin(BasePlugin):
         audlens: list[int],
         batch_ids: list[list[int]],
         processor: Optional["MMProcessor"],
-        media_orders: Optional[list[list[str]]] = None,
     ) -> dict[str, Union[list[int], "torch.Tensor"]]:
         self._validate_input(processor, images, videos, audios)
         if audios:
@@ -644,21 +633,16 @@ class MossVLPlugin(BasePlugin):
 
         if not (len(imglens) == len(vidlens) == len(batch_ids)):
             raise ValueError("MOSS-VL batch metadata must have one entry per sample.")
-        if media_orders is not None and len(media_orders) != len(batch_ids):
-            raise ValueError("MOSS-VL media order must have one entry per sample.")
-
         final_pixel_values = []
         final_grid_thw = []
         media_nums_per_sample = []
         image_offset = 0
         video_offset = 0
-        for sample_index, (imglen, vidlen, input_ids) in enumerate(zip(imglens, vidlens, batch_ids)):
+        for imglen, vidlen, input_ids in zip(imglens, vidlens, batch_ids):
             sample_images = images[image_offset : image_offset + imglen]
             sample_videos = videos[video_offset : video_offset + vidlen]
             image_offset += imglen
             video_offset += vidlen
-            media_order = media_orders[sample_index] if media_orders is not None else None
-
             image_chunks, image_grids = [], []
             if sample_images:
                 regularized_images = self._regularize_images(
@@ -685,26 +669,13 @@ class MossVLPlugin(BasePlugin):
                     video_inputs["video_grid_thw"],
                 )
 
-            token_media_order = self._get_media_order_from_ids(
+            media_order = self._get_media_order_from_ids(
                 input_ids,
                 processor,
                 imglen,
                 vidlen,
                 expected_video_frames=[int(grid[0].item()) for grid in video_grids],
             )
-            if media_order is None:
-                media_order = token_media_order
-            elif media_order != token_media_order:
-                raise ValueError(
-                    f"MOSS-VL media order changed after tokenization for sample {sample_index}: "
-                    f"recorded={media_order}, tokenized={token_media_order}."
-                )
-
-            if media_order.count("image") != imglen or media_order.count("video") != vidlen:
-                raise ValueError(
-                    f"MOSS-VL media order does not match sample {sample_index}: "
-                    f"order={media_order}, images={imglen}, videos={vidlen}."
-                )
 
             if not media_order:
                 patch_size = getattr(processor.image_processor, "patch_size", None)

@@ -28,7 +28,6 @@ from transformers import DataCollatorForSeq2Seq
 
 from ..extras.constants import AUDIO_PLACEHOLDER, IGNORE_INDEX, IMAGE_PLACEHOLDER, MROPE_MODELS
 from ..extras.packages import is_pillow_available
-from .mm_plugin import MossVLPlugin
 
 
 if is_pillow_available():
@@ -151,7 +150,7 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
         if isinstance(self.model, PeftModel):
             self.model = self.model.base_model.model
 
-        if isinstance(self.template.mm_plugin, MossVLPlugin):
+        if getattr(getattr(self.model, "config", None), "model_type", None) == "moss_vl":
             self.get_rope_func = None  # MOSS-VL computes its own XRoPE positions in model.forward.
         elif self.model is not None and hasattr(self.model, "get_rope_index"):  # for qwen2vl mrope
             self.get_rope_func = self.model.get_rope_index  # transformers < 4.52.0 or qwen2.5 omni
@@ -325,10 +324,10 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
             )
 
     def __call__(self, features: list[dict[str, Any]]) -> dict[str, "torch.Tensor"]:
-        is_moss_vl = isinstance(self.template.mm_plugin, MossVLPlugin)
+        model_type = getattr(getattr(self.model, "config", None), "model_type", None)
+        is_moss_vl = model_type == "moss_vl"
         batch_images, batch_videos, batch_audios = [], [], []
         batch_imglens, batch_vidlens, batch_audlens, batch_input_ids = [], [], [], []
-        batch_media_orders: list[list[str] | None] = []
         packing_params_list: list[dict[str, Any] | None] = []
         for feature in features:
             images = feature.pop("images", None) or []
@@ -341,7 +340,6 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
             batch_vidlens.append(len(videos))
             batch_audlens.append(len(audios))
             batch_input_ids.append(feature["input_ids"])
-            batch_media_orders.append(feature.pop("media_order", None) if is_moss_vl else None)
             packing_params_list.append(feature.pop("packing_params", None))
 
         fake_input_ids = []
@@ -394,29 +392,16 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
 
             batch_input_ids[0] = features[0]["input_ids"]
 
-        if is_moss_vl and all(media_order is not None for media_order in batch_media_orders):
-            mm_inputs = self.template.mm_plugin.get_mm_inputs(
-                batch_images,
-                batch_videos,
-                batch_audios,
-                batch_imglens,
-                batch_vidlens,
-                batch_audlens,
-                batch_input_ids,
-                self.processor,
-                media_orders=batch_media_orders,
-            )
-        else:
-            mm_inputs = self.template.mm_plugin.get_mm_inputs(
-                batch_images,
-                batch_videos,
-                batch_audios,
-                batch_imglens,
-                batch_vidlens,
-                batch_audlens,
-                batch_input_ids,
-                self.processor,
-            )
+        mm_inputs = self.template.mm_plugin.get_mm_inputs(
+            batch_images,
+            batch_videos,
+            batch_audios,
+            batch_imglens,
+            batch_vidlens,
+            batch_audlens,
+            batch_input_ids,
+            self.processor,
+        )
         if "token_type_ids" in mm_inputs:
             token_type_ids = mm_inputs.pop("token_type_ids")
             for i, feature in enumerate(features):
@@ -438,7 +423,6 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
         features: dict[str, torch.Tensor] = super().__call__(features)
 
         bsz, seq_len = features["input_ids"].shape[:2]
-        model_type = getattr(self.model.config, "model_type", None) if self.model is not None else None
         is_omni = model_type in [
             "qwen2_5_omni_thinker",
             "qwen3_omni_moe_thinker",

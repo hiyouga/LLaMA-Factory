@@ -163,8 +163,6 @@ def test_moss_vl_process_messages_expands_video_frames():
     ]
     images = [Image.new("RGB", (2, 2)), Image.new("RGB", (2, 2), (2, 0, 0))]
 
-    assert plugin.get_media_order(messages) == ["image", "video", "image"]
-
     processed = plugin.process_messages(messages, images, ["video.mp4"], [], processor)
 
     video_tokens = (
@@ -209,7 +207,6 @@ def test_moss_vl_process_messages_expands_multiple_videos_in_order():
         "<|vision_end|>"
     )
     assert processed[0]["content"] == f"Compare {frame_tokens} with {frame_tokens}."
-    assert plugin.get_media_order(messages) == ["video", "video"]
 
 
 def test_moss_vl_forwards_spatial_pixel_limits_to_native_processors():
@@ -239,7 +236,6 @@ def test_moss_vl_forwards_spatial_pixel_limits_to_native_processors():
         [0],
         [[IMAGE_TOKEN_ID, *_video_ids(201)]],
         processor,
-        media_orders=[["image", "video"]],
     )
 
     assert processor.image_processor.calls == [
@@ -267,7 +263,7 @@ def test_moss_vl_forwards_spatial_pixel_limits_to_native_processors():
     ]
 
 
-def test_moss_vl_rejects_invalid_batch_metadata_and_media_order():
+def test_moss_vl_rejects_invalid_batch_metadata():
     plugin = _get_plugin()
     processor = _Processor()
     image = Image.new("RGB", (2, 2))
@@ -275,25 +271,8 @@ def test_moss_vl_rejects_invalid_batch_metadata_and_media_order():
     with pytest.raises(ValueError, match="batch metadata must have one entry per sample"):
         plugin.get_mm_inputs([image], [], [], [1], [], [0], [[IMAGE_TOKEN_ID]], processor)
 
-    with pytest.raises(ValueError, match="media order must have one entry per sample"):
-        plugin.get_mm_inputs([image], [], [], [1], [0], [0], [[IMAGE_TOKEN_ID]], processor, media_orders=[])
-
-    image_then_video = [IMAGE_TOKEN_ID, 201, *_video_ids(202)]
-    with pytest.raises(ValueError, match="media order changed after tokenization"):
-        plugin.get_mm_inputs(
-            [image],
-            ["video.mp4"],
-            [],
-            [1],
-            [1],
-            [0],
-            [image_then_video],
-            processor,
-            media_orders=[["video", "image"]],
-        )
-
     with pytest.raises(ValueError, match="media lengths do not consume all provided inputs"):
-        plugin.get_mm_inputs([image], [], [], [0], [0], [0], [[201]], processor, media_orders=[[]])
+        plugin.get_mm_inputs([image], [], [], [0], [0], [0], [[201]], processor)
 
 
 def test_moss_vl_rejects_truncated_media_tokens():
@@ -308,7 +287,6 @@ def test_moss_vl_rejects_truncated_media_tokens():
             [0],
             [[201, 202]],
             _Processor(),
-            media_orders=[["image"]],
         )
 
 
@@ -326,7 +304,6 @@ def test_moss_vl_rejects_incomplete_video_token_block():
             [0],
             [truncated_video_ids],
             _Processor(),
-            media_orders=[["video"]],
         )
 
 
@@ -344,7 +321,6 @@ def test_moss_vl_rejects_video_frame_token_count_mismatch():
             [0],
             [incomplete_frame_ids],
             _Processor(),
-            media_orders=[["video"]],
         )
 
 
@@ -380,7 +356,6 @@ def test_moss_vl_media_order_batch_mask_and_labels():
         audlens=[0, 0],
         batch_ids=[first_ids, second_ids],
         processor=processor,
-        media_orders=[["image", "video", "image"], []],
     )
 
     assert mm_inputs["grid_thw"].tolist() == [[1, 1, 1], [2, 1, 1], [1, 1, 1], [1, 1, 1]]
@@ -426,13 +401,6 @@ def test_moss_vl_complex_batch_keeps_media_and_masks_sample_local():
         [241, 242, 243],
     ]
     images = [Image.new("RGB", (2, 2), (marker, 0, 0)) for marker in range(4)]
-    media_orders = [
-        ["image", "image"],
-        ["video", "video"],
-        ["image", "video", "image"],
-        [],
-    ]
-
     mm_inputs = plugin.get_mm_inputs(
         images=images,
         videos=["first.mp4", "second.mp4", "third.mp4"],
@@ -442,7 +410,6 @@ def test_moss_vl_complex_batch_keeps_media_and_masks_sample_local():
         audlens=[0, 0, 0, 0],
         batch_ids=batch_ids,
         processor=processor,
-        media_orders=media_orders,
     )
 
     assert mm_inputs["grid_thw"].tolist() == [
@@ -536,16 +503,7 @@ def test_moss_vl_supervised_processor_to_collator_mixed_batch(monkeypatch):
         "_audios": [None, None],
     }
     model_inputs = dataset_processor.preprocess_dataset(examples)
-    assert model_inputs["media_order"] == [["image", "video", "image"], []]
-
-    captured = {}
-    original_get_mm_inputs = plugin.get_mm_inputs
-
-    def capture_media_orders(*args, **kwargs):
-        captured["media_orders"] = kwargs.get("media_orders")
-        return original_get_mm_inputs(*args, **kwargs)
-
-    monkeypatch.setattr(plugin, "get_mm_inputs", capture_media_orders)
+    assert "media_order" not in model_inputs
     collator = MultiModalDataCollatorForSeq2Seq(
         tokenizer=tokenizer,
         model=SimpleNamespace(config=SimpleNamespace(model_type="moss_vl")),
@@ -558,7 +516,6 @@ def test_moss_vl_supervised_processor_to_collator_mixed_batch(monkeypatch):
     ]
     batch = collator(features)
 
-    assert captured["media_orders"] == [["image", "video", "image"], []]
     assert batch["grid_thw"].tolist() == [[1, 1, 1], [2, 1, 1], [1, 1, 1], [1, 1, 1]]
     assert batch["media_nums_per_sample"] == [3, 1]
     assert batch["pixel_values"][:, 0].tolist() == [1.0, 9.0, 9.0, 3.0, 256.0]
@@ -577,7 +534,7 @@ def test_moss_vl_masks_only_the_token_after_im_end():
         "attention_mask": torch.ones_like(input_ids),
         "labels": input_ids.clone(),
     }
-    mm_inputs = plugin.get_mm_inputs([], [], [], [0], [0], [0], [input_ids[0].tolist()], processor, [[]])
+    mm_inputs = plugin.get_mm_inputs([], [], [], [0], [0], [0], [input_ids[0].tolist()], processor)
 
     plugin.post_process_mossvl_inputs(features, mm_inputs, processor)
 
@@ -589,7 +546,7 @@ def test_moss_vl_native_text_dummy_shape_and_values():
     processor = _Processor()
     processor.image_processor = SimpleNamespace(patch_size=16, temporal_patch_size=1, merge_size=2)
 
-    mm_inputs = plugin.get_mm_inputs([], [], [], [0], [0], [0], [[301]], processor, [[]])
+    mm_inputs = plugin.get_mm_inputs([], [], [], [0], [0], [0], [[301]], processor)
 
     assert mm_inputs["grid_thw"].tolist() == [[1, 8, 8]]
     assert mm_inputs["pixel_values"].shape == (64, 768)
