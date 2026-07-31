@@ -19,16 +19,12 @@ dist_config:
   name: fsdpturbo
   ep_size: 16
   ep_dispatcher: eager
-  ep_modules:
-    - model.language_model.layers.{*}.mlp.experts
-  ep_fsdp_modules:
-    - model.language_model.layers.{*}.mlp
 ```
 
 最小示例中的字段职责如下：
 
-- `ep_modules`：交给 FSDPTurbo 执行 EP 的专家模块。
-- `ep_fsdp_modules`：交给 FSDPTurbo 执行 EFSDP 的专家容器。
+- `ep_size`：专家并行组大小。
+- `ep_dispatcher`：FSDPTurbo EP dispatcher，默认为 `eager`。
 
 `dp_size`、`cp_size`、`cp_mode`、`mp_replicate_size`、`mp_shard_size` 和 `dist_timeout`
 属于公共拓扑字段，继续放在顶层。`dist_config` 会被严格解析为 `FSDPTurboParams`；如果把公共拓扑
@@ -39,17 +35,17 @@ dist_config:
 
 以下高级字段为可选项，因此没有写入上面的最小 YAML 示例：
 
-- `fsdp_ignored_modules`：额外排除在 LlamaFactory 外层 FSDP2 之外的模块。由
-  `ep_modules` 选中的专家参数会被集成层自动加入忽略集合，普通配置无需重复填写。
+- `fsdp_ignored_modules`：额外排除在 LlamaFactory 外层 FSDP2 之外的模块。模型规格选中的专家参数
+  会被集成层自动加入忽略集合，普通配置无需重复填写。
 - `hook_modules`：FSDPTurbo EFSDP hook 的可选模块模式，默认为空列表。
 - `fsdp_implementation`：FSDPTurbo EFSDP 实现，可选 `native` 或 `custom`，默认为 `native`。
 
-EFSDP 的目标由 `ep_fsdp_modules` 决定。Attention、Embedding、LM Head 等非专家参数不进入
-FSDPTurbo EFSDP plan，而是继续由 LlamaFactory 外层 FSDP2 管理。
+EFSDP 的目标由模型规格决定。Attention、Embedding、LM Head 等非专家参数不进入 FSDPTurbo
+EFSDP plan，而是继续由 LlamaFactory 外层 FSDP2 管理。
 
-模型相关的默认适配由 `FSDPTurboEPModelSpec` 注册表管理。注册项可以提供默认 `ep_modules`、
-`ep_fsdp_modules` 和模型准备函数；YAML 显式配置始终优先。当前只内置了 `qwen3_moe` 适配，
-Qwen3.5 MoE 使用示例中的显式模块模式，避免把单一模型的特殊处理固化到通用分布式入口。
+模型相关的模块路径和准备逻辑统一由 `FSDPTurboEPModelSpec` 注册表管理。当前内置 `qwen3_moe`
+和 `qwen3_5_moe`；未注册的模型会明确报错。`ep_modules` 和 `ep_fsdp_modules` 不属于 YAML
+接口，严格参数解析会拒绝这两个字段，避免用户配置与模型实际结构失配。
 
 ## 2. Mesh 初始化
 

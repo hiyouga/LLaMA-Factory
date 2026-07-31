@@ -257,6 +257,15 @@ def _prepare_qwen3_moe_for_ep(model: HFModel) -> HFModel:
     return model
 
 
+@FSDPTurboEPModelSpec.register(
+    "qwen3_5_moe",
+    ep_modules=["model.language_model.layers.{*}.mlp.experts"],
+    ep_fsdp_modules=["model.language_model.layers.{*}.mlp"],
+)
+def _prepare_qwen3_5_moe_for_ep(model: HFModel) -> HFModel:
+    return model
+
+
 class FSDPTurboFSDP2Engine(FSDP2Engine):
     """FSDPTurbo EP adapter that reuses LlamaFactory's init/load flow.
 
@@ -277,17 +286,13 @@ class FSDPTurboFSDP2Engine(FSDP2Engine):
             self.fsdp_mesh = dp_mesh
             logger.info(f"Using DP-orthogonal FSDP mesh: {self.fsdp_mesh}")
 
-    def _get_ep_fsdp_modules(self, model: HFModel, ep_modules: list[str]) -> list[str]:
-        modules = self.dist_config.get("ep_fsdp_modules")
-        if modules is not None:
-            return modules
-
-        spec = FSDPTurboEPModelSpec.get(model)
-        if spec is not None and spec.ep_fsdp_modules is not None:
+    @staticmethod
+    def _get_ep_fsdp_modules(spec: FSDPTurboEPModelSpec) -> list[str]:
+        if spec.ep_fsdp_modules is not None:
             return spec.ep_fsdp_modules
 
         ep_fsdp_modules = []
-        for module in ep_modules:
+        for module in spec.ep_modules:
             if module.endswith(".experts"):
                 ep_fsdp_modules.append(module.removesuffix(".experts"))
             else:
@@ -357,25 +362,20 @@ class FSDPTurboFSDP2Engine(FSDP2Engine):
             module_name_match,
         )
 
-        ep_modules = self.dist_config.get("ep_modules")
-        if ep_modules is None:
-            spec = FSDPTurboEPModelSpec.get(model)
-            ep_modules = spec.ep_modules if spec is not None else None
-        if ep_modules is None:
+        spec = FSDPTurboEPModelSpec.get(model)
+        if spec is None:
             raise ValueError(
-                f"`ep_modules` is not specified and no FSDPTurbo EP spec is registered for "
-                f"model_type={_get_model_type(model)}."
+                f"No FSDPTurbo EP spec is registered for model_type={_get_model_type(model)}."
             )
 
-        spec = FSDPTurboEPModelSpec.get(model)
-        if spec is not None:
-            model = spec.prepare(model)
+        ep_modules = spec.ep_modules
+        model = spec.prepare(model)
 
         if self.ep_size > 1:
             ep_plan = EPPlanConfig(
                 apply_modules=ep_modules,
                 dispatcher=self.dist_config.get("ep_dispatcher", "eager"),
-                apply_efsdp_modules=self._get_ep_fsdp_modules(model, ep_modules),
+                apply_efsdp_modules=self._get_ep_fsdp_modules(spec),
             )
             ep_plan._gradient_divide_factor = float(self.ep_size * self.parallel_state.efsdp_size)
             fsdp_plan = FSDPPlanConfig(

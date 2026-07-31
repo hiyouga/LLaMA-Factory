@@ -18,7 +18,6 @@ import pytest
 import torch
 
 from llamafactory.v1.plugins.trainer_plugins.distributed import fsdpturbo as fsdpturbo_module
-from llamafactory.v1.plugins.trainer_plugins.distributed.fsdp2 import get_transformer_layer_cls
 from llamafactory.v1.plugins.trainer_plugins.distributed.fsdpturbo import (
     FSDPTurboEPModelSpec,
     FSDPTurboFSDP2Engine,
@@ -36,8 +35,12 @@ class _Model(torch.nn.Module):
         self.config = SimpleNamespace(model_type=model_type)
 
 
-def test_qwen35_support_is_not_hardcoded_in_model_registry():
-    assert FSDPTurboEPModelSpec.get(_Model("qwen3_5_moe")) is None
+def test_qwen35_ep_model_spec():
+    spec = FSDPTurboEPModelSpec.get(_Model("qwen3_5_moe"))
+
+    assert spec is not None
+    assert spec.ep_modules == ["model.language_model.layers.{*}.mlp.experts"]
+    assert spec.ep_fsdp_modules == ["model.language_model.layers.{*}.mlp"]
 
 
 def test_fsdpturbo_uses_class_plugin_and_strict_backend_params():
@@ -49,6 +52,9 @@ def test_fsdpturbo_uses_class_plugin_and_strict_backend_params():
     assert callable(plugin.clip_grad_norm)
     with pytest.raises(ValueError, match="Unknown params"):
         plugin.parse_params({"name": "fsdpturbo", "cp_size": 2}, FSDPTurboParams)
+    for key in ("ep_modules", "ep_fsdp_modules"):
+        with pytest.raises(ValueError, match="Unknown params"):
+            plugin.parse_params({"name": "fsdpturbo", key: ["model.layers.*.mlp"]}, FSDPTurboParams)
 
 
 def test_fsdpturbo_sets_storage_dtype_inside_backend(monkeypatch):
@@ -100,20 +106,3 @@ def test_fsdpturbo_owns_expert_mesh_topology(monkeypatch):
     assert state.ep_mesh.name == "ep"
     assert state.efsdp_mesh.name == "efsdp"
     assert state.expert_cp_mesh.name == "expert_cp"
-
-
-def test_transformer_layer_prefers_nested_language_model_over_vision_blocks():
-    class TextDecoderLayer(torch.nn.Module):
-        pass
-
-    class VisionBlock(torch.nn.Module):
-        pass
-
-    model = _Model("qwen3_5_moe")
-    model.model = torch.nn.Module()
-    model.model.visual = torch.nn.ModuleList([VisionBlock()])
-    model.model.language_model = torch.nn.Module()
-    model.model.language_model.layers = torch.nn.ModuleList([TextDecoderLayer()])
-    model._no_split_modules = {"VisionBlock", "TextDecoderLayer"}
-
-    assert get_transformer_layer_cls(model) is TextDecoderLayer

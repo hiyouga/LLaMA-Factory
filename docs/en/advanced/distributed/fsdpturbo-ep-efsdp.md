@@ -19,16 +19,12 @@ dist_config:
   name: fsdpturbo
   ep_size: 16
   ep_dispatcher: eager
-  ep_modules:
-    - model.language_model.layers.{*}.mlp.experts
-  ep_fsdp_modules:
-    - model.language_model.layers.{*}.mlp
 ```
 
 The fields used by the minimal example have the following responsibilities:
 
-- `ep_modules`: expert modules parallelized by FSDPTurbo EP.
-- `ep_fsdp_modules`: expert containers sharded by FSDPTurbo EFSDP.
+- `ep_size`: expert-parallel group size.
+- `ep_dispatcher`: FSDPTurbo EP dispatcher, which defaults to `eager`.
 
 `dp_size`, `cp_size`, `cp_mode`, `mp_replicate_size`, `mp_shard_size`, and `dist_timeout` are common topology fields and therefore remain at the top level. `dist_config` is parsed strictly as `FSDPTurboParams`; putting a common topology field inside it is rejected instead of being silently ignored.
 
@@ -36,13 +32,13 @@ The top-level training option `bf16` controls FSDPTurbo parameter storage and co
 
 The following advanced fields are optional and are therefore omitted from the minimal YAML example above:
 
-- `fsdp_ignored_modules`: additional modules excluded from the outer LlamaFactory FSDP2 path. Expert parameters selected by `ep_modules` are automatically added to the ignored set by the integration layer, so normal configurations do not need to repeat them here.
+- `fsdp_ignored_modules`: additional modules excluded from the outer LlamaFactory FSDP2 path. Expert parameters selected by the model spec are automatically added to the ignored set by the integration layer, so normal configurations do not need to repeat them here.
 - `hook_modules`: optional module patterns for FSDPTurbo EFSDP hooks. The default is an empty list.
 - `fsdp_implementation`: the FSDPTurbo EFSDP implementation, either `native` or `custom`. The default is `native`.
 
-`ep_fsdp_modules` determines the EFSDP targets. Non-expert parameters such as attention, embeddings, and the LM head do not enter the FSDPTurbo EFSDP plan. They remain managed by the outer LlamaFactory FSDP2 layer.
+The model spec determines the EFSDP targets. Non-expert parameters such as attention, embeddings, and the LM head do not enter the FSDPTurbo EFSDP plan. They remain managed by the outer LlamaFactory FSDP2 layer.
 
-Model-specific defaults are managed by the `FSDPTurboEPModelSpec` registry. A registration can provide default `ep_modules`, `ep_fsdp_modules`, and a model preparation function; explicit YAML settings always take precedence. Only a `qwen3_moe` adapter is currently built in. Qwen3.5 MoE uses the explicit module patterns in the example so that model-specific handling is not embedded in the generic distributed entry point.
+Model-specific module paths and preparation logic are managed exclusively by the `FSDPTurboEPModelSpec` registry. Built-in specs currently cover `qwen3_moe` and `qwen3_5_moe`; unregistered models fail with an explicit error. `ep_modules` and `ep_fsdp_modules` are not YAML options, and strict parameter parsing rejects them to prevent configuration from drifting away from the actual model structure.
 
 ## 2. Mesh Initialization
 

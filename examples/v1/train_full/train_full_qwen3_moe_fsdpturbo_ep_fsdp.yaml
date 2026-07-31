@@ -10,10 +10,6 @@ dist_config:
   name: fsdpturbo
   ep_size: 16
   ep_dispatcher: eager
-  ep_modules:
-    - model.language_model.layers.{*}.mlp.experts
-  ep_fsdp_modules:
-    - model.language_model.layers.{*}.mlp
 
 cp_size: 1
 

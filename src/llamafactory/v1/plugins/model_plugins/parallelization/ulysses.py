@@ -90,7 +90,6 @@ class UlyssesAttention(torch.nn.Module):
         deterministic=False,
         target_dtype=None,
         *args: Any,
-        **kwargs: Any,
     ) -> Tensor:
         """Forward.
 
@@ -107,7 +106,6 @@ class UlyssesAttention(torch.nn.Module):
             deterministic (bool, optional): whether to apply dropout in deterministic way. Defaults to False.
             target_dtype (torch.dtype, optional): target dtype for attention output. Defaults to None.
             args: other args
-            kwargs: other keyword arguments forwarded to the attention function.
 
         Returns:
             * output (Tensor): context output
@@ -174,7 +172,6 @@ class UlyssesAttention(torch.nn.Module):
             softmax_scale=softmax_scale,
             deterministic=deterministic,
             target_dtype=target_dtype,
-            **kwargs,
         )
 
         if isinstance(context_layer, tuple):

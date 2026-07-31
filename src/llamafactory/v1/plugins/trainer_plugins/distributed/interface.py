@@ -50,8 +50,6 @@ class FSDPTurboParams:
     dcp_path: str | None = None
     ep_size: int = 1
     ep_dispatcher: str = "eager"
-    ep_modules: list[str] | None = None
-    ep_fsdp_modules: list[str] | None = None
     fsdp_ignored_modules: list[str] = field(default_factory=list)
     hook_modules: list[str] = field(default_factory=list)
     fsdp_implementation: str = "native"
