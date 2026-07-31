@@ -2200,6 +2200,17 @@ register_model_group(
 
 register_model_group(
     models={
+        "MOSS-VL-Instruct-0708": {
+            DownloadSource.DEFAULT: "OpenMOSS-Team/MOSS-VL-Instruct-0708",
+        },
+    },
+    template="moss_vl",
+    multimodal=True,
+)
+
+
+register_model_group(
+    models={
         "OLMo-1B": {
             DownloadSource.DEFAULT: "allenai/OLMo-1B-hf",
         },

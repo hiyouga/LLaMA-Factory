@@ -18,6 +18,7 @@ from typing import TYPE_CHECKING, Any, Optional
 
 from ...extras import logging
 from ...extras.constants import IGNORE_INDEX
+from ..mm_plugin import MossVLPlugin
 from .processor_utils import DatasetProcessor, greedy_knapsack, infer_seqlen
 
 
@@ -125,6 +126,10 @@ class SupervisedDatasetProcessor(DatasetProcessor):
                 videos=examples["_videos"][i] or [],
                 audios=examples["_audios"][i] or [],
             )
+            if isinstance(self.template.mm_plugin, MossVLPlugin):
+                model_inputs["media_order"].append(
+                    self.template.mm_plugin.get_media_order(examples["_prompt"][i] + examples["_response"][i])
+                )
             model_inputs["input_ids"].append(input_ids)
             model_inputs["attention_mask"].append([1] * len(input_ids))
             model_inputs["labels"].append(labels)
