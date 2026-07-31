@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import sys
+from types import ModuleType
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -76,8 +77,6 @@ def test_apply_all_kernels():
 
 
 def test_flash_linear_attention_kernels_compose_with_auto(monkeypatch):
-    import fsdp_turbo.ops as fla_ops
-
     from llamafactory.v1.plugins.model_plugins.kernels import interface
     from llamafactory.v1.plugins.model_plugins.kernels.ops.linear_attention.fla import (
         FlashLinearAttentionKernel,
@@ -87,6 +86,19 @@ def test_flash_linear_attention_kernels_compose_with_auto(monkeypatch):
     auto_calls = []
     fla_calls = []
 
+    fsdp_turbo = ModuleType("fsdp_turbo")
+    fla_ops = ModuleType("fsdp_turbo.ops")
+    setattr(
+        fla_ops,
+        "apply_fla_ops",
+        lambda received_model, received_names, op_kwargs=None, strict=True: (
+            fla_calls.append((received_model, received_names, op_kwargs, strict)) or 2
+        ),
+    )
+    setattr(fsdp_turbo, "ops", fla_ops)
+    monkeypatch.setitem(sys.modules, "fsdp_turbo", fsdp_turbo)
+    monkeypatch.setitem(sys.modules, "fsdp_turbo.ops", fla_ops)
+
     monkeypatch.setattr(
         interface,
         "_apply_auto_kernels",
@@ -94,13 +106,6 @@ def test_flash_linear_attention_kernels_compose_with_auto(monkeypatch):
     )
     monkeypatch.setattr(FlashLinearAttentionKernel, "check_device", staticmethod(lambda: None))
     monkeypatch.setattr(FlashLinearAttentionKernel, "check_deps", staticmethod(lambda: None))
-    monkeypatch.setattr(
-        fla_ops,
-        "apply_fla_ops",
-        lambda received_model, received_names, op_kwargs=None, strict=True: (
-            fla_calls.append((received_model, received_names, op_kwargs, strict)) or 2
-        ),
-    )
 
     config = {
         "name": "auto, flash-linear-attention",
