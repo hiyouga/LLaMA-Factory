@@ -1,4 +1,4 @@
-# Copyright 2025 the LlamaFactory team.
+# Copyright 2026 the LlamaFactory team.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -141,6 +141,20 @@ class ModelInput(TypedDict, total=False):
     """Position ids for the model (optional)."""
     token_type_ids: NotRequired[list[int]]
     """Token type ids used in DPO, 1 represents the chosen messages, 2 represents the rejected messages."""
+    pixel_values: NotRequired[Any]
+    """Pixel values for vision models."""
+    image_grid_thw: NotRequired[Any]
+    """Image grid (temporal, height, width) for vision models."""
+    pixel_values_videos: NotRequired[Any]
+    """Pixel values for video inputs."""
+    video_grid_thw: NotRequired[Any]
+    """Video grid (temporal, height, width) for video models."""
+    input_features: NotRequired[Any]
+    """Audio input features (e.g. mel spectrogram) for audio models."""
+    feature_attention_mask: NotRequired[Any]
+    """Attention mask over the audio input features."""
+    mm_token_type_ids: NotRequired[list[int]]
+    """Multimodal token type ids: 0=text, 1=image, 2=video, 3=audio."""
 
 
 class BatchInput(TypedDict, total=False):
@@ -156,6 +170,20 @@ class BatchInput(TypedDict, total=False):
     """Position ids for the model (optional)."""
     token_type_ids: NotRequired[Tensor]
     """Token type ids used in DPO, 1 represents the chosen messages, 2 represents the rejected messages."""
+    pixel_values: NotRequired[Tensor]
+    """Pixel values for vision models."""
+    image_grid_thw: NotRequired[Tensor]
+    """Image grid (temporal, height, width) for vision models."""
+    pixel_values_videos: NotRequired[Tensor]
+    """Pixel values for video inputs."""
+    video_grid_thw: NotRequired[Tensor]
+    """Video grid (temporal, height, width) for video models."""
+    input_features: NotRequired[Tensor]
+    """Audio input features (e.g. mel spectrogram) for audio models."""
+    feature_attention_mask: NotRequired[Tensor]
+    """Attention mask over the audio input features."""
+    mm_token_type_ids: NotRequired[Tensor]
+    """Multimodal token type ids: 0=text, 1=image, 2=video, 3=audio."""
 
 
 class BatchInfo(TypedDict):

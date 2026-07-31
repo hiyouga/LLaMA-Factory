@@ -1,4 +1,4 @@
-# Copyright 2025 the LlamaFactory team.
+# Copyright 2026 the LlamaFactory team.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,8 +20,8 @@ from typing import Any
 import torch
 from torch.utils.data import default_collate
 
+from ...core.utils.collation import pad_and_truncate
 from ...utils.constants import IGNORE_INDEX
-from ...utils.helper import pad_and_truncate
 from ...utils.objects import StatefulBuffer
 from ...utils.plugin import BasePlugin, ensure_methods_implemented
 from ...utils.types import BatchInfo, BatchInput, DataLoader, ModelInput
