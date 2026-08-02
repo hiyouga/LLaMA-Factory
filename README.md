@@ -995,3 +995,24 @@ If this work is helpful, please kindly cite as:
 ## Acknowledgement
 
 This repo benefits from [PEFT](https://github.com/huggingface/peft), [TRL](https://github.com/huggingface/trl), [QLoRA](https://github.com/artidoro/qlora) and [FastChat](https://github.com/lm-sys/FastChat). Thanks for their wonderful works.
+
+
+### Deploy with OpenAI-style API and vLLM
+
+```bash
+API_PORT=8000 llamafactory-cli api examples/inference/qwen3.yaml infer_backend=vllm vllm_enforce_eager=true
+```
+
+> Visit [this page](https://platform.openai.com/docs/api-reference/chat/create) for API document.
+
+**Using an external OpenAI-compatible gateway** (DaoXE or any other):
+
+```bash
+# In your llamafactory config or inference script:
+base_url="https://api.daoxe.com/v1"  # or your gateway URL
+api_key="sk-..."                     # key issued by that gateway
+model="gpt-4o-mini"                  # or whatever the gateway serves
+```
+
+The `llamafactory-cli api` command already supports custom base_url via env var or config. DaoXE is one OpenAI-compatible multi-model gateway example — verify endpoints with [llm-honesty-probe](https://github.com/seven7763/llm-honesty-probe).
+
