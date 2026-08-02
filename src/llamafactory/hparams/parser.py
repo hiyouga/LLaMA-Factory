@@ -180,6 +180,13 @@ def _verify_trackio_args(training_args: "TrainingArguments") -> None:
         logger.warning("Consider setting --run_name for better experiment tracking clarity.")
 
 
+def _normalize_swanlab_args(training_args: "TrainingArguments", finetuning_args: "FinetuningArguments") -> None:
+    r"""Route SwanLab reporting through the native SwanLab callback."""
+    if "swanlab" in training_args.report_to:
+        training_args.report_to = [reporter for reporter in training_args.report_to if reporter != "swanlab"]
+        finetuning_args.use_swanlab = True
+
+
 def _set_transformers_logging() -> None:
     if os.getenv("LLAMAFACTORY_VERBOSITY", "INFO") in ["DEBUG", "INFO"]:
         transformers.utils.logging.set_verbosity_info()
@@ -373,6 +380,8 @@ def get_train_args(args: dict[str, Any] | list[str] | None = None) -> _TRAIN_CLS
         finetuning_args.use_mca = False
         finetuning_args.use_megatron_bridge = False
 
+    _normalize_swanlab_args(training_args, finetuning_args)
+
     # Setup logging
     if training_args.should_log:
         _set_transformers_logging()
@@ -552,9 +561,6 @@ def get_train_args(args: dict[str, Any] | list[str] | None = None) -> _TRAIN_CLS
     if finetuning_args.finetuning_type == "lora":
         # https://github.com/huggingface/transformers/blob/v4.50.0/src/transformers/trainer.py#L782
         training_args.label_names = training_args.label_names or ["labels"]
-
-    if "swanlab" in training_args.report_to and finetuning_args.use_swanlab:
-        training_args.report_to.remove("swanlab")
 
     if (
         training_args.parallel_mode == ParallelMode.DISTRIBUTED
