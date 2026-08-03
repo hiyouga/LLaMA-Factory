@@ -52,6 +52,14 @@ def get_ulysses_sequence_parallel_rank(group: ProcessGroup = None) -> int:
     return dist.get_rank(group) if group else 0
 
 
+def _get_text_position_ids(position_ids: Optional[Tensor]) -> Optional[Tensor]:
+    # Transformers < 5.4 broadcasts Qwen3.5 text positions over the mRoPE axes.
+    if position_ids is not None and position_ids.ndim == 3 and position_ids.stride(0) == 0:
+        position_ids = position_ids[0]
+
+    return position_ids.contiguous() if position_ids is not None and position_ids.ndim == 2 else None
+
+
 class UlyssesAttention(torch.nn.Module):
     """Initialization.
 
@@ -123,16 +131,12 @@ class UlyssesAttention(torch.nn.Module):
             softmax_scale = q.shape[-1] ** -0.5
 
         sp_world_size = get_ulysses_sequence_parallel_world_size(self.spg)
-        # HF FlashAttention only uses 2-D position IDs to detect packed
-        # sequences. Multi-axis IDs (for example Qwen3.5 mRoPE) have already
-        # been consumed by rotary embedding and must not enter that detector.
-        if position_ids is not None and position_ids.ndim == 2:
-            position_ids = position_ids.contiguous()
+        # HF FlashAttention only uses 2-D position IDs to detect packed sequences.
+        position_ids = _get_text_position_ids(position_ids)
+        if position_ids is not None:
             global_position_ids = [torch.empty_like(position_ids) for _ in range(sp_world_size)]
             dist.all_gather(global_position_ids, position_ids, group=self.spg)
             position_ids = torch.cat(global_position_ids, dim=-1).contiguous()
-        else:
-            position_ids = None
 
         # HF may turn an all-ones local attention_mask into None before this
         # function. Under CP, different ranks can then disagree: some local
