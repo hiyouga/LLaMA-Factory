@@ -99,8 +99,12 @@ class _Tokenizer:
         padded = {"input_ids": [], "attention_mask": []}
         for feature in features:
             pad_length = sequence_length - len(feature["input_ids"])
-            padded["input_ids"].append(feature["input_ids"] + [self.pad_token_id] * pad_length)
-            padded["attention_mask"].append(feature["attention_mask"] + [0] * pad_length)
+            if self.padding_side == "right":
+                padded["input_ids"].append(feature["input_ids"] + [self.pad_token_id] * pad_length)
+                padded["attention_mask"].append(feature["attention_mask"] + [0] * pad_length)
+            else:
+                padded["input_ids"].append([self.pad_token_id] * pad_length + feature["input_ids"])
+                padded["attention_mask"].append([0] * pad_length + feature["attention_mask"])
 
         return {key: torch.tensor(value) for key, value in padded.items()}
 
@@ -362,6 +366,13 @@ def test_moss_vl_media_order_batch_mask_and_labels():
     assert mm_inputs["media_nums_per_sample"] == [3, 1]
     assert mm_inputs["pixel_values"][:, 0].tolist() == [1.0, 9.0, 9.0, 3.0, 256.0]
 
+    pre_padding_mask = mm_inputs["cross_attention_mask"]
+    assert pre_padding_mask.shape == (2, 1, len(first_ids), 4)
+    assert pre_padding_mask[0, 0, 0].tolist() == [False, True, True, True]
+    assert pre_padding_mask[0, 0, 10].tolist() == [False, False, False, True]
+    assert pre_padding_mask[0, 0, 12].tolist() == [False, False, False, False]
+    assert pre_padding_mask[1].all()
+
     seq_len = len(first_ids)
     input_ids = torch.tensor([first_ids, [0] * (seq_len - 2) + second_ids])
     attention_mask = torch.tensor([[1] * seq_len, [0] * (seq_len - 2) + [1, 1]])
@@ -523,6 +534,72 @@ def test_moss_vl_supervised_processor_to_collator_mixed_batch(monkeypatch):
     assert batch["cross_attention_mask"][1].all()
     assert torch.all(batch["labels"][1, len(second_ids) :] == IGNORE_INDEX)
     assert "position_ids" not in batch
+
+
+def test_moss_vl_generate_collator_keeps_left_padded_cross_attention_mask():
+    plugin = _get_plugin()
+    processor = _Processor()
+    processor.tokenizer.padding_side = "left"
+    template = SimpleNamespace(mm_plugin=plugin)
+    batch_ids = [
+        [IMAGE_TOKEN_ID, 211],
+        [301, IMAGE_TOKEN_ID, 302, 303],
+    ]
+    features = [
+        {
+            "input_ids": input_ids,
+            "attention_mask": [1] * len(input_ids),
+            "labels": input_ids.copy(),
+            "images": [Image.new("RGB", (2, 2))],
+        }
+        for input_ids in batch_ids
+    ]
+    collator = MultiModalDataCollatorForSeq2Seq(
+        tokenizer=processor.tokenizer,
+        model=SimpleNamespace(config=SimpleNamespace(model_type="moss_vl")),
+        template=template,
+        processor=processor,
+        label_pad_token_id=IGNORE_INDEX,
+        pad_to_multiple_of=8,
+    )
+
+    batch = collator(features)
+
+    assert batch["cross_attention_mask"].shape == (2, 1, 8, 1)
+    assert batch["cross_attention_mask"][0, 0, :, 0].tolist() == [True] * 6 + [False, False]
+    assert batch["cross_attention_mask"][1, 0, :, 0].tolist() == [True] * 5 + [False, False, False]
+
+
+def test_moss_vl_predict_collator_uses_precomputed_cross_attention_mask_without_model():
+    plugin = _get_plugin()
+    processor = _Processor()
+    template = SimpleNamespace(mm_plugin=plugin)
+    batch_ids = [
+        [IMAGE_TOKEN_ID, 211],
+        [301, IMAGE_TOKEN_ID, 302, 303],
+    ]
+    features = [
+        {
+            "input_ids": input_ids,
+            "attention_mask": [1] * len(input_ids),
+            "labels": input_ids.copy(),
+            "images": [Image.new("RGB", (2, 2))],
+        }
+        for input_ids in batch_ids
+    ]
+    collator = MultiModalDataCollatorForSeq2Seq(
+        tokenizer=processor.tokenizer,
+        model=None,
+        template=template,
+        processor=processor,
+        label_pad_token_id=IGNORE_INDEX,
+    )
+
+    batch = collator(features)
+
+    assert batch["cross_attention_mask"].shape == (2, 1, 4, 1)
+    assert batch["cross_attention_mask"][0, 0, :, 0].tolist() == [False, False, True, True]
+    assert batch["cross_attention_mask"][1, 0, :, 0].tolist() == [True, False, False, False]
 
 
 def test_moss_vl_masks_only_the_token_after_im_end():

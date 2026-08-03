@@ -467,7 +467,9 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
         ):
             raise ValueError(f"{self.model.config.model_type} requires 3D position ids for mrope.")
 
-        if "cross_attention_mask" in mm_inputs:  # for mllama inputs when pad_to_multiple_of is enabled
+        if (
+            "cross_attention_mask" in mm_inputs and mm_inputs["cross_attention_mask"].dtype != torch.bool
+        ):  # for mllama inputs when pad_to_multiple_of is enabled
             cross_attention_mask = mm_inputs.pop("cross_attention_mask")
             seq_len = features["input_ids"].size(1)
             orig_len = cross_attention_mask.size(1)

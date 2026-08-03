@@ -487,6 +487,51 @@ class MossVLPlugin(BasePlugin):
         patch_counts = [int(grid.prod().item()) for grid in grid_thw]
         return list(torch.split(pixel_values, patch_counts))
 
+    @staticmethod
+    def _create_cross_attention_mask(
+        input_ids: Union[list[list[int]], "torch.Tensor"],
+        grid_thw: "torch.Tensor",
+        media_nums_per_sample: list[int],
+        image_token_id: int,
+        attention_mask: Optional["torch.Tensor"] = None,
+        padding_side: Literal["left", "right"] = "right",
+    ) -> "torch.Tensor":
+        r"""Create the native MOSS-VL frame-level causal cross-attention mask."""
+        if isinstance(input_ids, list):
+            max_text_len = max(len(token_ids) for token_ids in input_ids)
+            input_ids_tensor = torch.full((len(input_ids), max_text_len), -1, dtype=torch.long)
+            attention_mask_tensor = torch.zeros_like(input_ids_tensor, dtype=torch.bool)
+            for batch_index, token_ids in enumerate(input_ids):
+                seq_len = len(token_ids)
+                start = max_text_len - seq_len if padding_side == "left" else 0
+                input_ids_tensor[batch_index, start : start + seq_len] = torch.tensor(token_ids, dtype=torch.long)
+                attention_mask_tensor[batch_index, start : start + seq_len] = True
+        else:
+            input_ids_tensor = input_ids
+            attention_mask_tensor = (
+                torch.ones_like(input_ids_tensor, dtype=torch.bool)
+                if attention_mask is None
+                else attention_mask.bool()
+            )
+
+        total_frames_per_sample = []
+        media_index = 0
+        for num_media in media_nums_per_sample:
+            sample_grid = grid_thw[media_index : media_index + num_media]
+            total_frames_per_sample.append(int(sample_grid[:, 0].sum().item()))
+            media_index += num_media
+
+        max_num_frames = max(total_frames_per_sample)
+        frame_indices = torch.arange(max_num_frames, device=input_ids_tensor.device).view(1, 1, -1)
+        visible_mask = (input_ids_tensor == image_token_id).cumsum(dim=1).unsqueeze(-1) > frame_indices
+        visible_mask &= attention_mask_tensor.unsqueeze(-1)
+        valid_frames = frame_indices < torch.tensor(
+            total_frames_per_sample,
+            device=input_ids_tensor.device,
+        ).view(-1, 1, 1)
+        visible_mask &= valid_frames
+        return (~visible_mask).unsqueeze(1)
+
     def _get_video_inputs(
         self,
         videos: list["VideoInput"],
@@ -713,11 +758,19 @@ class MossVLPlugin(BasePlugin):
         if image_offset != len(images) or video_offset != len(videos):
             raise ValueError("MOSS-VL media lengths do not consume all provided inputs.")
 
-        return {
+        mm_inputs = {
             "pixel_values": torch.cat(final_pixel_values, dim=0),
             "grid_thw": torch.stack(final_grid_thw),
             "media_nums_per_sample": media_nums_per_sample,
         }
+        mm_inputs["cross_attention_mask"] = self._create_cross_attention_mask(
+            batch_ids,
+            mm_inputs["grid_thw"],
+            media_nums_per_sample,
+            processor.image_token_id,
+            padding_side=processor.tokenizer.padding_side,
+        )
+        return mm_inputs
 
     def post_process_mossvl_inputs(
         self,
@@ -728,26 +781,13 @@ class MossVLPlugin(BasePlugin):
         r"""Create MOSS-VL batch-only inputs after the text batch has been padded."""
         input_ids = features["input_ids"]
         attention_mask = features["attention_mask"].bool()
-        grid_thw = mm_inputs["grid_thw"]
-        media_nums_per_sample = mm_inputs["media_nums_per_sample"]
-
-        total_frames_per_sample = []
-        media_index = 0
-        for num_media in media_nums_per_sample:
-            sample_grid = grid_thw[media_index : media_index + num_media]
-            total_frames_per_sample.append(int(sample_grid[:, 0].sum().item()))
-            media_index += num_media
-
-        max_num_frames = max(total_frames_per_sample)
-        frame_indices = torch.arange(max_num_frames, device=input_ids.device).view(1, 1, -1)
-        visible_mask = (input_ids == processor.image_token_id).cumsum(dim=1).unsqueeze(-1) > frame_indices
-        visible_mask &= attention_mask.unsqueeze(-1)
-        valid_frames = frame_indices < torch.tensor(
-            total_frames_per_sample,
-            device=input_ids.device,
-        ).view(-1, 1, 1)
-        visible_mask &= valid_frames
-        mm_inputs["cross_attention_mask"] = (~visible_mask).unsqueeze(1)
+        mm_inputs["cross_attention_mask"] = self._create_cross_attention_mask(
+            input_ids,
+            mm_inputs["grid_thw"],
+            mm_inputs["media_nums_per_sample"],
+            processor.image_token_id,
+            attention_mask,
+        )
 
         dummy_image_tokens = (input_ids == processor.image_token_id) & ~attention_mask
         input_ids.masked_fill_(dummy_image_tokens, processor.tokenizer.pad_token_id)
