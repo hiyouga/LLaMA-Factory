@@ -334,6 +334,50 @@ class Template:
 
 
 @dataclass
+class MossVLTemplate(Template):
+    @override
+    def _encode(
+        self,
+        tokenizer: "PreTrainedTokenizer",
+        messages: list[dict[str, str]],
+        system: Optional[str],
+        tools: Optional[str],
+    ) -> list[list[int]]:
+        system = system or self.default_system
+        encoded_messages = []
+        for i, message in enumerate(messages):
+            elements = []
+
+            if i == 0:
+                elements += self.format_prefix.apply()
+                if system or tools:
+                    tool_text = self.format_tools.apply(content=tools)[0] if tools else ""
+                    if tools and not system:
+                        tool_text = tool_text.lstrip("\n")
+
+                    elements += self.format_system.apply(content=(system + tool_text))
+
+            if message["role"] == Role.USER:
+                elements += self.format_user.apply(content=message["content"], idx=str(i // 2))
+            elif message["role"] == Role.ASSISTANT:
+                elements += self.format_assistant.apply(content=message["content"])
+            elif message["role"] == Role.OBSERVATION:
+                elements += self.format_observation.apply(content=message["content"])
+            elif message["role"] == Role.FUNCTION:
+                elements += self.format_function.apply(
+                    content=message["content"],
+                    thought_words=self.thought_words,
+                    tool_call_words=self.tool_call_words,
+                )
+            else:
+                raise NotImplementedError("Unexpected role: {}".format(message["role"]))
+
+            encoded_messages.append(self._convert_elements_to_ids(tokenizer, elements))
+
+        return encoded_messages
+
+
+@dataclass
 class Llama2Template(Template):
     r"""A template that fuse the system message to first user message."""
 
@@ -1523,6 +1567,32 @@ register_template(
     default_system="You are a helpful assistant provided by Moonshot-AI.",
     stop_words=["<|im_end|>"],
     replace_eos=True,
+)
+
+
+# copied from qwen template
+register_template(
+    name="moss_vl",
+    format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
+    format_assistant=StringFormatter(slots=["{{content}}<|im_end|>\n"]),
+    format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
+    format_function=FunctionFormatter(slots=["{{content}}<|im_end|>\n"], tool_format="qwen"),
+    format_observation=StringFormatter(
+        slots=["<|im_start|>user\n<tool_response>\n{{content}}\n</tool_response><|im_end|>\n<|im_start|>assistant\n"]
+    ),
+    format_tools=ToolFormatter(tool_format="qwen"),
+    stop_words=["<|im_end|>"],
+    replace_eos=True,
+    mm_plugin=get_mm_plugin(
+        name="moss_vl",
+        image_token="<|image_pad|>",
+        video_token="<|video_pad|>",
+        vision_bos_token="<|vision_start|>",
+        vision_eos_token="<|vision_end|>",
+        time_bos_token="<|time_start|>",
+        time_eos_token="<|time_end|>",
+    ),
+    template_class=MossVLTemplate,
 )
 
 
