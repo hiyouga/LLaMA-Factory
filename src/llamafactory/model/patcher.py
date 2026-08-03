@@ -23,7 +23,7 @@ from transformers.modeling_utils import is_fsdp_enabled
 from transformers.utils import is_torch_cuda_available, is_torch_npu_available
 
 from ..extras import logging
-from ..extras.misc import infer_optim_dtype
+from ..extras.misc import check_version, infer_optim_dtype
 from ..extras.packages import is_transformers_version_greater_than
 from .model_utils.attention import configure_attn_implementation, print_attn_implementation
 from .model_utils.checkpointing import prepare_model_for_training
@@ -417,6 +417,10 @@ def patch_config(
             "LFM2.5-VL model requires transformers>=4.58.0 or install from commit: "
             "pip install git+https://github.com/huggingface/transformers.git@3c2517727ce28a30f5044e01663ee204deb1cdbe"
         )
+
+    if getattr(config, "model_type", None) == "moss_vl":
+        check_version("transformers==4.57.1", mandatory=True)
+        check_version("torchcodec==0.7.0", mandatory=True)
 
     if getattr(config, "model_type", None) == "qwen3_omni_moe":
         patch_qwen3_omni_moe_thinker_text_sparse_moe_block()

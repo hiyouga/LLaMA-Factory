@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import os
+from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
@@ -415,6 +416,24 @@ def test_qwen2_vl_plugin():
     ]
     check_inputs["expected_mm_inputs"] = _get_mm_inputs(tokenizer_module["processor"])
     _check_plugin(**check_inputs)
+
+
+def test_moss_vl_plugin():
+    messages = [
+        {"role": "user", "content": "First <image>, finally <image>."},
+        {"role": "assistant", "content": "Done."},
+    ]
+    expected_messages = [
+        {"role": "user", "content": "First <|image_pad|>, finally <|image_pad|>."},
+        {"role": "assistant", "content": "Done."},
+    ]
+    processor = SimpleNamespace(image_processor=object(), video_processor=object())
+    plugin = get_mm_plugin(name="moss_vl", image_token="<|image_pad|>", video_token="<|video_pad|>")
+
+    processed_messages = plugin.process_messages(messages, [object(), object()], [], [], processor)
+
+    assert processed_messages == expected_messages
+    assert messages[0]["content"] == "First <image>, finally <image>."
 
 
 @pytest.mark.runs_on(["cpu", "mps"])
