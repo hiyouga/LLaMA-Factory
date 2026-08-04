@@ -158,12 +158,16 @@ ModelEngine
 
 When `init_on_meta` constructs the model, it must propagate `attn_implementation` in the same way as the `from_pretrained` path. Otherwise, the model falls back to a non-FlashAttention implementation and Ulysses CP cannot start. Before calling Hugging Face FlashAttention, Ulysses reconstructs the global attention mask. Only two-dimensional position IDs participate in packed-sequence detection. Multi-axis position IDs such as Qwen3.5 mRoPE have already been consumed by rotary embedding and must not be passed to the FlashAttention packed-sequence detection logic.
 
-The current implementation has completed the following BF16 AdamW full SFT validations with Qwen3.5-35B-A3B on Atlas 900 A3 SuperPoD and Atlas 950 SuperPoD systems. Performance is calculated from timestamps of consecutive logged training steps and excludes initialization and compilation before the first step as well as model saving after training:
+The current implementation has completed the following BF16 AdamW full SFT validations with Qwen3.5-35B-A3B on Atlas 900 A3 SuperPoD and Atlas 950 SuperPoD systems. This revalidation used FSDPTurbo `0e96fbc`. The A3 environment used CANN 9.0.0, PyTorch 2.7.1, and torch-npu 2.7.1.post4; the A5 environment used CANN 9.1.0-beta.3, PyTorch 2.10.0, and torch-npu 2.10.0.post2. Performance is calculated from the step 1 and step 100 log timestamps and excludes initialization and compilation before the first step as well as model saving after training:
 
 | Machine | CP | EP | EFSDP | Checkpoint | Kernel / Dispatcher | Steps | Loss (first -> last) | Performance | Result |
 | --- | ---: | ---: | ---: | --- | --- | ---: | --- | ---: | --- |
-| Atlas 900 A3 SuperPoD | 1 | 16 | 1 | Off | FLA (chunk size 16) / eager | 100 | 1.3345 -> 0.1205 | 1.93 s/it | Passed and saved |
-| Atlas 900 A3 SuperPoD | 1 | 16 | 1 | Off | FLA (chunk size 16) / fused | 100 | 1.3367 -> 0.1326 | 1.95 s/it | Passed and saved |
-| Atlas 900 A3 SuperPoD | 2 | 4 | 2 | Off | auto + FLA / fused | 100 | 1.8095 -> 0.6986 | 5.80 s/it | Passed and saved |
-| Atlas 900 A3 SuperPoD | 2 | 4 | 2 | Off | auto + FLA / eager | 100 | 1.8095 -> 0.6139 | 5.77 s/it | Passed and saved |
-| Atlas 950 SuperPoD | 1 | 8 | 1 | Off | no kernel plugin configured / eager | 100 | 1.3561 -> 0.5941 | 2.58 s/it | Passed (model saving skipped) |
+| Atlas 900 A3 SuperPoD | 1 | 16 | 1 | Off | FLA (chunk size 16) / eager | 100 | 1.3361 -> 0.0793 | 2.51 s/it | Passed and saved |
+| Atlas 900 A3 SuperPoD | 1 | 16 | 1 | Off | FLA (chunk size 16) / fused | 100 | 1.3354 -> 0.1179 | 2.17 s/it | Passed and saved |
+| Atlas 900 A3 SuperPoD | 2 | 4 | 2 | Off | auto + FLA (chunk size 64) / fused | 100 | 1.8114 -> 0.5260 | 7.65 s/it | Passed and saved |
+| Atlas 900 A3 SuperPoD | 2 | 4 | 2 | Off | auto + FLA (chunk size 64) / eager | 100 | 1.8095 -> 0.5596 | 5.88 s/it | Passed and saved |
+| Atlas 950 SuperPoD | 1 | 8 | 1 | Off | no kernel plugin configured / eager | 100 | 1.3575 -> 0.4439 | 2.68 s/it | Passed and saved |
+
+Loss and gradient norm remained finite in all five runs, and every run completed 100 steps and model saving. With the same partition, the per-step loss correlation between eager and fused was 0.997 for EP16 and 0.977 for CP2/EP4/EFSDP2, which indicates consistent optimization trajectories. The performance effect depends on the partition: fused was about 13% faster than eager with EP16, but about 30% slower after adding CP and EFSDP. Fused therefore should not be treated as the default optimum for every mesh.
+
+The EP16 runs used global batch 16 and cutoff length 256. The CP2 runs used global batch 8 and cutoff length 128. The A5 run used global batch 8 and cutoff length 256. The first-to-last loss validates convergence within each run; absolute loss values across different partition groups should not be used directly as a numerical-equivalence conclusion.

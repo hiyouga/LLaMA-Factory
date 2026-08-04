@@ -68,6 +68,29 @@ def test_fsdpturbo_sets_storage_dtype_inside_backend(monkeypatch):
     assert engine.shard_model(model).weight.dtype == torch.bfloat16
 
 
+def test_fsdpturbo_sets_public_efsdp_gradient_divide_factor(monkeypatch):
+    distributed_module = pytest.importorskip("fsdp_turbo.distributed")
+    captured = {}
+    monkeypatch.setattr(distributed_module, "expert_parallelize_modules", lambda model, mesh, plan: model)
+
+    def _expert_fully_shard_modules(model, mesh, ep_plan, fsdp_plan):
+        captured["gradient_divide_factor"] = ep_plan.gradient_divide_factor
+        return model
+
+    monkeypatch.setattr(distributed_module, "expert_fully_shard_modules", _expert_fully_shard_modules)
+
+    engine = object.__new__(FSDPTurboFSDP2Engine)
+    engine.dist_config = {"ep_dispatcher": "eager"}
+    engine.ep_size = 4
+    engine.ep_fsdp_size = 2
+    engine.parallel_state = SimpleNamespace(efsdp_size=2, ep_mesh=object(), efsdp_mesh=object())
+    engine.rank = 0
+
+    engine.prepare_model_ep(_Model("qwen3_5_moe"))
+
+    assert captured["gradient_divide_factor"] == 8.0
+
+
 def test_fsdpturbo_owns_expert_mesh_topology(monkeypatch):
     calls = []
 

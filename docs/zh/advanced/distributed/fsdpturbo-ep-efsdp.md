@@ -190,13 +190,24 @@ attention mask；只有二维 position IDs 才参与 packed-sequence 检测。Qw
 已经在 rotary embedding 中消费，不应传入 FlashAttention 的 packed-sequence 检测逻辑。
 
 当前实现已在 Atlas 900 A3 SuperPoD 和 Atlas 950 SuperPoD 上用 Qwen3.5-35B-A3B 完成以下
-BF16、AdamW full SFT 验证。表中性能按相邻训练日志步的时间戳计算，不包含首步前的初始化、编译和
-训练后的模型保存时间：
+BF16、AdamW full SFT 验证。本次重验证使用 FSDPTurbo `0e96fbc`；A3 环境为 CANN 9.0.0、
+PyTorch 2.7.1 和 torch-npu 2.7.1.post4，A5 环境为 CANN 9.1.0-beta.3、PyTorch 2.10.0 和
+torch-npu 2.10.0.post2。表中性能按第 1 步至第 100 步的日志时间戳计算，不包含首步前的初始化、
+编译和训练后的模型保存时间：
 
 | 机器型号 | CP | EP | EFSDP | Checkpoint | Kernel / Dispatcher | 步数 | Loss（首步 -> 末步） | 性能 | 结果 |
 | --- | ---: | ---: | ---: | --- | --- | ---: | --- | ---: | --- |
-| Atlas 900 A3 SuperPoD | 1 | 16 | 1 | 关闭 | FLA（chunk size 16）/ eager | 100 | 1.3345 -> 0.1205 | 1.93 s/it | 通过并完成保存 |
-| Atlas 900 A3 SuperPoD | 1 | 16 | 1 | 关闭 | FLA（chunk size 16）/ fused | 100 | 1.3367 -> 0.1326 | 1.95 s/it | 通过并完成保存 |
-| Atlas 900 A3 SuperPoD | 2 | 4 | 2 | 关闭 | auto + FLA / fused | 100 | 1.8095 -> 0.6986 | 5.80 s/it | 通过并完成保存 |
-| Atlas 900 A3 SuperPoD | 2 | 4 | 2 | 关闭 | auto + FLA / eager | 100 | 1.8095 -> 0.6139 | 5.77 s/it | 通过并完成保存 |
-| Atlas 950 SuperPoD | 1 | 8 | 1 | 关闭 | 未配置 kernel plugin / eager | 100 | 1.3561 -> 0.5941 | 2.58 s/it | 通过（跳过模型保存） |
+| Atlas 900 A3 SuperPoD | 1 | 16 | 1 | 关闭 | FLA（chunk size 16）/ eager | 100 | 1.3361 -> 0.0793 | 2.51 s/it | 通过并完成保存 |
+| Atlas 900 A3 SuperPoD | 1 | 16 | 1 | 关闭 | FLA（chunk size 16）/ fused | 100 | 1.3354 -> 0.1179 | 2.17 s/it | 通过并完成保存 |
+| Atlas 900 A3 SuperPoD | 2 | 4 | 2 | 关闭 | auto + FLA（chunk size 64）/ fused | 100 | 1.8114 -> 0.5260 | 7.65 s/it | 通过并完成保存 |
+| Atlas 900 A3 SuperPoD | 2 | 4 | 2 | 关闭 | auto + FLA（chunk size 64）/ eager | 100 | 1.8095 -> 0.5596 | 5.88 s/it | 通过并完成保存 |
+| Atlas 950 SuperPoD | 1 | 8 | 1 | 关闭 | 未配置 kernel plugin / eager | 100 | 1.3575 -> 0.4439 | 2.68 s/it | 通过并完成保存 |
+
+五组训练的 loss 和 grad norm 均保持有限，并完成 100 步及模型保存。同一切分下，EP16 eager/fused
+的逐步 loss 相关系数为 0.997，CP2/EP4/EFSDP2 eager/fused 为 0.977，说明两种 dispatcher 的
+优化轨迹一致。性能收益与切分有关：EP16 下 fused 比 eager 快约 13%，而加入 CP 和 EFSDP 后 fused
+比 eager 慢约 30%，因此不能把 fused 视为所有 mesh 的默认最优选择。
+
+EP16 两组使用 global batch 16 和 cutoff length 256；CP2 两组使用 global batch 8 和 cutoff length
+128；A5 组使用 global batch 8 和 cutoff length 256。因此，首末 loss 用于验证各组自身的收敛趋势，
+不同切分组之间的绝对 loss 不应直接作为精度等价结论。

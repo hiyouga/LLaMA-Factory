@@ -364,9 +364,7 @@ class FSDPTurboFSDP2Engine(FSDP2Engine):
 
         spec = FSDPTurboEPModelSpec.get(model)
         if spec is None:
-            raise ValueError(
-                f"No FSDPTurbo EP spec is registered for model_type={_get_model_type(model)}."
-            )
+            raise ValueError(f"No FSDPTurbo EP spec is registered for model_type={_get_model_type(model)}.")
 
         ep_modules = spec.ep_modules
         model = spec.prepare(model)
@@ -377,7 +375,7 @@ class FSDPTurboFSDP2Engine(FSDP2Engine):
                 dispatcher=self.dist_config.get("ep_dispatcher", "eager"),
                 apply_efsdp_modules=self._get_ep_fsdp_modules(spec),
             )
-            ep_plan._gradient_divide_factor = float(self.ep_size * self.parallel_state.efsdp_size)
+            ep_plan.gradient_divide_factor = float(self.ep_size * self.parallel_state.efsdp_size)
             fsdp_plan = FSDPPlanConfig(
                 # FSDPTurbo uses this plan only to place EFSDP hooks and select its
                 # implementation. EFSDP targets come from ep_plan.apply_efsdp_modules.
@@ -395,7 +393,7 @@ class FSDPTurboFSDP2Engine(FSDP2Engine):
                 logger.info("Applying FSDPTurbo EP backend.")
                 logger.info(f"FSDPTurbo EP apply patterns: {ep_modules}")
                 logger.info(f"FSDPTurbo EP device mesh: {ep_mesh}")
-                logger.info(f"FSDPTurbo EP gradient divide factor: {ep_plan._gradient_divide_factor}")
+                logger.info(f"FSDPTurbo EP gradient divide factor: {ep_plan.gradient_divide_factor}")
 
             model = expert_parallelize_modules(model, ep_mesh, ep_plan)
 
