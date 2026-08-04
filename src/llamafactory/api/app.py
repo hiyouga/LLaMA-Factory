@@ -14,7 +14,7 @@
 
 import asyncio
 import os
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 from functools import partial
 from typing import Annotated
 
@@ -59,11 +59,19 @@ async def sweeper() -> None:
 
 @asynccontextmanager
 async def lifespan(app: "FastAPI", chat_model: "ChatModel"):  # collects GPU memory
+    sweeper_task = None
     if chat_model.engine.name == EngineName.HF:
-        asyncio.create_task(sweeper())
+        sweeper_task = asyncio.create_task(sweeper())
 
-    yield
-    torch_gc()
+    try:
+        yield
+    finally:
+        if sweeper_task is not None:
+            sweeper_task.cancel()
+            with suppress(asyncio.CancelledError):
+                await sweeper_task
+
+        torch_gc()
 
 
 def create_app(chat_model: "ChatModel") -> "FastAPI":
