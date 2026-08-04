@@ -35,6 +35,26 @@ from ..callbacks import SaveProcessorCallback
 from ..trainer_utils import create_custom_optimizer, create_custom_scheduler, get_batch_logps, nested_detach
 
 
+def get_batch_logps_memory_efficient(
+    logits: "torch.Tensor", labels: "torch.Tensor", label_pad_token_id: int = IGNORE_INDEX
+) -> tuple["torch.Tensor", "torch.Tensor"]:
+    r"""Compute label log probabilities without materializing full-vocabulary log-softmax."""
+    labels = labels[:, 1:].clone()
+    logits = logits[:, :-1, :]
+    loss_mask = labels != label_pad_token_id
+    labels[~loss_mask] = 0
+    logps = []
+    for start in range(0, logits.size(1), 64):
+        chunk = logits[:, start : start + 64, :].float()
+        chunk_labels = labels[:, start : start + 64]
+        target_logits = torch.gather(chunk, dim=2, index=chunk_labels.unsqueeze(2)).squeeze(2)
+        logps.append(target_logits - torch.logsumexp(chunk, dim=-1))
+
+    per_token_logps = torch.cat(logps, dim=1)
+    valid_length = loss_mask.sum(-1)
+    return (per_token_logps * loss_mask).sum(-1), valid_length
+
+
 if TYPE_CHECKING:
     from transformers import PreTrainedModel, ProcessorMixin
 
@@ -227,10 +247,11 @@ class CustomDPOTrainer(DPOTrainer):
             batch = nested_detach(batch, clone=True)  # avoid error
 
         labels = batch.pop("labels")  # dpo do not need compute loss in forward
-        all_logits: torch.Tensor = model(**batch, return_dict=True, use_cache=False).logits.to(torch.float32)
-        all_logps, valid_length = get_batch_logps(
-            logits=all_logits, labels=labels, ld_alpha=(self.ld_alpha if not is_ref_model else None)
-        )
+        all_logits: torch.Tensor = model(**batch, return_dict=True, use_cache=False).logits
+        if self.ld_alpha is not None and not is_ref_model:
+            all_logps, valid_length = get_batch_logps(logits=all_logits.float(), labels=labels, ld_alpha=self.ld_alpha)
+        else:
+            all_logps, valid_length = get_batch_logps_memory_efficient(logits=all_logits, labels=labels)
         if self.loss_type in ["ipo", "orpo", "simpo"]:
             all_logps = all_logps / valid_length
 
