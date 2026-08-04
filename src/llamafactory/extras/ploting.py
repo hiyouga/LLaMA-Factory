@@ -54,7 +54,7 @@ def gen_loss_plot(trainer_log: list[dict[str, Any]]) -> "matplotlib.figure.Figur
     ax = fig.add_subplot(111)
     steps, losses = [], []
     for log in trainer_log:
-        if log.get("loss", None):
+        if log.get("loss") is not None:
             steps.append(log["current_steps"])
             losses.append(log["loss"])
 
