@@ -13,13 +13,30 @@
 # limitations under the License.
 
 import sys
-from types import ModuleType
+from functools import partial
 from unittest.mock import MagicMock, patch
 
 import pytest
 import torch.multiprocessing as mp
 from torch import nn
 from transformers import AutoModelForCausalLM
+
+
+def _original_fla_op(*args, **kwargs):
+    return args, kwargs
+
+
+class _LinearAttention(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.chunk_gated_delta_rule = _original_fla_op
+        self.recurrent_gated_delta_rule = _original_fla_op
+
+
+class _FLAModel(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.linear_attn = _LinearAttention()
 
 
 def _apply_kernel(rank) -> None:
@@ -76,35 +93,24 @@ def test_apply_all_kernels():
     mp.spawn(_apply_all_kernels)
 
 
+@pytest.mark.runs_on(["npu"])
 def test_flash_linear_attention_kernels_compose_with_auto(monkeypatch):
+    from fsdp_turbo.ops import apply_fla_ops
+
     from llamafactory.v1.plugins.model_plugins.kernels import interface
     from llamafactory.v1.plugins.model_plugins.kernels.ops.linear_attention.fla import (
         FlashLinearAttentionKernel,
     )
 
-    model = nn.Sequential(nn.Linear(2, 2))
+    model = _FLAModel()
     auto_calls = []
-    fla_calls = []
-
-    fsdp_turbo = ModuleType("fsdp_turbo")
-    fla_ops = ModuleType("fsdp_turbo.ops")
-    setattr(
-        fla_ops,
-        "apply_fla_ops",
-        lambda received_model, received_names, op_kwargs=None, strict=True: (
-            fla_calls.append((received_model, received_names, op_kwargs, strict)) or 2
-        ),
-    )
-    setattr(fsdp_turbo, "ops", fla_ops)
-    monkeypatch.setitem(sys.modules, "fsdp_turbo", fsdp_turbo)
-    monkeypatch.setitem(sys.modules, "fsdp_turbo.ops", fla_ops)
 
     monkeypatch.setattr(
         interface,
         "_apply_auto_kernels",
         lambda model, **kwargs: auto_calls.append((model, kwargs)) or model,
     )
-    monkeypatch.setattr(FlashLinearAttentionKernel, "check_device", staticmethod(lambda: None))
+    # FLA execution is outside this bridge test; FSDPTurbo itself remains real.
     monkeypatch.setattr(FlashLinearAttentionKernel, "check_deps", staticmethod(lambda: None))
 
     config = {
@@ -114,14 +120,13 @@ def test_flash_linear_attention_kernels_compose_with_auto(monkeypatch):
     }
     assert interface.apply_kernels(model, config) is model
     assert auto_calls == [(model, {"config": config, "require_logits": False})]
-    assert fla_calls == [
-        (
-            model,
-            ["fused_recurrent_gated_delta_rule", "chunk_gated_delta_rule"],
-            {"chunk_gated_delta_rule": {"chunk_size": 32}},
-            True,
-        ),
-    ]
+    assert apply_fla_ops.__module__ == "fsdp_turbo.ops.fla"
+
+    chunk_op = model.linear_attn.chunk_gated_delta_rule
+    assert isinstance(chunk_op, partial)
+    assert chunk_op.func.__module__ == "fsdp_turbo.ops.fla"
+    assert chunk_op.keywords == {"chunk_size": 32}
+    assert model.linear_attn.recurrent_gated_delta_rule.__module__ == "fsdp_turbo.ops.fla"
 
 
 def test_flash_linear_attention_kernel_validates_config(monkeypatch):
