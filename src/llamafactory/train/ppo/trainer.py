@@ -357,14 +357,17 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
 
         with unwrap_model_for_generation(self.model, self.accelerator) as unwrapped_model:
             unwrapped_model: AutoModelForCausalLMWithValueHead = self.accelerator.unwrap_model(self.model)
+            layernorm_params = None
             if self.model_args.upcast_layernorm:
                 layernorm_params = dump_layernorm(unwrapped_model)
 
-            generate_output: torch.Tensor = unwrapped_model.generate(
-                generation_config=self.generation_config, logits_processor=get_logits_processor(), **batch
-            )
-            if self.model_args.upcast_layernorm:
-                restore_layernorm(unwrapped_model, layernorm_params)
+            try:
+                generate_output: torch.Tensor = unwrapped_model.generate(
+                    generation_config=self.generation_config, logits_processor=get_logits_processor(), **batch
+                )
+            finally:
+                if layernorm_params is not None:
+                    restore_layernorm(unwrapped_model, layernorm_params)
 
         query = batch["input_ids"].detach().cpu()
         response = generate_output[:, batch["input_ids"].size(-1) :].detach().cpu()
@@ -403,17 +406,21 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
         batch: dict[str, torch.Tensor] = self.prepare_model_inputs(queries, responses)
         unwrapped_model: AutoModelForCausalLMWithValueHead = self.accelerator.unwrap_model(self.model)
 
-        if self.finetuning_args.reward_model_type in ["lora", "oft"]:
+        use_reward_adapter = self.finetuning_args.reward_model_type in ["lora", "oft"]
+        adapter_replaced = False
+        if use_reward_adapter:
             replace_model(unwrapped_model, target="reward")
+            adapter_replaced = True
             reward_model = self.model
         else:
             reward_model = self.reward_model
 
-        with unwrap_model_for_generation(reward_model, self.accelerator), self.amp_context:  # support bf16
-            values: torch.Tensor = reward_model(**batch, return_dict=True, use_cache=False)[-1]
-
-        if self.finetuning_args.reward_model_type in ["lora", "oft"]:
-            replace_model(unwrapped_model, target="default")
+        try:
+            with unwrap_model_for_generation(reward_model, self.accelerator), self.amp_context:  # support bf16
+                values: torch.Tensor = reward_model(**batch, return_dict=True, use_cache=False)[-1]
+        finally:
+            if adapter_replaced:
+                replace_model(unwrapped_model, target="default")
 
         rewards = values.gather(dim=-1, index=(batch["attention_mask"].sum(dim=-1, keepdim=True) - 1))
         return rewards.float().detach()  # use fp32 type
