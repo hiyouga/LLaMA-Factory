@@ -128,7 +128,13 @@ def get_trainer_info(lang: str, output_path: os.PathLike, do_train: bool) -> tup
         trainer_log: list[dict[str, Any]] = []
         with open(trainer_log_path, encoding="utf-8") as f:
             for line in f:
-                trainer_log.append(json.loads(line))
+                try:
+                    trainer_log.append(json.loads(line))
+                except json.JSONDecodeError:
+                    if line.endswith("\n"):
+                        raise
+
+                    break
 
         if len(trainer_log) != 0:
             latest_log = trainer_log[-1]
