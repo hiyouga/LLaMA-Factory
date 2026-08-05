@@ -138,7 +138,7 @@ def apply_sequence_parallel(model, cp_size: int):
                     continue
                 replaced_modules.add(id(gdn_module))
                 gdn_module.original_forward = gdn_module.forward
-                gdn_module.forward = gdn_forward_with_cp.get(gdn_module, type(gdn_module))
+                gdn_module.forward = gdn_forward_with_cp.__get__(gdn_module, type(gdn_module))
                 gdn_name = name if gdn_module is module else f"{name}.linear_attn"
                 logger.info_rank0(f"Replaced GDN forward in {gdn_name} with gdn_forward_with_cp for context parallel.")
 
