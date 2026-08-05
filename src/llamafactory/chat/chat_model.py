@@ -119,12 +119,15 @@ class ChatModel:
     ) -> Generator[str, None, None]:
         r"""Get the response token-by-token of the chat model."""
         generator = self.astream_chat(messages, system, tools, images, videos, audios, **input_kwargs)
-        while True:
-            try:
-                task = asyncio.run_coroutine_threadsafe(generator.__anext__(), self._loop)
-                yield task.result()
-            except StopAsyncIteration:
-                break
+        try:
+            while True:
+                try:
+                    task = asyncio.run_coroutine_threadsafe(generator.__anext__(), self._loop)
+                    yield task.result()
+                except StopAsyncIteration:
+                    break
+        finally:
+            asyncio.run_coroutine_threadsafe(generator.aclose(), self._loop).result()
 
     async def astream_chat(
         self,
