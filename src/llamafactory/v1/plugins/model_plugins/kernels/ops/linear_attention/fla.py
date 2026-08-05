@@ -51,7 +51,8 @@ class FlashLinearAttentionKernel(BaseKernel):
     def check_deps() -> None:
         try:
             import fla.ops.gated_delta_rule  # noqa: F401
-            from fsdp_turbo.ops import get_op  # noqa: F401
+            import fsdp_turbo.ops.fla  # noqa: F401
+            from fsdp_turbo.ops.registry import get_op  # noqa: F401
             from fsdp_turbo.utils.patch import patch_model_members  # noqa: F401
         except ImportError as exc:
             raise RuntimeError("Flash Linear Attention and FSDPTurbo are required for this kernel.") from exc
@@ -79,7 +80,7 @@ class FlashLinearAttentionKernel(BaseKernel):
         if isinstance(chunk_size, bool) or not isinstance(chunk_size, int) or chunk_size not in SUPPORTED_CHUNK_SIZES:
             raise ValueError(f"chunk_size must be one of {SUPPORTED_CHUNK_SIZES}, got {chunk_size!r}.")
 
-        from fsdp_turbo.ops import get_op
+        from fsdp_turbo.ops.registry import get_op
         from fsdp_turbo.utils.patch import patch_model_members
 
         patched = 0
