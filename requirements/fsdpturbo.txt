@@ -1,2 +1,2 @@
-# FSDPTurbo MR 41, pinned for reproducible NPU integration tests.
-fsdp-turbo @ git+https://gitcode.com/hazeldxq/FSDPTurbo.git@1e9ccbc0d709fd126c6e3456e27b5391884e2322
+# FSDPTurbo plugin support is available on the upstream main branch.
+fsdp-turbo @ git+https://gitcode.com/Ascend/FSDPTurbo.git@main
