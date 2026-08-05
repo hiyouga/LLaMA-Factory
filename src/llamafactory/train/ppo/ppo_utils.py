@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import json
 from contextlib import nullcontext
 from typing import TYPE_CHECKING, Literal, Optional
 
@@ -36,7 +35,11 @@ def get_rewards_from_server(server_url: str, messages: list[str]) -> list["torch
     headers = {"Content-Type": "application/json"}
     payload = {"model": "model", "messages": messages}
     response = requests.post(server_url, json=payload, headers=headers)
-    rewards = json.loads(response.text)["scores"]
+    response.raise_for_status()
+    rewards = response.json()["scores"]
+    if not isinstance(rewards, list) or len(rewards) != len(messages):
+        raise ValueError("Reward server must return one score for each message.")
+
     return torch.Tensor(rewards)
 
 
