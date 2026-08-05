@@ -115,22 +115,21 @@ LlamaFactory 与 FSDPTurbo 之间的 EP/EFSDP 集成正确性。本次实验矩�
 `domino`：它们还引入了额外的算子、通信调度和输入形状约束，需要独立比较数值、长步稳定性和 profiler 结果。
 因此，它们在配置接口上可选，但不应从本 PR 的实验结果推断为已达到相同的稳定性、精度或性能水平。
 
-## 4. FSDPTurbo 公共入口
+## 4. FSDPTurbo 依赖入口
 
-LlamaFactory 只依赖 FSDPTurbo 的稳定公共 API：
+LlamaFactory 从各功能的定义模块直接导入所需对象：
 
 ```python
-from fsdp_turbo.distributed import (
-    EPPlanConfig,
-    FSDPPlanConfig,
+from fsdp_turbo.distributed.expert_parallel.expert_fully_shard_parallel import (
     expert_fully_shard_modules,
-    expert_parallelize_modules,
-    module_name_match,
 )
+from fsdp_turbo.distributed.expert_parallel.expert_parallel import expert_parallelize_modules
+from fsdp_turbo.fsdp_turbo_config import EPPlanConfig, FSDPPlanConfig
+from fsdp_turbo.utils.str_match import module_name_match
 ```
 
 导入发生在 `prepare_model_ep()` 内，因此没有安装 FSDPTurbo 时，其他 distributed backend 仍可正常导入。
-LlamaFactory 不依赖 `fsdp_turbo.distributed` 下的内部文件路径。
+这里不通过 `fsdp_turbo.distributed.__init__` 聚合导出，避免 package 初始化期间的额外依赖和潜在循环导入。
 
 ## 5. 梯度范数
 
@@ -170,15 +169,18 @@ ModelEngine
   -> apply_kernels("auto, flash-linear-attention")
      -> LlamaFactory 当前加速器对应的 auto kernels
      -> KernelPlugin("flash-linear-attention").apply(...)
-        -> fsdp_turbo.ops.apply_fla_ops()
+        -> fsdp_turbo.ops.get_op()
            -> FSDPTurbo device operator registry
-              -> FLA backend implementation
+        -> fsdp_turbo.utils.patch.patch_model_members()
+           -> FLA backend implementation
 ```
 
 `chunk_size` 当前支持 `16`、`32` 和 `64`，默认值为 `64`。Kernel plugin 与 distributed plugin
 彼此独立。`name: flash-linear-attention` 只安装所选 FLA 算子；逗号分隔的
 `name: auto, flash-linear-attention` 会在分布式切分前组合 LlamaFactory 当前加速器的 auto kernels
-与 FLA plugin。FLA 依赖可选的外部三方件，因此保持显式选择，不属于内置 `auto` 集合。FSDPTurbo
+与 FLA plugin。LlamaFactory 负责算子名到模型属性的映射和 `chunk_size` 参数绑定；FSDPTurbo 负责设备
+算子注册、选择和通用 callable patch。FLA 依赖可选的外部三方件，因此保持显式选择，不属于内置
+`auto` 集合。FSDPTurbo
 随后会替换目标专家模块的 `forward`，所以专家计算的最终路径由 `ep_dispatcher` 决定；auto 阶段
 应用的 MoE kernel 不会作为独立的第二条专家执行路径保留下来。
 

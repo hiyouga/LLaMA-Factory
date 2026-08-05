@@ -14,6 +14,8 @@
 
 """Flash Linear Attention kernel plugin backed by FSDPTurbo's operator registry."""
 
+from functools import partial
+
 from ......accelerator.helper import DeviceType, get_current_accelerator
 from ......utils import logging
 from ......utils.types import HFModel
@@ -28,6 +30,10 @@ FLASH_LINEAR_ATTENTION_KERNELS = (
     CHUNK_GATED_DELTA_RULE,
     FUSED_RECURRENT_GATED_DELTA_RULE,
 )
+FLA_MODULE_ATTRIBUTES = {
+    CHUNK_GATED_DELTA_RULE: "chunk_gated_delta_rule",
+    FUSED_RECURRENT_GATED_DELTA_RULE: "recurrent_gated_delta_rule",
+}
 SUPPORTED_CHUNK_SIZES = (16, 32, 64)
 
 
@@ -45,7 +51,8 @@ class FlashLinearAttentionKernel(BaseKernel):
     def check_deps() -> None:
         try:
             import fla.ops.gated_delta_rule  # noqa: F401
-            from fsdp_turbo.ops import apply_fla_ops  # noqa: F401
+            from fsdp_turbo.ops import get_op  # noqa: F401
+            from fsdp_turbo.utils.patch import patch_model_members  # noqa: F401
         except ImportError as exc:
             raise RuntimeError("Flash Linear Attention and FSDPTurbo are required for this kernel.") from exc
 
@@ -72,11 +79,24 @@ class FlashLinearAttentionKernel(BaseKernel):
         if isinstance(chunk_size, bool) or not isinstance(chunk_size, int) or chunk_size not in SUPPORTED_CHUNK_SIZES:
             raise ValueError(f"chunk_size must be one of {SUPPORTED_CHUNK_SIZES}, got {chunk_size!r}.")
 
-        from fsdp_turbo.ops import apply_fla_ops
+        from fsdp_turbo.ops import get_op
+        from fsdp_turbo.utils.patch import patch_model_members
 
-        op_kwargs = None
-        if CHUNK_GATED_DELTA_RULE in selected:
-            op_kwargs = {CHUNK_GATED_DELTA_RULE: {"chunk_size": chunk_size}}
-        patched = apply_fla_ops(model, selected, op_kwargs=op_kwargs, strict=True)
+        patched = 0
+        named_modules = tuple(model.named_modules())
+        for op_name in selected:
+            module_attribute = FLA_MODULE_ATTRIBUTES[op_name]
+            op = get_op(op_name)
+            configured_op = partial(op, chunk_size=chunk_size) if op_name == CHUNK_GATED_DELTA_RULE else op
+            targets = {
+                f"{type(module).__module__}.{type(module).__name__}.{module_attribute}"
+                for _, module in named_modules
+                if callable(getattr(module, module_attribute, None))
+            }
+            matched = patch_model_members(model, sorted(targets), configured_op) if targets else 0
+            if matched == 0:
+                raise RuntimeError(f"FLA operator `{op_name}` did not match any model module attributes.")
+            patched += matched
+
         logger.info_rank0(f"Flash Linear Attention kernels updated {patched} module callables: {selected}.")
         return model

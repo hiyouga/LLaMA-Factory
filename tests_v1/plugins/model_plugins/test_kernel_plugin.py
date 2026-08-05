@@ -95,7 +95,7 @@ def test_apply_all_kernels():
 
 @pytest.mark.runs_on(["npu"])
 def test_flash_linear_attention_kernels_compose_with_auto(monkeypatch):
-    from fsdp_turbo.ops import apply_fla_ops
+    from fsdp_turbo.ops import get_op
 
     from llamafactory.v1.plugins.model_plugins.kernels import interface
     from llamafactory.v1.plugins.model_plugins.kernels.ops.linear_attention.fla import (
@@ -120,13 +120,19 @@ def test_flash_linear_attention_kernels_compose_with_auto(monkeypatch):
     }
     assert interface.apply_kernels(model, config) is model
     assert auto_calls == [(model, {"config": config, "require_logits": False})]
-    assert apply_fla_ops.__module__ == "fsdp_turbo.ops.fla"
+    assert get_op("chunk_gated_delta_rule").__module__ == "fsdp_turbo.ops.fla"
 
     chunk_op = model.linear_attn.chunk_gated_delta_rule
     assert isinstance(chunk_op, partial)
     assert chunk_op.func.__module__ == "fsdp_turbo.ops.fla"
     assert chunk_op.keywords == {"chunk_size": 32}
     assert model.linear_attn.recurrent_gated_delta_rule.__module__ == "fsdp_turbo.ops.fla"
+
+    with pytest.raises(RuntimeError, match="did not match any model module attributes"):
+        FlashLinearAttentionKernel.apply(
+            model=nn.Linear(2, 2),
+            config={"include_kernels": "chunk_gated_delta_rule", "chunk_size": 32},
+        )
 
 
 def test_flash_linear_attention_kernel_validates_config(monkeypatch):

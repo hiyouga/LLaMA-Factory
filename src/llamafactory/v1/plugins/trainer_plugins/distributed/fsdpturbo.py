@@ -354,13 +354,12 @@ class FSDPTurboFSDP2Engine(FSDP2Engine):
 
     def prepare_model_ep(self, model: HFModel) -> tuple[HFModel, set]:
         """Apply FSDPTurbo EP/EFSDP and return parameters excluded from outer FSDP."""
-        from fsdp_turbo.distributed import (
-            EPPlanConfig,
-            FSDPPlanConfig,
+        from fsdp_turbo.distributed.expert_parallel.expert_fully_shard_parallel import (
             expert_fully_shard_modules,
-            expert_parallelize_modules,
-            module_name_match,
         )
+        from fsdp_turbo.distributed.expert_parallel.expert_parallel import expert_parallelize_modules
+        from fsdp_turbo.fsdp_turbo_config import EPPlanConfig, FSDPPlanConfig
+        from fsdp_turbo.utils.str_match import module_name_match
 
         spec = FSDPTurboEPModelSpec.get(model)
         if spec is None:

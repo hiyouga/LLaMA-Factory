@@ -99,21 +99,20 @@ The LlamaFactory integration layer accepts `eager`, `fused`, `mc2`, and `domino`
 
 Only `eager` and `fused` are validated here because they cover the reference path and the commonly used A3 device-fused path, respectively, and therefore isolate and establish the correctness of the EP/EFSDP integration between LlamaFactory and FSDPTurbo. The current experiment matrix was not extended to `mc2` and `domino`: they add operator, communication-scheduling, and input-shape constraints that require separate numerical comparisons, long-run stability tests, and profiler analysis. They are accepted configuration choices, but the results in this PR should not be interpreted as evidence that they have reached the same stability, numerical, or performance level.
 
-## 4. FSDPTurbo Public Entry Point
+## 4. FSDPTurbo Dependency Entry Points
 
-LlamaFactory depends only on the stable public FSDPTurbo API:
+LlamaFactory imports each required object directly from the module that defines it:
 
 ```python
-from fsdp_turbo.distributed import (
-    EPPlanConfig,
-    FSDPPlanConfig,
+from fsdp_turbo.distributed.expert_parallel.expert_fully_shard_parallel import (
     expert_fully_shard_modules,
-    expert_parallelize_modules,
-    module_name_match,
 )
+from fsdp_turbo.distributed.expert_parallel.expert_parallel import expert_parallelize_modules
+from fsdp_turbo.fsdp_turbo_config import EPPlanConfig, FSDPPlanConfig
+from fsdp_turbo.utils.str_match import module_name_match
 ```
 
-The import occurs inside `prepare_model_ep()`, so other distributed backends remain importable when FSDPTurbo is not installed. LlamaFactory does not depend on internal file paths under `fsdp_turbo.distributed`.
+The imports occur inside `prepare_model_ep()`, so other distributed backends remain importable when FSDPTurbo is not installed. They intentionally bypass aggregate exports from `fsdp_turbo.distributed.__init__` to avoid extra dependencies and potential import cycles during package initialization.
 
 ## 5. Gradient Norms
 
@@ -147,12 +146,13 @@ ModelEngine
   -> apply_kernels("auto, flash-linear-attention")
      -> accelerator-specific LlamaFactory auto kernels
      -> KernelPlugin("flash-linear-attention").apply(...)
-        -> fsdp_turbo.ops.apply_fla_ops()
+        -> fsdp_turbo.ops.get_op()
            -> FSDPTurbo device operator registry
-              -> FLA backend implementation
+        -> fsdp_turbo.utils.patch.patch_model_members()
+           -> FLA backend implementation
 ```
 
-`chunk_size` accepts `16`, `32`, and `64`, with a default of `64`. The kernel plugin and distributed plugin are independent. `name: flash-linear-attention` installs only the selected FLA operators. The comma-separated `name: auto, flash-linear-attention` form composes LlamaFactory's accelerator-specific automatic kernels with the FLA plugin before distributed sharding. FLA stays explicit because it has optional external dependencies and is not part of the built-in `auto` set. FSDPTurbo subsequently replaces the target expert module's `forward`, so the final expert execution path is selected by `ep_dispatcher`; an MoE kernel applied during the auto stage is not retained as a separate second expert execution path.
+`chunk_size` accepts `16`, `32`, and `64`, with a default of `64`. The kernel plugin and distributed plugin are independent. `name: flash-linear-attention` installs only the selected FLA operators. The comma-separated `name: auto, flash-linear-attention` form composes LlamaFactory's accelerator-specific automatic kernels with the FLA plugin before distributed sharding. LlamaFactory owns the operator-to-model-attribute mapping and `chunk_size` binding; FSDPTurbo owns device operator registration, selection, and generic callable patching. FLA stays explicit because it has optional external dependencies and is not part of the built-in `auto` set. FSDPTurbo subsequently replaces the target expert module's `forward`, so the final expert execution path is selected by `ep_dispatcher`; an MoE kernel applied during the auto stage is not retained as a separate second expert execution path.
 
 ## 8. CP Runtime Constraints and Validation Scope
 
