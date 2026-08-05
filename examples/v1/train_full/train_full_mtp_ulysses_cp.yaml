@@ -1,8 +1,6 @@
 model: Qwen/Qwen3-0.6B
 model_class: llm
 
-template: qwen3_nothink
-
 # MTP + Context Parallelism (Ulysses). CP requires `dist_config.name: fsdp2` and
 # `flash_attn: flash_attention_2`. Each MTP head's loss is reduced across the CP
 # group by all-gathering labels / loss_weights / log-probs (see
