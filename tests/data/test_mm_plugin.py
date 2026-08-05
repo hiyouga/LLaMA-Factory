@@ -91,6 +91,32 @@ LABELS = [0, 1, 2, 3, 4]
 BATCH_IDS = [[1] * 1024]
 
 
+class _FakeVideoFrame:
+    def to_image(self):
+        return IMAGES[0]
+
+
+class _FakeVideoContainer:
+    def __init__(self):
+        self.closed = False
+        self.streams = [SimpleNamespace(type="video", duration=2, time_base=0.5, average_rate=2)]
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.close()
+
+    def close(self):
+        self.closed = True
+
+    def seek(self, offset):
+        pass
+
+    def decode(self, stream):
+        return [_FakeVideoFrame(), _FakeVideoFrame()]
+
+
 def _get_mm_inputs(processor: "ProcessorMixin") -> dict[str, "torch.Tensor"]:
     image_processor: BaseImageProcessor = getattr(processor, "image_processor")
     return image_processor(images=IMAGES, return_tensors="pt")
@@ -186,6 +212,26 @@ def test_base_plugin():
     base_plugin = get_mm_plugin(name="base")
     check_inputs = {"plugin": base_plugin, **tokenizer_module}
     _check_plugin(**check_inputs)
+
+
+@pytest.mark.parametrize("plugin_name", ["base", "gemma4", "qwen3_vl"])
+def test_regularize_videos_closes_container(monkeypatch, plugin_name):
+    containers = []
+
+    def open_video(*args, **kwargs):
+        container = _FakeVideoContainer()
+        containers.append(container)
+        return container
+
+    plugin = get_mm_plugin(name=plugin_name)
+    monkeypatch.setattr("llamafactory.data.mm_plugin.av.open", open_video)
+    monkeypatch.setattr(plugin, "_get_video_sample_indices", lambda *args, **kwargs: [0, 1])
+    monkeypatch.setattr(plugin, "_regularize_images", lambda images, **kwargs: {"images": images})
+
+    plugin._regularize_videos(["video.mp4"], video_fps=2.0, video_maxlen=8)
+
+    assert len(containers) == 1
+    assert containers[0].closed
 
 
 @pytest.mark.runs_on(["cpu", "mps"])

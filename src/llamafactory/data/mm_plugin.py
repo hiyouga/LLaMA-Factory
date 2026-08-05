@@ -288,18 +288,18 @@ class MMPluginMixin:
                 frames = video
                 durations.append(len(frames) / kwargs.get("video_fps", 2.0))
             else:
-                container = av.open(video, "r")
-                video_stream = next(stream for stream in container.streams if stream.type == "video")
-                sample_indices = self._get_video_sample_indices(video_stream, **kwargs)
-                container.seek(0)
-                for frame_idx, frame in enumerate(container.decode(video_stream)):
-                    if frame_idx in sample_indices:
-                        frames.append(frame.to_image())
+                with av.open(video, "r") as container:
+                    video_stream = next(stream for stream in container.streams if stream.type == "video")
+                    sample_indices = self._get_video_sample_indices(video_stream, **kwargs)
+                    container.seek(0)
+                    for frame_idx, frame in enumerate(container.decode(video_stream)):
+                        if frame_idx in sample_indices:
+                            frames.append(frame.to_image())
 
-                if video_stream.duration is None:
-                    durations.append(len(frames) / kwargs.get("video_fps", 2.0))
-                else:
-                    durations.append(float(video_stream.duration * video_stream.time_base))
+                    if video_stream.duration is None:
+                        durations.append(len(frames) / kwargs.get("video_fps", 2.0))
+                    else:
+                        durations.append(float(video_stream.duration * video_stream.time_base))
 
             frames = self._regularize_images(frames, **kwargs)["images"]
             results.append(frames)
@@ -980,21 +980,23 @@ class Gemma4Plugin(BasePlugin):
                 durations.append(len(frames) / kwargs.get("video_fps", 2.0))
                 frames_indices.append(list(range(len(frames))))
             else:
-                container = av.open(video, "r")
-                video_stream = next(stream for stream in container.streams if stream.type == "video")
-                sample_indices = self._get_video_sample_indices(video_stream, **kwargs)
-                original_fps = float(video_stream.average_rate)
-                # for correctly calculate timestamps
-                frames_indices.append([idx / original_fps * kwargs.get("video_fps", 2.0) for idx in sample_indices])
-                container.seek(0)
-                for frame_idx, frame in enumerate(container.decode(video_stream)):
-                    if frame_idx in sample_indices:
-                        frames.append(frame.to_image())
+                with av.open(video, "r") as container:
+                    video_stream = next(stream for stream in container.streams if stream.type == "video")
+                    sample_indices = self._get_video_sample_indices(video_stream, **kwargs)
+                    original_fps = float(video_stream.average_rate)
+                    # for correctly calculate timestamps
+                    frames_indices.append(
+                        [idx / original_fps * kwargs.get("video_fps", 2.0) for idx in sample_indices]
+                    )
+                    container.seek(0)
+                    for frame_idx, frame in enumerate(container.decode(video_stream)):
+                        if frame_idx in sample_indices:
+                            frames.append(frame.to_image())
 
-                if video_stream.duration is None:
-                    durations.append(len(frames) / kwargs.get("video_fps", 2.0))
-                else:
-                    durations.append(float(video_stream.duration * video_stream.time_base))
+                    if video_stream.duration is None:
+                        durations.append(len(frames) / kwargs.get("video_fps", 2.0))
+                    else:
+                        durations.append(float(video_stream.duration * video_stream.time_base))
 
             frames = self._regularize_images(frames, **kwargs)["images"]
             results.append(frames)
@@ -2290,25 +2292,27 @@ class Qwen2VLPlugin(BasePlugin):
                 durations.append(len(frames) / kwargs.get("video_fps", 2.0))
                 frames_indices.append(list(range(len(frames))))
             else:
-                container = av.open(video, "r")
-                video_stream = next(stream for stream in container.streams if stream.type == "video")
-                sample_indices = self._get_video_sample_indices(video_stream, **kwargs)
-                original_fps = float(video_stream.average_rate)
-                # for qwen3vl video timestamp calculation
-                frames_indices.append(
-                    [idx / original_fps * kwargs.get("video_fps", 2.0) for idx in sample_indices]
-                )  # hack usage when do_sample_frames=False
-                container.seek(0)
-                for frame_idx, frame in enumerate(container.decode(video_stream)):
-                    if frame_idx in sample_indices:
-                        frames.append(frame.to_image())
+                with av.open(video, "r") as container:
+                    video_stream = next(stream for stream in container.streams if stream.type == "video")
+                    sample_indices = self._get_video_sample_indices(video_stream, **kwargs)
+                    original_fps = float(video_stream.average_rate)
+                    # for qwen3vl video timestamp calculation
+                    frames_indices.append(
+                        [idx / original_fps * kwargs.get("video_fps", 2.0) for idx in sample_indices]
+                    )  # hack usage when do_sample_frames=False
+                    container.seek(0)
+                    for frame_idx, frame in enumerate(container.decode(video_stream)):
+                        if frame_idx in sample_indices:
+                            frames.append(frame.to_image())
 
-                if video_stream.duration is None:
-                    fps_per_video.append(kwargs.get("video_fps", 2.0))
-                    durations.append(len(frames) / kwargs.get("video_fps", 2.0))
-                else:
-                    fps_per_video.append(len(sample_indices) / float(video_stream.duration * video_stream.time_base))
-                    durations.append(float(video_stream.duration * video_stream.time_base))
+                    if video_stream.duration is None:
+                        fps_per_video.append(kwargs.get("video_fps", 2.0))
+                        durations.append(len(frames) / kwargs.get("video_fps", 2.0))
+                    else:
+                        fps_per_video.append(
+                            len(sample_indices) / float(video_stream.duration * video_stream.time_base)
+                        )
+                        durations.append(float(video_stream.duration * video_stream.time_base))
 
             if len(frames) % 2 != 0:
                 frames.append(frames[-1])
