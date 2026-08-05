@@ -217,17 +217,17 @@ class SGLangEngine(BaseEngine):
             }
             if self.lora_request:
                 json_data["lora_request"] = ["lora0"]
-            response = requests.post(f"{self.base_url}/generate", json=json_data, stream=True)
-            if response.status_code != 200:
-                raise RuntimeError(f"SGLang server error: {response.status_code}, {response.text}")
+            with requests.post(f"{self.base_url}/generate", json=json_data, stream=True) as response:
+                if response.status_code != 200:
+                    raise RuntimeError(f"SGLang server error: {response.status_code}, {response.text}")
 
-            for chunk in response.iter_lines(decode_unicode=False):
-                chunk = str(chunk.decode("utf-8"))
-                if chunk == "data: [DONE]":
-                    break
+                for chunk in response.iter_lines(decode_unicode=False):
+                    chunk = str(chunk.decode("utf-8"))
+                    if chunk == "data: [DONE]":
+                        break
 
-                if chunk and chunk.startswith("data:"):
-                    yield json.loads(chunk[5:].strip("\n"))
+                    if chunk and chunk.startswith("data:"):
+                        yield json.loads(chunk[5:].strip("\n"))
 
         return await asyncio.to_thread(stream_request)
 
