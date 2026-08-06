@@ -40,6 +40,9 @@ Conventions
   uses ``mtp_logits[k][:, :-(k + 2)]`` against ``labels[:, k + 2:]``.
 """
 
+import glob
+import json
+import os
 from typing import TYPE_CHECKING, Optional
 
 import torch
@@ -47,6 +50,7 @@ import torch.distributed as dist
 import torch.distributed.nn  # noqa: F401  required for `dist.nn.all_gather` (autograd-friendly)
 import torch.nn as nn
 import torch.nn.functional as F
+from safetensors.torch import load_file as load_safetensors_file
 
 from ...utils import logging
 from ...utils.plugin import BasePlugin
@@ -73,6 +77,52 @@ def roll_tensor(
     rolled = torch.roll(tensor, shifts=shifts, dims=dim)
     rolled.select(dim, shifts).fill_(fill_value)
     return rolled
+
+
+def shift_input_ids_for_mtp(
+    input_ids: torch.Tensor, fill_value: float = 0.0
+) -> torch.Tensor:
+    """Shift ``input_ids`` left by one to obtain next-token ids, context-parallel aware.
+
+    The MTP head combines the main hidden state at position ``p`` with the embedding of
+    token ``p + 1`` (the next token), so the input ids are shifted left by one. Under
+    Ulysses context parallelism each rank only holds a *local* sequence chunk, so a plain
+    local ``roll_tensor`` would fill the chunk-tail position with ``fill_value`` — dropping
+    the real next token that lives at the head of the *next* rank's chunk. That corrupts
+    the MTP input embedding at every CP boundary.
+
+    Under CP we therefore all-gather the first token of every rank's chunk and fill this
+    rank's tail with the next rank's first token (the true next token across the
+    boundary). Only the global last rank's tail — the genuine end of the sequence — is
+    filled with ``fill_value``. The non-CP path is an unchanged local roll.
+    """
+    cp_size = 1
+    if dist.is_available() and dist.is_initialized():
+        try:
+            from .parallelization.ulysses import (
+                get_ulysses_sequence_parallel_group,
+                get_ulysses_sequence_parallel_rank,
+                get_ulysses_sequence_parallel_world_size,
+            )
+
+            cp_size = get_ulysses_sequence_parallel_world_size()
+        except Exception:
+            cp_size = 1
+
+    if cp_size <= 1:
+        return roll_tensor(input_ids, shifts=-1, dim=-1, fill_value=fill_value)
+
+    cp_group = get_ulysses_sequence_parallel_group()
+    cp_rank = get_ulysses_sequence_parallel_rank()
+    # All-gather the first token of each rank's local chunk: rank r's tail needs rank r+1's head.
+    first_tok = input_ids[:, :1].contiguous()
+    gathered_first = [torch.empty_like(first_tok) for _ in range(cp_size)]
+    dist.all_gather(gathered_first, first_tok, group=cp_group)
+    if cp_rank < cp_size - 1:
+        next_first = gathered_first[cp_rank + 1]
+        return torch.cat([input_ids[:, 1:], next_first], dim=-1)
+    # Global last rank: the sequence truly ends here, so pad with fill_value.
+    return torch.cat([input_ids[:, 1:], torch.full_like(first_tok, fill_value)], dim=-1)
 
 
 class MultiTokenPredictionLayer(nn.Module):
@@ -137,11 +187,16 @@ class MultiTokenPredictionBlock(nn.Module):
         self.output_layer = output_layer
         self.mtp_start_layer_idx = config.num_hidden_layers
 
-        # MTP heads are brand-new decoder layers. Some models index per-layer config
-        # lists (e.g. ``config.layer_types[layer_idx]``) by ``layer_idx``, which would
-        # raise out of range for an index >= ``num_hidden_layers``. Use a valid in-range
-        # index (the last decoder layer) so the cloned layer behaves like a normal one.
-        safe_layer_idx = max(0, config.num_hidden_layers - 1)
+        # MTP heads are brand-new decoder layers. Their attention type is selected by
+        # ``config.layer_types[layer_idx]`` for hybrid-attention models (e.g. Qwen3 mixes
+        # full_attention with sliding_attention; Qwen3.5 mixes full_attention with
+        # linear_attention/GDN). An MTP head predicts the next+ token over the *full*
+        # sequence and needs global context, so it must use full self-attention — a
+        # sliding-window or GDN head would only see a local/linear view. Pick a
+        # ``full_attention`` layer index explicitly instead of blindly taking the last
+        # layer (which may be sliding/GDN depending on the layer count).
+        safe_layer_idx = _select_layer_idx_for_mtp(config)
+        self.mtp_layer_idx = safe_layer_idx
 
         self.layers = nn.ModuleDict(
             {
@@ -194,8 +249,9 @@ class MultiTokenPredictionBlock(nn.Module):
         if position_ids is None:
             position_ids = torch.arange(seq_len, device=hidden_states.device).unsqueeze(0).expand(batch_size, -1)
 
-        # Shift input ids by one to obtain the embedding of the "next" token.
-        shifted_input_ids = roll_tensor(input_ids, shifts=-1, dim=-1, fill_value=0)
+        # Shift input ids by one to obtain the embedding of the "next" token. Under context
+        # parallelism this must cross the CP boundary correctly (see shift_input_ids_for_mtp).
+        shifted_input_ids = shift_input_ids_for_mtp(input_ids, fill_value=0)
         input_embeds = self.embed_tokens(shifted_input_ids)
 
         # Causal mask for the MTP decoder layers (same construction as the base model).
@@ -385,6 +441,30 @@ def _resolve_layer_cls(model: "PreTrainedModel") -> tuple[type[nn.Module], type[
     return layer_cls, norm_cls
 
 
+def _select_layer_idx_for_mtp(config: "PretrainedConfig") -> int:
+    """Select a decoder layer index whose attention type is full self-attention.
+
+    MTP heads reuse the base model's decoder layer class, and for hybrid-attention models
+    the layer's attention type is determined by ``config.layer_types[layer_idx]``: Qwen3
+    mixes ``full_attention`` with ``sliding_attention``; Qwen3.5 mixes ``full_attention``
+    with ``linear_attention`` (GDN). An MTP head predicts the token at offset ``k + 2``
+    over the *full* sequence and needs global context, so it must use full self-attention
+    — a sliding-window head only sees a local window, and a GDN/linear head is a recurrent
+    approximation, neither of which fits the MTP objective. We therefore pick the last
+    ``full_attention`` layer index so the cloned MTP layer builds a standard attention
+    module (``self_attn``) that goes through ``_flash_attention_forward``.
+
+    Falls back to the last layer index when ``layer_types`` is absent (Llama/Mistral-style
+    models, which are all-full) or contains no ``full_attention`` entry.
+    """
+    layer_types = getattr(config, "layer_types", None)
+    if layer_types:
+        for idx in range(len(layer_types) - 1, -1, -1):
+            if layer_types[idx] == "full_attention":
+                return idx
+    return max(0, config.num_hidden_layers - 1)
+
+
 def apply_mtp(model: "PreTrainedModel", mtp_config: "PluginConfig") -> "PreTrainedModel":
     """Attach an MTP block to ``model`` and patch its forward to emit ``mtp_logits``."""
     num_layers = int(mtp_config.get("num_layers", 1))
@@ -423,9 +503,12 @@ def apply_mtp(model: "PreTrainedModel", mtp_config: "PluginConfig") -> "PreTrain
 
     _patch_forward(model)
 
+    layer_types = getattr(model.config, "layer_types", None)
+    layer_type_str = layer_types[block.mtp_layer_idx] if layer_types else "full_attention"
     logger.info_rank0(
         f"Enabled Multi-Token Prediction with {num_layers} head(s) "
-        f"(loss_scale={model.config.mtp_loss_scaling_factor})."
+        f"(loss_scale={model.config.mtp_loss_scaling_factor}, "
+        f"decoder layer cloned from layer_idx={block.mtp_layer_idx} [{layer_type_str}])."
     )
     return model
 
@@ -464,3 +547,133 @@ def _patch_forward(model: "PreTrainedModel") -> None:
         return outputs
 
     model.forward = types.MethodType(mtp_forward, model)
+
+
+# MTP modules whose weights are *shared* with the base model (the embedding and the
+# lm_head). These keys must be dropped from any state_dict passed to ``save_pretrained``,
+# otherwise transformers raises a "shared tensors not properly defined" RuntimeError, and
+# they must be skipped when loading (``apply_mtp`` re-shares them from the base model).
+_SHARED_MTP_KEYS = ("mtp.embed_tokens.weight", "mtp.output_layer.weight")
+
+
+def strip_shared_mtp_keys(state_dict: dict) -> list[str]:
+    """Remove MTP keys that share tensors with the base model, in place.
+
+    ``mtp.embed_tokens`` and ``mtp.output_layer`` reference the base model's embedding and
+    ``lm_head`` (see ``apply_mtp``), so their weights are already saved under the base
+    model's own keys. Keeping them in the state_dict triggers transformers'
+    ``shared tensors ... not properly defined`` RuntimeError on ``save_pretrained``. Returns
+    the list of removed keys so callers can log it.
+    """
+    removed = [k for k in _SHARED_MTP_KEYS if k in state_dict]
+    for k in removed:
+        del state_dict[k]
+    return removed
+
+
+def load_mtp_weights(model: "PreTrainedModel", model_path: str) -> None:
+    """Load MTP weights from a checkpoint into an already-grafted ``model.mtp``.
+
+    transformers' ``from_pretrained`` drops ``mtp.*`` keys as unexpected (the MTP block is
+    grafted at runtime, not part of the model class), so after ``apply_mtp`` re-creates the
+    block with random weights we re-read the ``mtp.*`` tensors from the checkpoint and load
+    them. Shared keys (``embed_tokens`` / ``output_layer``) are skipped — ``apply_mtp``
+    already re-shares them from the base model.
+
+    Called only on the non-meta init path; the FSDP2 meta path loads ``mtp.*`` through the
+    regular HF weight-loading loop (the checkpoint's ``mtp.*`` keys match the grafted
+    module's parameters). No-op when the model is still on meta device or the checkpoint
+    has no ``mtp.*`` weights (e.g. fine-tuning from a base checkpoint).
+    """
+    mtp_block = getattr(model, "mtp", None)
+    if mtp_block is None:
+        return
+
+    # Skip on meta device: FSDP2 meta path materializes and loads weights later.
+    try:
+        if next(model.parameters()).is_meta:
+            return
+    except StopIteration:
+        return
+
+    local_dir = _resolve_checkpoint_dir(model_path)
+    if local_dir is None:
+        return
+
+    mtp_state = _read_mtp_tensors(local_dir)
+    if mtp_state:
+        model.load_state_dict(mtp_state, strict=False)
+        logger.info_rank0(f"Loaded {len(mtp_state)} MTP weight tensor(s) from {local_dir}.")
+    else:
+        logger.info_rank0(
+            f"No MTP weights found in {local_dir}; MTP heads keep their random initialization."
+        )
+
+
+def _read_mtp_tensors(local_dir: str) -> dict[str, torch.Tensor]:
+    """Read every ``mtp.*`` tensor (shared keys excluded) from a local checkpoint dir.
+
+    Handles both sharded (``model.safetensors.index.json`` + ``model-*.safetensors``) and
+    single-file (``model.safetensors``) checkpoints. ``safetensors.torch.load_file`` already
+    resolves sharded checkpoints from the index, so the two cases collapse to one call.
+    """
+    mtp_state: dict[str, torch.Tensor] = {}
+
+    safetensors_files = _resolve_safetensors_files(local_dir)
+    for sf in safetensors_files:
+        for k, v in load_safetensors_file(sf).items():
+            if k.startswith("mtp.") and k not in _SHARED_MTP_KEYS:
+                mtp_state[k] = v
+
+    # Legacy pytorch_model.bin checkpoints (rare, but cover for completeness).
+    if not mtp_state:
+        for bf in sorted(glob.glob(os.path.join(local_dir, "*.bin"))):
+            sd = torch.load(bf, map_location="cpu", weights_only=True)
+            for k, v in sd.items():
+                if k.startswith("mtp.") and k not in _SHARED_MTP_KEYS:
+                    mtp_state[k] = v
+            del sd
+
+    return mtp_state
+
+
+def _resolve_safetensors_files(local_dir: str) -> list[str]:
+    """Return the list of safetensors shard files for a checkpoint dir."""
+    index_file = os.path.join(local_dir, "model.safetensors.index.json")
+    if os.path.exists(index_file):
+        with open(index_file) as f:
+            weight_map = json.load(f)["weight_map"]
+        # Only shards that actually contain mtp.* keys (avoids loading every shard).
+        mtp_shards = {weight_map[k] for k in weight_map if k.startswith("mtp.") and k not in _SHARED_MTP_KEYS}
+        if not mtp_shards:
+            return []
+        return [os.path.join(local_dir, s) for s in sorted(mtp_shards)]
+
+    single = os.path.join(local_dir, "model.safetensors")
+    return [single] if os.path.exists(single) else []
+
+
+def _resolve_checkpoint_dir(model_path: str) -> Optional[str]:
+    """Resolve a model path/id to a local directory containing checkpoint files."""
+    if not model_path:
+        return None
+    if os.path.isdir(model_path):
+        return model_path
+
+    try:
+        from huggingface_hub import snapshot_download
+    except ImportError:
+        logger.warning_rank0(
+            f"Cannot resolve MTP weights from '{model_path}': huggingface_hub is not available."
+        )
+        return None
+
+    offline = os.getenv("HF_HUB_OFFLINE") == "1" or os.getenv("TRANSFORMERS_OFFLINE") == "1"
+    allow_patterns = ["*.safetensors", "*.bin", "*.index.json", "config.json"]
+    try:
+        return snapshot_download(
+            repo_id=model_path, local_files_only=offline, allow_patterns=allow_patterns
+        )
+    except Exception as e:
+        logger.warning_rank0(f"Cannot resolve MTP weights from '{model_path}': {e}")
+        return None

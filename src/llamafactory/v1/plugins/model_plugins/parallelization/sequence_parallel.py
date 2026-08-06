@@ -236,5 +236,8 @@ def sequence_parallel_mtp_loss(model, model_inputs):
         mtp_loss = compute_mtp_loss(mtp_logits, labels, loss_weights, cp_group=cp_group)
         loss_scale = float(getattr(model.config, "mtp_loss_scaling_factor", 0.3))
         loss = loss + mtp_loss * loss_scale
+        # Expose the unscaled per-head-mean MTP loss for logging (the main `loss` above
+        # already includes the scaled contribution). Read back by BaseTrainer.fit.
+        model._last_mtp_loss = float(mtp_loss.detach().item())
 
     return loss

@@ -21,7 +21,14 @@ import torch.multiprocessing as mp
 import torch.nn.functional as F
 from transformers import AutoConfig, AutoModelForCausalLM
 
-from llamafactory.v1.plugins.model_plugins.mtp import apply_mtp, compute_mtp_loss, roll_tensor
+from llamafactory.v1.plugins.model_plugins.mtp import (
+    apply_mtp,
+    compute_mtp_loss,
+    load_mtp_weights,
+    roll_tensor,
+    shift_input_ids_for_mtp,
+    strip_shared_mtp_keys,
+)
 from llamafactory.v1.utils.env import find_available_port
 from llamafactory.v1.utils.pytest import dist_env
 
@@ -121,6 +128,77 @@ def test_mtp_head_offset(tiny_model):
         tgt = labels[:, shift:].contiguous().reshape(-1)
         expected = F.cross_entropy(pred, tgt, ignore_index=-100)
         assert torch.isfinite(expected)
+
+
+def test_mtp_save_load(tmp_path):
+    """MTP weights survive save_pretrained -> from_pretrained + apply_mtp + load_mtp_weights.
+
+    Regression test for the MTP weight-save bug: ``save_pretrained`` raised a
+    ``shared tensors ... not properly defined`` RuntimeError on the shared
+    ``mtp.embed_tokens``/``mtp.output_layer`` keys, and ``from_pretrained`` drops all
+    ``mtp.*`` keys as unexpected, so the grafted MTP weights were lost on reload.
+    """
+    config = AutoConfig.from_pretrained(MODEL)
+    model = AutoModelForCausalLM.from_config(config)
+    model = apply_mtp(model, {"name": "mtp", "num_layers": 1, "loss_scale": 0.3})
+    # Mutate MTP weights to detectable non-default values.
+    with torch.no_grad():
+        model.mtp.e_proj.weight.fill_(0.25)
+        head0 = model.mtp.layers[str(config.num_hidden_layers)]
+        head0.layer.self_attn.q_proj.weight.fill_(-0.5)
+    ref_eproj = model.mtp.e_proj.weight.detach().clone()
+    ref_q = head0.layer.self_attn.q_proj.weight.detach().clone()
+
+    # Save: strip the shared MTP keys first, exactly as the trainer does.
+    state_dict = model.state_dict()
+    strip_shared_mtp_keys(state_dict)
+    model.save_pretrained(tmp_path, state_dict=state_dict, max_shard_size="4GB")
+
+    # Reload: from_pretrained drops mtp.*, apply_mtp re-creates the block (random),
+    # load_mtp_weights restores the saved MTP tensors.
+    reloaded = AutoModelForCausalLM.from_pretrained(tmp_path)
+    reloaded = apply_mtp(reloaded, {"name": "mtp", "num_layers": 1, "loss_scale": 0.3})
+    load_mtp_weights(reloaded, str(tmp_path))
+
+    assert torch.equal(ref_eproj, reloaded.mtp.e_proj.weight)
+    new_head0 = reloaded.mtp.layers[str(config.num_hidden_layers)]
+    assert torch.equal(ref_q, new_head0.layer.self_attn.q_proj.weight)
+    # Shared modules are re-tied to the base model (not loaded from a separate copy).
+    assert reloaded.mtp.embed_tokens.weight.data_ptr() == reloaded.get_input_embeddings().weight.data_ptr()
+    assert reloaded.mtp.output_layer.weight.data_ptr() == reloaded.lm_head.weight.data_ptr()
+
+
+def _test_mtp_shift_input_ids_cp(local_rank: int, world_size: int, master_port: int):
+    """``shift_input_ids_for_mtp`` under CP must match a full-sequence roll on each chunk.
+
+    Regression test for the CP boundary bug: a plain local ``roll_tensor`` filled each
+    chunk's tail with ``fill_value`` instead of the next rank's first token, corrupting
+    the MTP input embedding at every CP boundary.
+    """
+    with dist_env(local_rank, world_size, master_port):
+        dist.init_process_group("gloo")
+        from llamafactory.v1.plugins.model_plugins.parallelization.ulysses import (
+            set_ulysses_sequence_parallel_group,
+        )
+
+        cp_group = dist.new_group(ranks=list(range(world_size)))
+        set_ulysses_sequence_parallel_group(cp_group)
+
+        global_ids = torch.tensor([[10, 11, 12, 13, 14, 15, 16, 17]])
+        chunk = torch.chunk(global_ids, world_size, dim=-1)[local_rank].contiguous()
+        cp_shifted = shift_input_ids_for_mtp(chunk, fill_value=0)
+        # Reference: roll the FULL sequence left by one, then take the local chunk.
+        full_shifted = roll_tensor(global_ids.clone(), shifts=-1, dim=-1, fill_value=0)
+        ref = torch.chunk(full_shifted, world_size, dim=-1)[local_rank].contiguous()
+        assert torch.equal(cp_shifted, ref), (local_rank, cp_shifted.tolist(), ref.tolist())
+        dist.destroy_process_group()
+
+
+@pytest.mark.require_distributed(2)
+def test_mtp_shift_input_ids_cp():
+    """The CP-aware shift reproduces the full-sequence roll across the chunk boundary."""
+    master_port = find_available_port()
+    mp.spawn(_test_mtp_shift_input_ids_cp, args=(2, master_port), nprocs=2, join=True)
 
 
 def _test_mtp_cp_alignment(local_rank: int, world_size: int, master_port: int):

@@ -58,10 +58,36 @@ See `examples/v1/train_full/train_full_mtp_fsdp2.yaml` for a complete example.
 
 ## Compatibility
 
-MTP currently targets Llama/Qwen3/Mistral-style models that expose `model.model.layers`,
+MTP currently targets Llama/Qwen3/Qwen3.5/Mistral-style models that expose `model.model.layers`,
 `model.model.rotary_emb`, `model.model.norm` and `model.lm_head`. The MTP heads are
 randomly initialized; loading a base checkpoint that does not contain `mtp.*` keys will
 leave them at their initialization (missing-key warnings are expected).
+
+### Layer selection (hybrid-attention models)
+
+Each MTP head reuses the base model's decoder layer *class* and is cloned from a layer
+index whose attention type is **full self-attention**. For hybrid-attention models this
+matters: Qwen3 mixes `full_attention` with `sliding_attention`; Qwen3.5 mixes
+`full_attention` with `linear_attention` (GDN). An MTP head predicts the token at offset
+`k + 2` over the *full* sequence and needs global context, so a sliding-window or GDN
+head (local / recurrent view) would be wrong. `_select_layer_idx_for_mtp` picks the last
+`full_attention` layer index from `config.layer_types` (falling back to the last layer for
+all-full models like Llama/Mistral). The selected index is logged on attach, e.g.
+`decoder layer cloned from layer_idx=7 [full_attention]`.
+
+## Saving and loading MTP weights
+
+`mtp.embed_tokens` and `mtp.output_layer` are **shared** with the base model's embedding
+and `lm_head`, so they are stripped from the saved state dict (`strip_shared_mtp_keys`)
+before `save_pretrained` to avoid transformers' "shared tensors not properly defined"
+error. Only the MTP-specific tensors (`layers.*`, `enorm`/`hnorm`/`e_proj`/`h_proj`/
+`final_layernorm`) are written alongside the base model weights.
+
+On load, `from_pretrained` drops `mtp.*` keys as unexpected (the MTP block is grafted at
+runtime). `ModelEngine` therefore calls `apply_mtp` (re-creating the block and re-sharing
+the embedding/`lm_head`) and then `load_mtp_weights` to restore the saved MTP tensors from
+the checkpoint. This is automatic; no extra config is needed. The FSDP2 meta path loads
+`mtp.*` through the regular HF weight loop, and DCP resume restores them by FQN.
 
 ## Context Parallelism (MTP + CP)
 
@@ -70,12 +96,17 @@ MTP also works under Ulysses context parallelism (CP). CP requires
 non-MTP CP). When MTP and CP are both enabled:
 
 - The MTP decoder layers go through the same globally-patched `_flash_attention_forward`
-  as the main model, so they participate in Ulysses attention automatically.
+  as the main model, so they participate in Ulysses attention automatically. (Each MTP
+  head is a `full_attention` layer, so it always uses `_flash_attention_forward`.)
 - `BaseTrainer.fit` routes to the `sequence_parallel_mtp_loss` plugin, which computes the
   main-head CP loss (unchanged) plus the scaled MTP loss. The per-head MTP loss is
   computed on the full sequence by all-gathering `labels` / `loss_weights` / `log_probs`
   across the CP group (see `compute_mtp_loss` with `cp_group` in `mtp.py`), mirroring the
   single-head `sequence_parallel_loss` plugin.
+- The MTP input shift (`shift_input_ids_for_mtp`) is CP-aware: each rank's chunk-tail is
+  filled with the *next rank's first token* (all-gathered across the CP group) instead of
+  a pad value, so the next-token embedding at every CP boundary is correct. Only the
+  global last rank's tail (the true sequence end) is padded.
 
 ```yaml
 mtp_config:

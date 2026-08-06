@@ -64,6 +64,9 @@ class SFTTrainer(BaseTrainer):
         if mtp_logits:
             mtp_loss = compute_mtp_loss(mtp_logits, labels, loss_weights)
             loss = loss + mtp_loss * self._mtp_loss_scale()
+            # Expose the unscaled per-head-mean MTP loss for logging (the main `loss` above
+            # already includes the scaled contribution). Read back by BaseTrainer.fit.
+            self.model._last_mtp_loss = float(mtp_loss.detach().item())
 
         return loss
 
