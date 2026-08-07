@@ -95,6 +95,7 @@ def test_apply_all_kernels():
 
 @pytest.mark.runs_on(["npu"])
 def test_flash_linear_attention_kernels_compose_with_auto(monkeypatch):
+    import fsdp_turbo.ops.fla  # noqa: F401
     from fsdp_turbo.ops import get_op
 
     from llamafactory.v1.plugins.model_plugins.kernels import interface
@@ -110,7 +111,7 @@ def test_flash_linear_attention_kernels_compose_with_auto(monkeypatch):
         "_apply_auto_kernels",
         lambda model, **kwargs: auto_calls.append((model, kwargs)) or model,
     )
-    # FLA execution is outside this bridge test; FSDPTurbo itself remains real.
+    # FLA execution is outside this bridge test; its external runtime is not required.
     monkeypatch.setattr(FlashLinearAttentionKernel, "check_deps", staticmethod(lambda: None))
 
     config = {
