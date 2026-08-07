@@ -936,6 +936,8 @@ def get_ray_remote_config_for_worker(
         remote_config["num_gpus"] = 1
     elif device_name == "npu":
         remote_config["resources"] = {"NPU": 1}
+    elif device_name == "xpu":
+        remote_config["resources"] = {"XPU": 1}
 
     return remote_config
 
