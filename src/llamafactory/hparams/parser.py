@@ -117,6 +117,26 @@ def read_args(args: dict[str, Any] | list[str] | None = None) -> dict[str, Any] 
         return sys.argv[1:]
 
 
+def _get_kt_runtime_capacity(
+    data_args: "DataArguments",
+    training_args: "TrainingArguments",
+    finetuning_args: "FinetuningArguments",
+) -> int:
+    r"""Return the largest local token batch submitted to a KT expert."""
+    tokens_per_sample = data_args.cutoff_len
+    if finetuning_args.stage == "sft" and data_args.packing:
+        tokens_per_sample += 1
+    if finetuning_args.stage == "sft" and training_args.do_train:
+        tokens_per_sample = ((tokens_per_sample + 7) // 8) * 8
+
+    local_batch_sizes = [1]
+    if training_args.do_train:
+        local_batch_sizes.append(training_args.per_device_train_batch_size)
+    if training_args.do_eval or training_args.do_predict:
+        local_batch_sizes.append(training_args.per_device_eval_batch_size)
+    return tokens_per_sample * max(local_batch_sizes)
+
+
 def _parse_args(
     parser: "HfArgumentParser", args: dict[str, Any] | list[str] | None = None, allow_extra_keys: bool = False
 ) -> tuple[Any]:
@@ -605,10 +625,10 @@ def get_train_args(args: dict[str, Any] | list[str] | None = None) -> _TRAIN_CLS
     elif training_args.fp16:
         model_args.compute_dtype = torch.float16
 
+    data_args.packing = data_args.packing if data_args.packing is not None else finetuning_args.stage == "pt"
     model_args.device_map = {"": get_current_device()}
     model_args.model_max_length = data_args.cutoff_len
     model_args.block_diag_attn = data_args.neat_packing
-    data_args.packing = data_args.packing if data_args.packing is not None else finetuning_args.stage == "pt"
 
     # Log on each process the small summary
     logger.info(
@@ -620,7 +640,11 @@ def get_train_args(args: dict[str, Any] | list[str] | None = None) -> _TRAIN_CLS
     transformers.set_seed(training_args.seed)
 
     if model_args.use_kt:
-        model_args.apply_kt_config(finetuning_args, training_args, model_args.model_max_length)
+        model_args.apply_kt_config(
+            finetuning_args,
+            training_args,
+            _get_kt_runtime_capacity(data_args, training_args, finetuning_args),
+        )
 
     return model_args, data_args, training_args, finetuning_args, generating_args
 
