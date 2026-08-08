@@ -82,10 +82,14 @@ def test_kt_rejects_cpu_recompute_without_gpu_checkpointing():
         model_args.get_kt_activation_policy()
 
 
-def test_apply_kt_config_calls_one_public_transformers_api():
+def test_apply_kt_config_calls_one_public_transformers_api(tmp_path):
+    adapter_root = tmp_path / "adapter"
+    adapter_dir = adapter_root / "version-1"
+    adapter_dir.mkdir(parents=True)
     model_args = ModelArguments(
         model_name_or_path="dummy",
-        adapter_name_or_path="adapter",
+        adapter_name_or_path=str(adapter_root),
+        adapter_folder="version-1",
         use_kt=True,
         kt_cpu_activation="retain",
         kt_weight_path="/weights/experts",
@@ -97,7 +101,7 @@ def test_apply_kt_config_calls_one_public_transformers_api():
 
     assert len(training_args.calls) == 1
     config, adapter_path = training_args.calls[0]
-    assert adapter_path == "adapter"
+    assert adapter_path == str(adapter_dir)
     assert config["kt_backend"] == "auto"
     assert config["kt_model_max_length"] == 1152
     assert config["kt_activation_policy"] == {"cpu": "retain", "gpu": "recompute"}
@@ -138,6 +142,37 @@ def test_apply_kt_config_rejects_accelerate_fsdp_checkpointing(monkeypatch):
     model_args = ModelArguments(model_name_or_path="dummy", use_kt=True)
 
     with pytest.raises(ValueError, match="Disable FSDP activation checkpointing"):
+        model_args.apply_kt_config(_finetuning_args(), _TrainingArgs({}), model_max_length=1024)
+
+
+def test_apply_kt_config_rejects_adapter_folder_symlink_escape(tmp_path):
+    adapter_root = tmp_path / "adapter"
+    outside = tmp_path / "outside"
+    adapter_root.mkdir()
+    outside.mkdir()
+    (adapter_root / "escaped").symlink_to(outside, target_is_directory=True)
+    model_args = ModelArguments(
+        model_name_or_path="dummy",
+        adapter_name_or_path=str(adapter_root),
+        adapter_folder="escaped",
+        use_kt=True,
+    )
+
+    with pytest.raises(ValueError, match="must stay inside"):
+        model_args.apply_kt_config(_finetuning_args(), _TrainingArgs({}), model_max_length=1024)
+
+
+def test_apply_kt_config_rejects_missing_adapter_subfolder(tmp_path):
+    adapter_root = tmp_path / "adapter"
+    adapter_root.mkdir()
+    model_args = ModelArguments(
+        model_name_or_path="dummy",
+        adapter_name_or_path=str(adapter_root),
+        adapter_folder="missing",
+        use_kt=True,
+    )
+
+    with pytest.raises(ValueError, match="training requires a local adapter directory"):
         model_args.apply_kt_config(_finetuning_args(), _TrainingArgs({}), model_max_length=1024)
 
 

@@ -640,6 +640,22 @@ class KTransformersArguments:
         )
         return {key: value for key, value in kt_config.items() if value is not None}
 
+    def _resolve_kt_adapter_artifact_dir(self, operation: str) -> str | None:
+        if not self.adapter_name_or_path:
+            return None
+        if len(self.adapter_name_or_path) != 1:
+            raise ValueError("KTransformers accepts a single `adapter_name_or_path`.")
+
+        adapter_root = os.path.realpath(os.path.expanduser(self.adapter_name_or_path[0]))
+        adapter_dir = adapter_root
+        if self.adapter_folder:
+            adapter_dir = os.path.realpath(os.path.join(adapter_root, self.adapter_folder))
+            if os.path.commonpath((adapter_root, adapter_dir)) != adapter_root:
+                raise ValueError("`adapter_folder` must stay inside the KT adapter directory.")
+        if not os.path.isdir(adapter_dir):
+            raise ValueError(f"KTransformers {operation} requires a local adapter directory.")
+        return adapter_dir
+
     def apply_kt_config(self, finetuning_args: Any, training_args: Any, model_max_length: int | None) -> None:
         r"""Apply LLaMA-Factory KT args to transformers/accelerate KT integration points."""
         if not self.use_kt:
@@ -657,12 +673,8 @@ class KTransformersArguments:
                 "The installed Transformers-KT does not provide `TrainingArguments.update_kt_config()`."
             )
 
-        adapter_path = None
-        if self.adapter_name_or_path:
-            if len(self.adapter_name_or_path) != 1:
-                raise ValueError("KTransformers accepts a single `adapter_name_or_path`.")
-            adapter_path = self.adapter_name_or_path[0]
-        update_kt_config(kt_config, adapter_name_or_path=adapter_path)
+        adapter_dir = self._resolve_kt_adapter_artifact_dir("training")
+        update_kt_config(kt_config, adapter_name_or_path=adapter_dir)
 
     def configure_kt_loading(self, finetuning_args: Any, model_max_length: int | None) -> None:
         r"""Configure KT model loading for inference and evaluation."""
@@ -673,18 +685,7 @@ class KTransformersArguments:
         if self.infer_backend != EngineName.HF:
             raise ValueError("KTransformers inference requires `infer_backend: huggingface`.")
 
-        adapter_path = None
-        if self.adapter_name_or_path:
-            if len(self.adapter_name_or_path) != 1:
-                raise ValueError("KTransformers accepts a single `adapter_name_or_path`.")
-            adapter_root = os.path.realpath(os.path.expanduser(self.adapter_name_or_path[0]))
-            adapter_path = adapter_root
-            if self.adapter_folder:
-                adapter_path = os.path.realpath(os.path.join(adapter_root, self.adapter_folder))
-                if os.path.commonpath((adapter_root, adapter_path)) != adapter_root:
-                    raise ValueError("`adapter_folder` must stay inside the KT adapter directory.")
-            if not os.path.isdir(adapter_path):
-                raise ValueError("KTransformers inference requires a local adapter directory.")
+        adapter_dir = self._resolve_kt_adapter_artifact_dir("inference")
 
         try:
             from transformers.integrations.kt import configure_kt
@@ -696,7 +697,7 @@ class KTransformersArguments:
             model_max_length,
             self._normalize_advanced_kt_config(self._kt_inference_config),
         )
-        self._kt_adapter_artifact_path = adapter_path
+        self._kt_adapter_artifact_path = adapter_dir
         self._kt_config_handle = configure_kt(kt_config)
 
 
