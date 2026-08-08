@@ -143,13 +143,15 @@ def test_apply_kt_config_rejects_accelerate_fsdp_checkpointing(monkeypatch):
 
 @pytest.mark.parametrize("parse_args", (_parse_infer_args, _parse_eval_args))
 def test_inference_parsers_accept_the_training_yaml_kt_config(parse_args):
-    parsed = parse_args(
-        {
-            "model_name_or_path": "dummy",
-            "use_kt": True,
-            "kt_config": {"kt_backend": "AMXBF16"},
-        }
-    )
+    arguments = {
+        "model_name_or_path": "dummy",
+        "use_kt": True,
+        "kt_config": {"kt_backend": "AMXBF16"},
+    }
+    if parse_args is _parse_eval_args:
+        arguments["task"] = "dummy"
+
+    parsed = parse_args(arguments)
 
     assert parsed[0]._kt_inference_config == {"kt_backend": "AMXBF16"}
 
