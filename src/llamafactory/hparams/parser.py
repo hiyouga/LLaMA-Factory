@@ -18,6 +18,7 @@
 import json
 import os
 import sys
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Optional
 
@@ -48,6 +49,14 @@ logger = logging.get_logger(__name__)
 check_dependencies()
 
 
+@dataclass
+class _KTransformersRuntimeArguments:
+    kt_config: dict[str, Any] | None = field(
+        default=None,
+        metadata={"help": "Advanced KTransformers settings used during inference or evaluation."},
+    )
+
+
 _TRAIN_ARGS = [
     ModelArguments,
     DataArguments,
@@ -56,9 +65,9 @@ _TRAIN_ARGS = [
     GeneratingArguments,
 ]
 _TRAIN_CLS = tuple[ModelArguments, DataArguments, TrainingArguments, FinetuningArguments, GeneratingArguments]
-_INFER_ARGS = [ModelArguments, DataArguments, FinetuningArguments, GeneratingArguments]
+_INFER_ARGS = [ModelArguments, DataArguments, FinetuningArguments, GeneratingArguments, _KTransformersRuntimeArguments]
 _INFER_CLS = tuple[ModelArguments, DataArguments, FinetuningArguments, GeneratingArguments]
-_EVAL_ARGS = [ModelArguments, DataArguments, EvaluationArguments, FinetuningArguments]
+_EVAL_ARGS = [ModelArguments, DataArguments, EvaluationArguments, FinetuningArguments, _KTransformersRuntimeArguments]
 _EVAL_CLS = tuple[ModelArguments, DataArguments, EvaluationArguments, FinetuningArguments]
 
 if is_mcore_adapter_available() and is_env_enabled("USE_MCA"):
@@ -360,13 +369,21 @@ def _configure_mbridge_training_args(training_args, data_args, finetuning_args) 
 def _parse_infer_args(args: dict[str, Any] | list[str] | None = None) -> _INFER_CLS:
     parser = HfArgumentParser(_INFER_ARGS)
     allow_extra_keys = is_env_enabled("ALLOW_EXTRA_ARGS")
-    return _parse_args(parser, args, allow_extra_keys=allow_extra_keys)
+    model_args, data_args, finetuning_args, generating_args, kt_args = _parse_args(
+        parser, args, allow_extra_keys=allow_extra_keys
+    )
+    model_args._kt_inference_config = kt_args.kt_config
+    return model_args, data_args, finetuning_args, generating_args
 
 
 def _parse_eval_args(args: dict[str, Any] | list[str] | None = None) -> _EVAL_CLS:
     parser = HfArgumentParser(_EVAL_ARGS)
     allow_extra_keys = is_env_enabled("ALLOW_EXTRA_ARGS")
-    return _parse_args(parser, args, allow_extra_keys=allow_extra_keys)
+    model_args, data_args, eval_args, finetuning_args, kt_args = _parse_args(
+        parser, args, allow_extra_keys=allow_extra_keys
+    )
+    model_args._kt_inference_config = kt_args.kt_config
+    return model_args, data_args, eval_args, finetuning_args
 
 
 def get_ray_args(args: dict[str, Any] | list[str] | None = None) -> RayArguments:
@@ -681,6 +698,8 @@ def get_infer_args(args: dict[str, Any] | list[str] | None = None) -> _INFER_CLS
     else:
         model_args.device_map = "auto"
 
+    model_args.configure_kt_loading(finetuning_args, data_args.cutoff_len)
+
     return model_args, data_args, finetuning_args, generating_args
 
 
@@ -699,6 +718,7 @@ def get_eval_args(args: dict[str, Any] | list[str] | None = None) -> _EVAL_CLS:
     _check_extra_dependencies(model_args, finetuning_args)
 
     model_args.device_map = "auto"
+    model_args.configure_kt_loading(finetuning_args, data_args.cutoff_len)
 
     transformers.set_seed(eval_args.seed)
 

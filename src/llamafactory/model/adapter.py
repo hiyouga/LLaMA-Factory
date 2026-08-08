@@ -138,6 +138,12 @@ def _setup_freeze_tuning(
     logger.info_rank0("Set trainable layers: {}".format(",".join(trainable_layers)))
 
 
+def _load_kt_inference_adapter_artifacts(model: "PreTrainedModel", adapter_path: str) -> None:
+    from kt_kernel.sft import load_kt_adapter_artifacts
+
+    load_kt_adapter_artifacts(model, adapter_path)
+
+
 def _setup_lora_tuning(
     config: "PretrainedConfig",
     model: "PreTrainedModel",
@@ -208,6 +214,12 @@ def _setup_lora_tuning(
                     model = PeftModel.from_pretrained(
                         model, adapter_to_resume, is_trainable=is_trainable, **init_kwargs
                     )
+
+            if model_args.use_kt and not is_trainable:
+                adapter_path = model_args._kt_adapter_artifact_path
+                if adapter_path is None:
+                    raise RuntimeError("KT adapter artifacts were not resolved before model loading.")
+                _load_kt_inference_adapter_artifacts(model, adapter_path)
 
         logger.info_rank0("Loaded adapter(s): {}".format(",".join(model_args.adapter_name_or_path)))
 

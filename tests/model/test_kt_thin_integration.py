@@ -15,11 +15,14 @@
 import sys
 from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import patch
 
 import pytest
+import torch
 
 from llamafactory.hparams.model_args import ModelArguments
-from llamafactory.hparams.parser import _get_kt_runtime_capacity
+from llamafactory.hparams.parser import _get_kt_runtime_capacity, _parse_eval_args, _parse_infer_args
+from llamafactory.model import adapter as adapter_module
 from llamafactory.model.model_utils.checkpointing import _get_gradient_checkpointing_kwargs
 
 
@@ -30,6 +33,8 @@ def _finetuning_args() -> SimpleNamespace:
         lora_rank=8,
         lora_alpha=16,
         lora_dropout=0.05,
+        create_new_adapter=False,
+        use_dora=False,
     )
 
 
@@ -134,6 +139,118 @@ def test_apply_kt_config_rejects_accelerate_fsdp_checkpointing(monkeypatch):
 
     with pytest.raises(ValueError, match="Disable FSDP activation checkpointing"):
         model_args.apply_kt_config(_finetuning_args(), _TrainingArgs({}), model_max_length=1024)
+
+
+@pytest.mark.parametrize("parse_args", (_parse_infer_args, _parse_eval_args))
+def test_inference_parsers_accept_the_training_yaml_kt_config(parse_args):
+    parsed = parse_args(
+        {
+            "model_name_or_path": "dummy",
+            "use_kt": True,
+            "kt_config": {"kt_backend": "AMXBF16"},
+        }
+    )
+
+    assert parsed[0]._kt_inference_config == {"kt_backend": "AMXBF16"}
+
+
+def test_configure_kt_loading_resolves_local_adapter_subfolder(tmp_path, monkeypatch):
+    adapter_root = tmp_path / "adapter"
+    adapter_path = adapter_root / "version-1"
+    adapter_path.mkdir(parents=True)
+    handle = object()
+    captured = []
+    import transformers.integrations.kt as kt_integration
+
+    monkeypatch.setattr(
+        kt_integration, "configure_kt", lambda config: (captured.append(config), handle)[1], raising=False
+    )
+    model_args = ModelArguments(
+        model_name_or_path="dummy",
+        adapter_name_or_path=str(adapter_root),
+        adapter_folder="version-1",
+        use_kt=True,
+        kt_cpu_activation="retain",
+        kt_weight_path="/weights/experts",
+        kt_non_expert_weight_path="/weights/nonexpert",
+    )
+    model_args._kt_inference_config = {"kt_backend": "AMXBF16", "kt_model_max_length": 1152}
+
+    model_args.configure_kt_loading(_finetuning_args(), model_max_length=1024)
+
+    assert model_args._kt_adapter_artifact_path == str(adapter_path)
+    assert model_args._kt_config_handle is handle
+    assert captured[0]["kt_backend"] == "AMXBF16"
+    assert captured[0]["kt_lora_rank"] == 8
+    assert captured[0]["kt_lora_alpha"] == 16
+    assert captured[0]["kt_model_max_length"] == 1152
+    assert captured[0]["kt_weight_path"] == "/weights/experts"
+    assert captured[0]["kt_non_expert_weight_path"] == "/weights/nonexpert"
+
+
+def test_configure_kt_loading_rejects_adapter_folder_symlink_escape(tmp_path):
+    adapter_root = tmp_path / "adapter"
+    outside = tmp_path / "outside"
+    adapter_root.mkdir()
+    outside.mkdir()
+    (adapter_root / "escaped").symlink_to(outside, target_is_directory=True)
+    model_args = ModelArguments(
+        model_name_or_path="dummy",
+        adapter_name_or_path=str(adapter_root),
+        adapter_folder="escaped",
+        use_kt=True,
+    )
+
+    with pytest.raises(ValueError, match="must stay inside"):
+        model_args.configure_kt_loading(_finetuning_args(), model_max_length=1024)
+
+
+def test_configure_kt_loading_rejects_nonlocal_adapter(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    model_args = ModelArguments(
+        model_name_or_path="dummy",
+        adapter_name_or_path="organization/remote-adapter",
+        use_kt=True,
+    )
+
+    with pytest.raises(ValueError, match="local adapter directory"):
+        model_args.configure_kt_loading(_finetuning_args(), model_max_length=1024)
+
+
+@pytest.mark.parametrize("is_trainable", (False, True))
+def test_kt_artifacts_load_after_standard_peft_only_for_inference(is_trainable):
+    events = []
+    peft_model = torch.nn.Linear(2, 2)
+    model_args = ModelArguments(
+        model_name_or_path="dummy",
+        adapter_name_or_path="adapter",
+        use_kt=True,
+    )
+    model_args._kt_adapter_artifact_path = "/abs/adapter"
+
+    with (
+        patch.object(
+            adapter_module.PeftModel,
+            "from_pretrained",
+            side_effect=lambda *_args, **_kwargs: (events.append("standard"), peft_model)[1],
+        ),
+        patch.object(
+            adapter_module,
+            "_load_kt_inference_adapter_artifacts",
+            side_effect=lambda *_args: events.append("kt"),
+        ),
+        patch.object(adapter_module, "is_deepspeed_zero3_enabled", return_value=False),
+    ):
+        adapter_module._setup_lora_tuning(
+            SimpleNamespace(),
+            torch.nn.Linear(2, 2),
+            model_args,
+            _finetuning_args(),
+            is_trainable=is_trainable,
+            cast_trainable_params_to_fp32=False,
+        )
+
+    assert events == (["standard"] if is_trainable else ["standard", "kt"])
 
 
 def test_kt_runtime_capacity_uses_local_physical_token_batch():

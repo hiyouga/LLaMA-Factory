@@ -503,6 +503,9 @@ class KTransformersArguments:
         default=None,
         metadata={"help": "Intermediate size for GPU-side LoRA Experts."},
     )
+    _kt_inference_config: dict[str, Any] | None = field(default=None, init=False, repr=False)
+    _kt_config_handle: Any = field(default=None, init=False, repr=False)
+    _kt_adapter_artifact_path: str | None = field(default=None, init=False, repr=False)
 
     _KT_DERIVED_KEYS = frozenset(
         {
@@ -548,6 +551,18 @@ class KTransformersArguments:
             return accelerator_config.get("kt_config")
         return getattr(accelerator_config, "kt_config", None)
 
+    def _normalize_advanced_kt_config(self, raw_config: Any) -> dict[str, Any]:
+        if raw_config is None:
+            return {}
+        if not isinstance(raw_config, dict):
+            raise TypeError("LLaMA-Factory `kt_config` must be a flat mapping.")
+
+        config = dict(raw_config)
+        conflicts = sorted(set(config) & self._KT_DERIVED_KEYS)
+        if conflicts:
+            raise ValueError(f"These `kt_config` values are derived from LLaMA-Factory arguments: {conflicts}.")
+        return config
+
     def _get_advanced_kt_config(self, training_args: Any) -> dict[str, Any]:
         raw_config = getattr(training_args, "kt_config", None)
         accelerator_config = self._get_accelerator_kt_config(training_args)
@@ -558,16 +573,9 @@ class KTransformersArguments:
                     "remove `kt_config` from the Accelerate config."
                 )
             return {}
-        if not isinstance(raw_config, dict):
-            raise TypeError("LLaMA-Factory `kt_config` must be a flat mapping.")
         if accelerator_config is not None and accelerator_config != raw_config:
             raise ValueError("LLaMA-Factory YAML and Accelerate config cannot define different KT settings.")
-
-        config = dict(raw_config)
-        conflicts = sorted(set(config) & self._KT_DERIVED_KEYS)
-        if conflicts:
-            raise ValueError(f"These `kt_config` values are derived from LLaMA-Factory arguments: {conflicts}.")
-        return config
+        return self._normalize_advanced_kt_config(raw_config)
 
     def configure_kt_checkpointing(self, training_args: Any) -> None:
         r"""Keep LLaMA-Factory as the single gradient-checkpointing entry point."""
@@ -655,6 +663,41 @@ class KTransformersArguments:
                 raise ValueError("KTransformers accepts a single `adapter_name_or_path`.")
             adapter_path = self.adapter_name_or_path[0]
         update_kt_config(kt_config, adapter_name_or_path=adapter_path)
+
+    def configure_kt_loading(self, finetuning_args: Any, model_max_length: int | None) -> None:
+        r"""Configure KT model loading for inference and evaluation."""
+        if not self.use_kt:
+            if self._kt_inference_config is not None:
+                raise ValueError("`kt_config` requires `use_kt: true`.")
+            return
+        if self.infer_backend != EngineName.HF:
+            raise ValueError("KTransformers inference requires `infer_backend: huggingface`.")
+
+        adapter_path = None
+        if self.adapter_name_or_path:
+            if len(self.adapter_name_or_path) != 1:
+                raise ValueError("KTransformers accepts a single `adapter_name_or_path`.")
+            adapter_root = os.path.realpath(os.path.expanduser(self.adapter_name_or_path[0]))
+            adapter_path = adapter_root
+            if self.adapter_folder:
+                adapter_path = os.path.realpath(os.path.join(adapter_root, self.adapter_folder))
+                if os.path.commonpath((adapter_root, adapter_path)) != adapter_root:
+                    raise ValueError("`adapter_folder` must stay inside the KT adapter directory.")
+            if not os.path.isdir(adapter_path):
+                raise ValueError("KTransformers inference requires a local adapter directory.")
+
+        try:
+            from transformers.integrations.kt import configure_kt
+        except (ImportError, ModuleNotFoundError) as exc:
+            raise RuntimeError("The installed Transformers-KT does not provide `configure_kt()`.") from exc
+
+        kt_config = self.get_kt_config_dict(
+            finetuning_args,
+            model_max_length,
+            self._normalize_advanced_kt_config(self._kt_inference_config),
+        )
+        self._kt_adapter_artifact_path = adapter_path
+        self._kt_config_handle = configure_kt(kt_config)
 
 
 @dataclass
