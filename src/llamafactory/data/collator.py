@@ -541,6 +541,17 @@ class SFTDataCollatorWith4DAttentionMask(MultiModalDataCollatorForSeq2Seq):
                 self._unpad_packed_features(features)
 
             features["attention_mask"] = None  # let transformers handle causal packed mask.
+        else:
+            # `DataCollatorForSeq2Seq(pad_to_multiple_of=...)` pads `input_ids`/`attention_mask`
+            # but leaves `position_ids` untouched (it is not in `model_input_names`). On the
+            # non-FA2 packing path we do not unpad, so `position_ids` stays shorter than
+            # `input_ids`, which makes cos/sin shorter than query and crashes
+            # `apply_rotary_pos_emb`. Right-pad `position_ids` to the padded length to match.
+            position_ids = features.get("position_ids")
+            if torch.is_tensor(position_ids):
+                pad_len = features["input_ids"].shape[-1] - position_ids.shape[-1]
+                if pad_len > 0:
+                    features["position_ids"] = F.pad(position_ids, (0, pad_len), value=0)
 
         for key, value in features.items():  # cast data dtype for paligemma
             if torch.is_tensor(value) and torch.is_floating_point(value):
