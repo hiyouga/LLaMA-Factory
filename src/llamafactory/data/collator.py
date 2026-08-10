@@ -30,6 +30,11 @@ from ..extras.constants import AUDIO_PLACEHOLDER, IGNORE_INDEX, IMAGE_PLACEHOLDE
 from ..extras.packages import is_pillow_available
 
 
+# FlashAttention implementations that consume varlen (unpadded) packed batches directly, i.e. do not
+# need a dense 4D attention mask and support neat packing.
+FLASH_ATTN_IMPLS = ("flash_attention_2", "flash_attention_4")
+
+
 if is_pillow_available():
     from PIL import Image
 
@@ -493,19 +498,19 @@ class SFTDataCollatorWith4DAttentionMask(MultiModalDataCollatorForSeq2Seq):
     r"""Data collator for 4d attention mask."""
 
     block_diag_attn: bool = False
-    attn_implementation: Literal["eager", "sdpa", "flash_attention_2"] = "eager"
+    attn_implementation: Literal["eager", "sdpa", "flash_attention_2", "flash_attention_4"] = "eager"
     compute_dtype: "torch.dtype" = torch.float32
     neat_packing: bool = False
 
     def __post_init__(self):
         super().__post_init__()
-        if self.neat_packing and self.attn_implementation == "flash_attention_2":
+        if self.neat_packing and self.attn_implementation in FLASH_ATTN_IMPLS:
             if self.model is not None and getattr(self.model.config, "model_type", None) in ["gemma4", "gpt_oss"]:
                 raise ValueError("Neat packing is not supported for gemma4, gpt_oss models for now.")
 
     @staticmethod
     def _unpad_packed_features(features: dict[str, Any]) -> None:
-        r"""Trim padded positions for packed FA2 batches."""
+        r"""Trim padded positions for packed FlashAttention (fa2/fa4) batches."""
         attention_mask = features.get("attention_mask")
         if not torch.is_tensor(attention_mask) or attention_mask.dim() != 2 or attention_mask.size(0) != 1:
             return
@@ -532,10 +537,10 @@ class SFTDataCollatorWith4DAttentionMask(MultiModalDataCollatorForSeq2Seq):
     def __call__(self, features: list[dict[str, Any]]) -> dict[str, "torch.Tensor"]:
         features = super().__call__(features)
         has_dummy_image = features.pop("has_dummy_image", False)
-        if self.block_diag_attn and self.attn_implementation != "flash_attention_2":
+        if self.block_diag_attn and self.attn_implementation not in FLASH_ATTN_IMPLS:
             features["attention_mask"] = prepare_4d_attention_mask(features["attention_mask"], self.compute_dtype)
 
-        if self.neat_packing and self.attn_implementation == "flash_attention_2":  # FIXME compatibility fa3/fa4
+        if self.neat_packing and self.attn_implementation in FLASH_ATTN_IMPLS:
             assert features["input_ids"].shape[0] == 1, "bsz should be 1 for neat packing"
             if not has_dummy_image:
                 self._unpad_packed_features(features)
