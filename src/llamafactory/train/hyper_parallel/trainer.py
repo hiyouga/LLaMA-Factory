@@ -361,7 +361,12 @@ class HyperParallelTrainer(CustomSeq2SeqTrainer):
             loss = loss.mean()
 
         if not getattr(self, "model_accepts_loss_kwargs", False) and getattr(self, "compute_loss_func", None) is None:
-            loss = loss / self.args.gradient_accumulation_steps
+            accumulation_steps = getattr(
+                self,
+                "current_gradient_accumulation_steps",
+                self.args.gradient_accumulation_steps,
+            )
+            loss = loss / accumulation_steps
 
         self.accelerator.backward(loss)
 

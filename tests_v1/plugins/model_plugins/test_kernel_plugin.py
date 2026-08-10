@@ -25,18 +25,19 @@ def _apply_kernel(rank) -> None:
         setattr(mock_device, "type", "npu")
         mock_get_accelerator.return_value = mock_device
 
-        # reload kernel modules to respect mocked accelerator
-        for k in list(sys.modules.keys()):
-            if k.startswith("llamafactory.v1.plugins.model_plugins.kernels"):
-                del sys.modules[k]
-
-        from llamafactory.v1.plugins.model_plugins.kernels.interface import apply_kernels
-
         model = AutoModelForCausalLM.from_pretrained("llamafactory/tiny-random-qwen3")
         original_rmsnorm_forward = model.model.layers[0].input_layernorm.forward
         original_swiglu_forward = model.model.layers[0].mlp.forward
 
-        model = apply_kernels(model=model, config={"name": "npu_fused_rmsnorm"})
+        with patch.dict(sys.modules, {"torch_npu": MagicMock()}):
+            # Reload kernel modules so dependency checks use the mocked NPU environment.
+            for k in list(sys.modules.keys()):
+                if k.startswith("llamafactory.v1.plugins.model_plugins.kernels"):
+                    del sys.modules[k]
+
+            from llamafactory.v1.plugins.model_plugins.kernels.interface import apply_kernels
+
+            model = apply_kernels(model=model, config={"name": "npu_fused_rmsnorm"})
 
         assert model.model.layers[0].input_layernorm.forward.__func__ is not original_rmsnorm_forward.__func__
         assert model.model.layers[0].mlp.forward.__func__ is original_swiglu_forward.__func__
@@ -48,18 +49,19 @@ def _apply_all_kernels(rank) -> None:
         setattr(mock_device, "type", "npu")
         mock_get_accelerator.return_value = mock_device
 
-        # reload kernel modules to respect mocked accelerator
-        for k in list(sys.modules.keys()):
-            if k.startswith("llamafactory.v1.plugins.model_plugins.kernels"):
-                del sys.modules[k]
-
-        from llamafactory.v1.plugins.model_plugins.kernels.interface import apply_kernels
-
         model = AutoModelForCausalLM.from_pretrained("llamafactory/tiny-random-qwen3")
         original_rmsnorm_forward = model.model.layers[0].input_layernorm.forward
         original_swiglu_forward = model.model.layers[0].mlp.forward
 
-        model = apply_kernels(model=model, config={"name": "auto"})
+        with patch.dict(sys.modules, {"torch_npu": MagicMock()}):
+            # Reload kernel modules so dependency checks use the mocked NPU environment.
+            for k in list(sys.modules.keys()):
+                if k.startswith("llamafactory.v1.plugins.model_plugins.kernels"):
+                    del sys.modules[k]
+
+            from llamafactory.v1.plugins.model_plugins.kernels.interface import apply_kernels
+
+            model = apply_kernels(model=model, config={"name": "auto"})
 
         assert model.model.layers[0].input_layernorm.forward.__func__ is not original_rmsnorm_forward.__func__
         assert model.model.layers[0].mlp.forward.__func__ is not original_swiglu_forward.__func__

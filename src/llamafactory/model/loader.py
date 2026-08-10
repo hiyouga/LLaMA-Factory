@@ -217,9 +217,9 @@ def load_model(
             "You are try to using future feature about kernels, please note that this feature "
             "is not supported for all models. If get any error, please disable this feature, or report the issue."
         )
-        from ..v1.plugins.model_plugins.kernels.interface import apply_default_kernels
+        from ..v1.plugins.model_plugins.kernels.interface import apply_v1_kernels
 
-        model = apply_default_kernels(model, include_kernels=model_args.use_v1_kernels)
+        model = apply_v1_kernels(model, use_v1_kernels=model_args.use_v1_kernels)
 
     trainable_params, all_param = count_parameters(model)
     if is_trainable:
