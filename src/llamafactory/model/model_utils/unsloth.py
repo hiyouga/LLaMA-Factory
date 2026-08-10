@@ -65,11 +65,45 @@ def load_unsloth_pretrained_model(
     return model
 
 
+def _leaf_target_modules(target_modules: list[str] | set[str] | str | None) -> list[str] | str | None:
+    r"""Convert expanded module paths to unique leaf names for Unsloth.
+
+    For composite VLMs, ``patch_target_modules`` may expand short targets like
+    ``out_proj`` into full paths such as
+    ``model.language_model.layers.0.linear_attn.out_proj`` (correct for PEFT).
+    Unsloth's ``get_peft_regex`` treats each entry as a leaf name and builds
+    end-anchored regexes, so full paths match nothing and training crashes with
+    "No layers to finetune?".
+    """
+    if target_modules is None or isinstance(target_modules, str):
+        return target_modules
+
+    leaves: list[str] = []
+    seen: set[str] = set()
+    for module in target_modules:
+        leaf = module.rsplit(".", 1)[-1]
+        if leaf not in seen:
+            seen.add(leaf)
+            leaves.append(leaf)
+    return leaves
+
+
 def get_unsloth_peft_model(
     model: "PreTrainedModel", model_args: "ModelArguments", peft_kwargs: dict[str, Any]
 ) -> "PreTrainedModel":
     r"""Get the peft model for the pretrained model with unsloth. Used in training."""
     from unsloth import FastLanguageModel  # type: ignore
+
+    peft_kwargs = dict(peft_kwargs)
+    if "target_modules" in peft_kwargs:
+        original = peft_kwargs["target_modules"]
+        peft_kwargs["target_modules"] = _leaf_target_modules(original)
+        if peft_kwargs["target_modules"] != original:
+            logger.info_rank0(
+                "Unsloth expects leaf module names; rewrote target_modules from expanded paths: {} -> {}.".format(
+                    original, peft_kwargs["target_modules"]
+                )
+            )
 
     unsloth_peft_kwargs = {
         "model": model,
