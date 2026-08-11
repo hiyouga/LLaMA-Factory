@@ -492,16 +492,30 @@ class KTransformersArguments:
     )
 
     def get_kt_config_dict(self, finetuning_args: Any, model_max_length: int | None) -> dict[str, Any]:
-        r"""Build KT config values from LLaMA-Factory model and LoRA arguments."""
+        r"""Build KT config values from LlamaFactory model and LoRA arguments."""
+        # Map LlamaFactory finetuning_type to kt_train_mode
+        finetuning_type = getattr(finetuning_args, "finetuning_type", None) if finetuning_args else None
+        kt_train_mode_map = {
+            "full": "full",
+            "freeze": "hybrid",
+            "lora": "lora",
+            "galore": "full",
+            "badam": "full",
+        }
+        kt_train_mode = kt_train_mode_map.get(finetuning_type) if finetuning_type else None
+        kt_full_weight_grad = kt_train_mode in ("full", "hybrid") if kt_train_mode else None
+
         kt_config = {
-            "kt_lora_rank": getattr(finetuning_args, "lora_rank", None),
-            "kt_lora_alpha": getattr(finetuning_args, "lora_alpha", None),
+            "kt_lora_rank": 0 if kt_train_mode == "full" else getattr(finetuning_args, "lora_rank", None),
+            "kt_lora_alpha": None if kt_train_mode == "full" else getattr(finetuning_args, "lora_alpha", None),
             "kt_weight_path": self.kt_weight_path,
             "kt_expert_checkpoint_path": self.kt_expert_checkpoint_path,
             "kt_model_max_length": model_max_length,
             "kt_use_lora_experts": self.kt_use_lora_experts,
             "kt_lora_expert_num": self.kt_lora_expert_num,
             "kt_lora_expert_intermediate_size": self.kt_lora_expert_intermediate_size,
+            "kt_train_mode": kt_train_mode,
+            "kt_full_weight_grad": kt_full_weight_grad,
         }
         return {key: value for key, value in kt_config.items() if value is not None}
 
@@ -520,6 +534,8 @@ class KTransformersArguments:
             "kt_use_lora_experts": "ACCELERATE_KT_USE_LORA_EXPERTS",
             "kt_lora_expert_num": "ACCELERATE_KT_LORA_EXPERT_NUM",
             "kt_lora_expert_intermediate_size": "ACCELERATE_KT_LORA_EXPERT_INTERMEDIATE_SIZE",
+            "kt_train_mode": "ACCELERATE_KT_TRAIN_MODE",
+            "kt_full_weight_grad": "ACCELERATE_KT_FULL_WEIGHT_GRAD",
         }
         for key, env_key in env_mapping.items():
             value = kt_config.get(key)
