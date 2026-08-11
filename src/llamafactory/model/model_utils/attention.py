@@ -30,6 +30,11 @@ logger = logging.get_logger(__name__)
 
 def configure_attn_implementation(config: "PretrainedConfig", model_args: "ModelArguments") -> None:
     from transformers.utils import is_flash_attn_2_available
+    try:
+        from transformers.utils import is_flash_attn_3_available
+    except ImportError:
+          def is_flash_attn_3_available():
+              return False
 
     if getattr(config, "model_type", None) == "gpt_oss":
         from transformers.integrations.hub_kernels import load_and_register_kernel
@@ -82,6 +87,12 @@ def configure_attn_implementation(config: "PretrainedConfig", model_args: "Model
             return
 
         requested_attn_implementation = "flash_attention_2"
+    elif model_args.flash_attn == AttentionFunction.FA3:
+        if not is_flash_attn_3_available():
+            logger.warning_rank0("FlashAttention-3 is not installed.")
+            return
+
+        requested_attn_implementation = "flash_attention_3"
     else:
         raise NotImplementedError(f"Unknown attention type: {model_args.flash_attn}")
 
@@ -109,6 +120,8 @@ def print_attn_implementation(config: "PretrainedConfig") -> None:
 
     if attn_implementation == "flash_attention_2":
         logger.info_rank0("Using FlashAttention-2 for faster training and inference.")
+    elif attn_implementation == "flash_attention_3":
+        logger.info_rank0("Using FlashAttention-3 for faster training and inference.") 
     elif attn_implementation == "sdpa":
         logger.info_rank0("Using torch SDPA for faster training and inference.")
     else:
