@@ -487,7 +487,11 @@ class Runner:
                 else:
                     stderr = "No subprocess log file found."
 
-            print(stderr)
+            try:
+                print(stderr)
+            except UnicodeEncodeError:
+                sys.stdout.buffer.write(stderr.encode("utf-8", errors="replace"))
+                sys.stdout.buffer.flush()
             finish_info = ALERTS["err_failed"][lang]
             finish_log = ALERTS["err_failed"][lang] + f" Exit code: {return_code}\n\n```\n{stderr}\n```\n"
 
