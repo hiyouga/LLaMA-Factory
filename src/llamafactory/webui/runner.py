@@ -17,7 +17,6 @@ import os
 import sys
 from collections.abc import Generator
 from copy import deepcopy
-from pathlib import Path
 from subprocess import Popen, TimeoutExpired
 from typing import TYPE_CHECKING, Any
 
@@ -41,6 +40,7 @@ from .common import (
 )
 from .control import get_trainer_info
 from .locales import ALERTS, LOCALES
+from .runner_paths import resolve_cli_executable
 
 
 if is_gradio_available():
@@ -382,12 +382,7 @@ class Runner:
             env = deepcopy(os.environ)
             env["LLAMABOARD_ENABLED"] = "1"
             env["LLAMABOARD_WORKDIR"] = args["output_dir"]
-            if os.name == "nt":
-                cli_exe = str(Path(sys.executable).parent / "llamafactory-cli.exe")
-            else:
-                cli_exe = str(Path(sys.executable).parent / "llamafactory-cli")
-                if not Path(cli_exe).exists():
-                    cli_exe = "llamafactory-cli"
+            cli_exe = resolve_cli_executable(sys.executable, os.name)
             if args.get("deepspeed", None) is not None:
                 env["FORCE_TORCHRUN"] = "1"
 
