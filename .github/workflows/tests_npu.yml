@@ -25,11 +25,11 @@ jobs:
       fail-fast: false
       matrix:
         python:
-          - "3.11"
+          - "3.12"
         os:
           - "linux-aarch64-a2-4"
         pytorch_npu:
-          - "2.7.1"
+          - "2.10.0"
 
     runs-on: ${{ matrix.os }}
 
@@ -38,7 +38,7 @@ jobs:
       cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
     container:
-      image: ascendai/cann:9.0.0-910b-ubuntu22.04-py3.11
+      image: ascendai/cann:9.1.0-910b-ubuntu22.04-py3.12
       env:
         HF_ENDPOINT: https://hf-mirror.com
         HF_TOKEN: ${{ secrets.HF_TOKEN }}
