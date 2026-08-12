@@ -299,6 +299,14 @@ def patch_qwen3_5_forward_gpu(model: "PreTrainedModel") -> None:
 
         Qwen3_5MoeDecoderLayer.forward = _patched_decoder_forward
         Qwen3_5MoeGatedDeltaNet.forward = _patch_gdn_forward
+    elif model.config.architectures[0] == "Qwen3_5MoeForCausalLM":
+        from transformers.models.qwen3_5_moe.modeling_qwen3_5_moe import (
+            Qwen3_5MoeDecoderLayer,
+            Qwen3_5MoeGatedDeltaNet,
+        )
+
+        Qwen3_5MoeDecoderLayer.forward = _patched_decoder_forward
+        Qwen3_5MoeGatedDeltaNet.forward = _patch_gdn_forward
 
     logger.info_rank0("Patched Qwen3.5 decoder forward to support cu_seqlens input only patch when do training.")
 
@@ -484,7 +492,7 @@ def patch_model(
         autocast_projector_dtype(model, model_args)
         add_z3_leaf_module(model)
 
-        if getattr(model.config, "model_type", None) in ["qwen3_5", "qwen3_5_moe"]:
+        if getattr(model.config, "model_type", None) in ["qwen3_5", "qwen3_5_moe", "qwen3_5_moe_text"]:
             if is_torch_npu_available():
                 patch_qwen3_5_forward_npu(model)
             elif is_torch_cuda_available() and model_args.flash_attn == "fa2":

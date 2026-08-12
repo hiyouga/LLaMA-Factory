@@ -152,6 +152,10 @@ _MODEL_TYPE_TO_PATCHES = {
         "Qwen3_5MoeRMSNorm": npu_residual_rms_norm_forward,
         "Qwen3_5MoeRMSNormGated": npu_gated_rms_norm_forward,
     },
+    "qwen3_5_moe_text": {
+        "Qwen3_5MoeRMSNorm": npu_residual_rms_norm_forward,
+        "Qwen3_5MoeRMSNormGated": npu_gated_rms_norm_forward,
+    },
 }
 
 

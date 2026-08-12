@@ -71,6 +71,7 @@ MCA_SUPPORTED_MODELS = {
     "qwen3_next",
     "qwen3_5",
     "qwen3_5_moe",
+    "qwen3_5_moe_text",
 }
 
 # Text LLM model_types supported by the Megatron Bridge PT/SFT path (gpt_step).
@@ -3009,6 +3010,17 @@ register_model_group(
     },
     template="qwen3_5",
     multimodal=True,
+)
+
+
+register_model_group(
+    models={
+        "Qwen3.8-2.4T-A95B": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3.8-2.4T-A95B",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3.8-2.4T-A95B",
+        },
+    },
+    template="qwen3_5",
 )
 
 
