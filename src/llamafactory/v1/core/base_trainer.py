@@ -147,11 +147,6 @@ class BaseTrainer:
         self.state.epoch = self._resume_epoch
 
         if self.args.cp_size > 1:
-            # qwen3.5 is not supported because of the different attention implementation, which will be supported in the future.
-            if model.config.model_type == "qwen3_5":
-                raise RuntimeError(
-                    "Sequence parallel is not supported for qwen3.5 model due to its different attention implementation, which will be supported in the future."
-                )
             from ..plugins.model_plugins.parallelization.sequence_parallel import SequenceParallelModelPlugin
 
             if model.config._attn_implementation != "flash_attention_2":
