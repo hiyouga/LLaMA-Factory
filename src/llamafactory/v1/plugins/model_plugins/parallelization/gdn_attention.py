@@ -98,6 +98,19 @@ def gdn_forward_with_cp(self, hidden_states, attention_mask=None, **kwargs):
     batch_size, seq_len, _ = hidden_states.shape
     full_seq_len = seq_len * cp_size
 
+    # Extract position_ids and derive cu_seqlens for pack support
+    position_ids = kwargs.get("position_ids", None)
+    cu_seqlens = None
+    if position_ids is not None and batch_size == 1:
+        global_position_ids = [torch.empty_like(position_ids) for _ in range(cp_size)]
+        dist.all_gather(global_position_ids, position_ids, group=cp_group)
+        global_position_ids = torch.cat(global_position_ids, dim=-1).contiguous()
+        try:
+            from transformers.modeling_flash_attention_utils import prepare_fa_kwargs_from_position_ids
+            cu_seqlens = prepare_fa_kwargs_from_position_ids(global_position_ids)[0][0]
+        except ImportError:
+            cu_seqlens = None
+
     # Input projections in CP layout: [B, seq/cp, hidden]
     qkv = self.in_proj_qkv(hidden_states)  # [B, seq/cp, key_dim*2 + value_dim]
     z = self.in_proj_z(hidden_states)  # [B, seq/cp, value_dim]
@@ -158,6 +171,12 @@ def gdn_forward_with_cp(self, hidden_states, attention_mask=None, **kwargs):
             bias=conv1d_bias,
             activation=self.activation,
             seq_idx=None,
+            **({"cu_seqlens": cu_seqlens} if cu_seqlens is not None else {}),
+        )
+    elif cu_seqlens is not None:
+        raise RuntimeError(
+            "cu_seqlens requires causal_conv1d_fn (FLA) but it is not available. "
+            "Please install flash-linear-attention for pack support."
         )
     else:
         conv_out = F.conv1d(
@@ -212,6 +231,7 @@ def gdn_forward_with_cp(self, hidden_states, attention_mask=None, **kwargs):
         initial_state=None,
         output_final_state=False,
         use_qk_l2norm_in_kernel=True,
+        **({"cu_seqlens": cu_seqlens} if cu_seqlens is not None else {}),
     )
 
     z_shape_og = gate.shape
