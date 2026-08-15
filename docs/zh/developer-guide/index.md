@@ -1,20 +1,20 @@
 # 开发者指南
 
-开发者指南说明 v1 的运行路径和扩展点。阅读顺序建议为架构、Core、
-Plugin。
+开发者指南说明 v1 的运行路径和扩展点。v1 由 Core（核心模块）组织主要运行流程，并通过 Plugin（插件系统）提供可替换实现。
 
-## 架构与扩展机制
+## 架构
 
 | 页面 | 内容 |
 |------|------|
-| [架构概览](architecture_overview.md) | 入口、引擎、训练器和并行层 |
-| [BasePlugin](baseplugin_mechanism.md) | 注册、路由和严格参数解析 |
+| [整体架构](architecture_overview.md) | 模块分层以及 Core 与 Plugin 的调用关系 |
 
-## Core
+## Core（核心模块）
 
-[Core](core/index.md) 说明数据加载、模型加载、样本渲染、批处理和训练循环。
+[Core（核心模块）](core/index.md)说明数据加载、模型加载、样本渲染、批处理和训练循环。
 
-## Plugin
+## Plugin（插件系统）
 
-[Plugin](plugins/index.md) 说明数据、模型和训练器插件，以及融合算子加速的
-注册与调用方式。
+| 页面 | 内容 |
+|------|------|
+| [插件注册机制](baseplugin_mechanism.md) | `BasePlugin` 的注册、路由和参数解析 |
+| [插件实现](plugins/index.md) | 数据、模型和训练器插件，以及融合算子加速 |

@@ -1,7 +1,6 @@
 # 偏好优化（DPO）
 
-v1 的 `dpo` 入口支持 sigmoid DPO、ORPO 和 SimPO。数据必须是
-chosen/rejected 偏好对。
+v1 通过统一的 `dpo` 入口运行偏好优化。`pref_loss` 可以选择标准 DPO 使用的 `sigmoid`，也可以选择 `orpo` 或 `simpo`。数据必须是 chosen/rejected 偏好对。
 
 ## 运行 DPO
 
@@ -45,11 +44,8 @@ max_steps: 10
 | `orpo` | ORPO 目标 |
 | `simpo` | SimPO；额外使用 `simpo_gamma` |
 
-`pref_ftx` 加入 SFT 损失，`dpo_label_smoothing` 用于 cDPO，
-`ld_alpha` 启用 LD-DPO（长度差异 DPO）的冗长 token 权重。参数定义见
-[训练参数](../configuration/training.md#trainingarguments)。
+`pref_ftx` 加入 SFT 损失，`dpo_label_smoothing` 用于 cDPO。设置 `ld_alpha` 后，LD-DPO 会将 chosen 和 rejected 中超出较短响应长度的尾部 token log-prob 乘以该系数。参数定义见[训练参数](../configuration/training.md#trainingarguments)。
 
 ## 参考模型
 
-全参训练会建立独立的 reference model。LoRA 训练复用 policy model 的
-基座权重，并在计算 reference log-prob 时禁用 adapter。
+全参训练会建立独立的 reference model。LoRA 训练复用 policy model 的基座权重，并在计算 reference log-prob 时禁用 adapter。

@@ -1,60 +1,40 @@
-# 架构概览
+# 整体架构
 
-v1 以“参数解析 → Engine → Trainer/Sampler → Plugin”为主路径。
+v1 将命令入口、运行流程和可替换实现分开组织。Core 负责连接配置、数据、模型和训练状态，Plugin 为 Core 提供数据加载、模型处理、批处理和分布式训练等具体实现。
 
-## 代码目录
+## 模块分层
 
-```text
-src/llamafactory/v1/
-├── launcher.py                 CLI 路由与 torchrun 重启
-├── config/                     四个顶层 dataclass
-├── accelerator/                设备、进程组和 DeviceMesh
-├── core/
-│   ├── data_engine.py          数据加载与全局索引
-│   ├── model_engine.py         Processor、Renderer、Model
-│   ├── rendering/              HF chat template 渲染
-│   ├── base_trainer.py         通用训练循环
-│   └── base_sampler.py         通用推理入口
-├── plugins/
-│   ├── data_plugins/
-│   ├── model_plugins/
-│   ├── trainer_plugins/
-│   └── sampler_plugins/
-├── trainers/                   SFT、DPO、RM
-└── samplers/                   CLI sampler
-```
+| 模块 | 目录 | 职责 |
+|------|------|------|
+| 命令入口 | `launcher.py` | 路由 `sft`、`dpo`、`rm`、`chat` 和 `merge`，并在多设备训练时通过 `torchrun` 重启 |
+| 参数配置 | `config/` | 解析数据、模型、训练和推理参数 |
+| 任务入口 | `trainers/`、`samplers/` | 组装 SFT、DPO、RM 或推理流程 |
+| Core | `core/` | 管理数据索引、模型加载、样本渲染、批处理、训练循环和推理引擎 |
+| Plugin | `plugins/` | 提供数据、模型和训练器相关的可替换实现 |
+| 设备抽象 | `accelerator/` | 管理设备、进程组和 DeviceMesh |
 
-## SFT 训练流程
+## 调用关系
 
 ```text
-llamafactory-cli sft config.yaml
-  → launcher.launch()
-  → get_args()
-  → DistributedInterface(training_args)
-  → DataEngine(train_dataset)
-  → ModelEngine(model_args, is_train=True)
-  → SFTTrainer(...).fit()
-  → save_model()
+llamafactory-cli <command> config.yaml
+  → launcher
+  → get_args
+  → Trainer / Sampler
+      ├── DataEngine
+      │   ├── DataLoaderPlugin
+      │   └── DataConverterPlugin
+      ├── ModelEngine
+      │   ├── InitPlugin
+      │   ├── QuantizationPlugin
+      │   ├── PeftPlugin
+      │   └── KernelPlugin
+      ├── BaseTrainer
+      │   ├── BatchingPlugin
+      │   ├── DistributedPlugin
+      │   └── OptimizerPlugin
+      └── BaseSampler
 ```
 
-多设备时 `launcher` 先使用相同子命令和参数通过 `torchrun` 重启。
+Trainer 和 Sampler 决定任务流程，Core 组件维护运行状态，Plugin 只实现由 Core 调用的可替换操作。例如，`ModelEngine` 决定模型加载顺序，具体的量化、PEFT 和融合算子处理分别由对应插件完成。
 
-## DPO/RM 训练流程
-
-DPO 与 RM 复用 DataEngine、ModelEngine 和 BaseTrainer：
-
-- DPO 使用 `DPOSample`，计算 policy/reference 的 chosen/rejected log-prob。
-- RM 强制 `model_class=cls`，使用 score head 计算 pairwise ranking loss。
-
-## 可扩展组件
-
-- 新原始数据格式：`DataConverterPlugin`
-- 新数据来源：`DataLoaderPlugin`
-- 新 PEFT、量化或初始化方法：对应模型插件
-- 新分布式后端：`DistributedPlugin`
-- 新优化器：`OptimizerPlugin`
-- 新模型算子：`KernelPlugin` + `BaseKernel`
-- 新训练目标：继承 `BaseTrainer`
-
-Chat template 不再是插件扩展点；由 tokenizer/processor 的 Hugging Face
-chat template 或 `custom_chat_template` 提供。
+Core 各组件见[Core（核心模块）](core/index.md)，插件的注册方式见[插件注册机制](baseplugin_mechanism.md)，内置实现见[插件实现](plugins/index.md)。

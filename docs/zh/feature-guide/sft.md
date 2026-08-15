@@ -1,7 +1,6 @@
 # 监督微调（SFT）
 
-使用 `llamafactory-cli sft` 启动监督微调。是否传入 `peft_config`
-决定全参、LoRA 或 Freeze。
+使用 `llamafactory-cli sft` 启动监督微调。是否传入 `peft_config` 决定全参、LoRA 或 Freeze。
 
 ## 全参训练
 
@@ -35,8 +34,7 @@ peft_config:
   target_modules: all
 ```
 
-继续训练已有 adapter 时设置 `adapter_name_or_path`。训练只允许一个
-adapter；LoRA 参数从 adapter 自身恢复。
+继续训练已有 adapter 时设置 `adapter_name_or_path`。训练只允许一个 adapter；LoRA 参数从 adapter 自身恢复。
 
 ## Freeze
 
@@ -67,5 +65,12 @@ dist_config:
   name: fsdp2
 ```
 
-QLoRA 使用 bitsandbytes 4-bit。字段详情见
-[模型参数](../configuration/model.md#peft_config)。
+QLoRA 使用 bitsandbytes 4-bit。字段详情见[模型参数](../configuration/model.md#peft_config)。
+
+## 激活值重算
+
+`enable_activation_checkpointing` 默认为 `true`。启用后，训练在反向传播时重新计算部分前向结果，以减少激活值占用的显存或设备内存，但会增加计算量。内存充足并希望减少重计算时可以设置：
+
+```yaml
+enable_activation_checkpointing: false
+```

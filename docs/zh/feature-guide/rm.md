@@ -27,10 +27,8 @@ max_steps: 10
 llamafactory-cli rm config.yaml
 ```
 
-入口会将 `model_class` 设置为 `cls`，初始化 score head，并在训练开始前
-检查首个样本是否包含 `chosen_messages` 和 `rejected_messages`。
+入口会将 `model_class` 设置为 `cls`，初始化 score head，并在训练开始前检查首个样本是否包含 `chosen_messages` 和 `rejected_messages`。
 
 ## 训练约束
 
-RM 当前要求 `cp_size` 为 `1`。`cutoff_len` 需要保留 chosen 和 rejected
-的有效 token；否则当前 micro-batch 无法组成偏好对。
+RM 当前要求 `cp_size` 为 `1`。`cutoff_len` 需要保留 chosen 和 rejected 的有效 token；否则当前 micro-batch 无法组成偏好对。

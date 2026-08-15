@@ -62,8 +62,14 @@ classification 模型，`other` 使用 `AutoModel`。
 
 ## init_config
 
-| `name` | 初始化设备 |
-|--------|------------|
+`init_config` 当前只使用 `name` 选择模型初始化设备：
+
+| 字段 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `name` | `str` | 必填 | 初始化插件名称 |
+
+| `name` 取值 | 初始化设备 |
+|-------------|------------|
 | `init_on_default` | 当前分布式设备 |
 | `init_on_meta` | meta device |
 | `init_on_rank0` | rank 0 使用 CPU，其余 rank 使用 meta |
@@ -72,14 +78,11 @@ meta 初始化不能与量化同时使用。
 
 ## kernel_config
 
-`kernel_config` 可以配置单个融合算子，也可以启用 Liger Kernel 这类包含
-多项优化的外部加速库。
+`kernel_config` 可以配置单个融合算子，也可以启用 Liger Kernel 这类包含多项优化的外部加速库。
 
 | 字段 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
 | `name` | `str` | 必填 | `auto`、单个实现名称或逗号分隔的多个名称 |
-| `include_kernels` | `str` | `auto` | Flash Linear Attention 使用的算子名称 |
-| `chunk_size` | `int` | `64` | Flash Linear Attention chunk size；可选 `16`、`32`、`64` |
 
 可用名称：
 
@@ -90,5 +93,14 @@ meta 初始化不能与量化同时使用。
 - `npu_fused_rmsnorm`
 - `npu_fused_rope`
 - `npu_fused_swiglu`
+
+### Flash Linear Attention
+
+当 `name` 包含 `flash-linear-attention` 时，可以使用以下专属字段：
+
+| 字段 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `include_kernels` | `str` | `auto` | `auto` 或逗号分隔的 FLA 算子名称 |
+| `chunk_size` | `int` | `64` | chunk size；可选 `16`、`32`、`64` |
 
 用法见[融合算子加速](../feature-guide/kernel_acceleration.md)。

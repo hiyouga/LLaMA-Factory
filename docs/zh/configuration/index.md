@@ -1,7 +1,6 @@
 # 参数说明
 
-v1 使用一份 YAML 同时描述数据、模型、训练、推理和插件配置。顶层字段
-来自四个参数类，带 `*_config` 后缀的字段通过 `name` 选择具体实现。
+v1 使用一份 YAML 同时描述数据、模型、训练和推理配置。顶层字段来自四个参数类。`peft_config`、`quant_config`、`kernel_config`、`dist_config` 等插件配置通过 `name` 选择具体实现，其余字段由对应实现解析；可用名称和字段统一列在所属的参数页面中。
 
 ```yaml
 model: Qwen/Qwen3-0.6B
@@ -19,9 +18,6 @@ kernel_config:
   name: liger_kernel
 ```
 
-插件配置必须包含 `name`。每个实现使用自己的参数类解析配置，未声明的
-字段会触发错误。
-
 ## 参数分类
 
 | 页面 | 参数 |
@@ -30,7 +26,5 @@ kernel_config:
 | [模型参数](model.md) | `ModelArguments`、PEFT、量化、初始化和 Kernel |
 | [训练参数](training.md) | `TrainingArguments`、分布式和优化器 |
 | [推理参数](inference.md) | `SampleArguments` |
-| [插件配置](plugins.md) | 插件选择方式、可用名称和配置示例 |
 
-功能指南中的示例只列出完成对应任务所需的字段。字段类型、默认值和可用
-选项以本目录为准。
+功能指南中的示例只列出完成对应任务所需的字段。字段类型、默认值和可用选项以本目录为准。

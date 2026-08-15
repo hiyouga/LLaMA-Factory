@@ -1,7 +1,6 @@
 # ModelEngine
 
-`ModelEngine(model_args, is_train=False)` 拥有 processor、model config、
-Renderer 和最终 Hugging Face model。
+`ModelEngine(model_args, is_train=False)` 拥有 processor、model config、Renderer 和最终 Hugging Face model。
 
 ## 模型加载流程
 
@@ -20,9 +19,7 @@ AutoProcessor.from_pretrained
 
 ## 同步 Chat Template
 
-多模态 processor 没有模板时，会从其 tokenizer 同步。
-`custom_chat_template` 则覆盖 processor/tokenizer 模板。Renderer 最终调用
-`apply_chat_template`，不再导入模型专属 Python 模板。
+多模态 processor 没有模板时，会从其 tokenizer 同步。`custom_chat_template` 则覆盖 processor/tokenizer 模板。Renderer 最终调用 `apply_chat_template`，不再导入模型专属 Python 模板。
 
 ## 选择 Hugging Face 模型类
 

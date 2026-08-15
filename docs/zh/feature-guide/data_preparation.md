@@ -1,7 +1,6 @@
 # 数据准备
 
-v1 将训练样本统一为 Messages 结构。`DataEngine` 根据 `train_dataset`
-指向的路径加载数据，并在存在 `converter` 时转换原始字段。
+v1 将训练样本统一为 Messages 结构。`DataEngine` 根据 `train_dataset` 指向的路径加载数据，并在存在 `converter` 时转换原始字段。
 
 ## 配置训练数据集
 
@@ -12,8 +11,7 @@ v1 将训练样本统一为 Messages 结构。`DataEngine` 根据 `train_dataset
 - Hugging Face Hub 数据集 ID
 - Hub 数据集仓库中的 YAML
 
-`eval_dataset` 字段已定义，评估流程尚未实现。完整字段见
-[数据参数](../configuration/data.md#dataarguments)。
+`eval_dataset` 字段已定义，评估流程尚未实现。完整字段见[数据参数](../configuration/data.md#dataarguments)。
 
 ## SFT 数据格式
 
@@ -34,15 +32,11 @@ v1 将训练样本统一为 Messages 结构。`DataEngine` 根据 `train_dataset
 }
 ```
 
-`content` 是内容块列表；文本使用 `text`，多模态内容可以使用
-`image_url`、`audio_url` 或 `video_url`。`loss_weight` 决定对应消息是否
-参与损失计算。
+`content` 是内容块列表；文本使用 `text`，多模态内容可以使用 `image_url`、`audio_url` 或 `video_url`。`loss_weight` 是该 assistant turn 的监督权重，并应用到该回复的每个监督 token。`0.0` 不参与损失计算，`1.0` 使用完整权重，也可以设置 `0.5` 等中间值调整不同回复的相对权重。
 
-多轮对话会按每个受监督的 assistant turn 展开为多条训练样本，每条样本
-只监督最后一个 assistant turn。
+多轮对话会按每个受监督的 assistant turn 展开为多条训练样本，每条样本只监督最后一个 assistant turn。
 
-多模态 SFT 示例位于 `data/v1_multimodal_demo.yaml`，对应训练配置为
-`examples/v1/train_full/train_multimodal.yaml`。
+多模态 SFT 示例位于 `data/v1_multimodal_demo.yaml`，对应训练配置为 `examples/v1/train_full/train_multimodal.yaml`。
 
 ## DPO/RM 数据格式
 
@@ -78,9 +72,7 @@ demo:
   streaming: false
 ```
 
-同一个 YAML 中的 streaming 配置必须一致；当前训练路径不支持 streaming
-数据集。多个条目会组成一个全局数据索引；`size` 与 `weight` 用于控制
-每个数据集的采样规模。
+同一个 YAML 中的 streaming 配置必须一致；当前训练路径不支持 streaming 数据集。多个条目会组成一个全局数据索引；`size` 与 `weight` 用于控制每个数据集的采样规模。
 
 ## 转换现有数据格式
 

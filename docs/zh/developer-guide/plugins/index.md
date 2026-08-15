@@ -1,7 +1,6 @@
-# Plugin
+# 插件实现
 
-Plugin 为可替换实现提供名称注册和统一调用接口。配置文件通过实现名称
-选择内置插件，新增实现时使用对应的插件类注册。
+v1 按数据、模型和训练流程组织内置插件。配置文件通过实现名称选择插件，新增实现时使用对应的插件类注册。
 
 | 分类 | 内容 |
 |------|------|
@@ -10,8 +9,7 @@ Plugin 为可替换实现提供名称注册和统一调用接口。配置文件�
 | [训练器插件](trainer_plugins.md) | 分布式后端、批处理和优化器 |
 | [融合算子加速](kernel-acceleration/overview.md) | Kernel 选择与调用流程 |
 
-插件注册和参数解析的通用机制见
-[BasePlugin](../baseplugin_mechanism.md)。
+插件注册和参数解析的通用机制见[插件注册机制](../baseplugin_mechanism.md)。
 
 ```{toctree}
 :maxdepth: 2

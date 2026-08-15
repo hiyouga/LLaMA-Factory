@@ -4,8 +4,7 @@
 
 ## 手动安装
 
-手动安装需要依次准备 HDK 驱动与固件、CANN 和 `torch-npu`。安装包需要
-与 NPU 型号、CPU 架构和操作系统匹配。本分支使用以下软件组合：
+手动安装需要依次准备 HDK 驱动与固件、CANN 和 `torch-npu`。安装包需要与 NPU 型号、CPU 架构和操作系统匹配。本分支使用以下软件组合：
 
 | 组件 | 版本 |
 |------|------|
@@ -16,15 +15,11 @@
 | torchaudio | `2.10.0` |
 | Triton Ascend | `3.2.1` |
 
-安装前使用 [Ascend 兼容性查询助手](https://www.hiascend.com/hardware/compatibility)
-确认硬件与操作系统组合，并从
-[CANN 9.1.0 社区版资源中心](https://www.hiascend.com/developer/download/community/result?cann=9.1.0&module=cann)
-选择对应 CPU 架构的软件包。
+安装前使用[Ascend 兼容性查询助手](https://www.hiascend.com/hardware/compatibility)确认硬件与操作系统组合，并从[CANN 9.1.0 社区版资源中心](https://www.hiascend.com/developer/download/community/result?cann=9.1.0&module=cann)选择对应 CPU 架构的软件包。
 
 ### 安装驱动与固件
 
-从 Ascend 下载与设备匹配的 HDK 驱动和固件安装包。以下命令中的文件名
-需要替换为实际下载的包名：
+从 Ascend 下载与设备匹配的 HDK 驱动和固件安装包。以下命令中的文件名需要替换为实际下载的包名：
 
 ```bash
 chmod +x Ascend-hdk-<chip_type>-npu-driver_<version>_linux-<arch>.run
@@ -59,8 +54,7 @@ sudo ./Ascend-cann-<chip_type>-ops_<version>_linux-<arch>.run --install
 source /usr/local/Ascend/ascend-toolkit/set_env.sh
 ```
 
-普通用户安装时，环境脚本位于用户选择的 CANN 安装目录。需要在每个运行
-LlamaFactory 的 shell 中加载该脚本，也可以将命令加入 shell 配置文件。
+普通用户安装时，环境脚本位于用户选择的 CANN 安装目录。需要在每个运行 LlamaFactory 的 shell 中加载该脚本，也可以将命令加入 shell 配置文件。
 
 ### 安装 LlamaFactory
 
@@ -75,10 +69,7 @@ python -m pip install -r requirements/npu.txt
 python -m pip install -r requirements/triton_ascend.txt
 ```
 
-`requirements/npu.txt` 固定了相互匹配的 PyTorch、torchvision、
-torchaudio 和 `torch-npu` 版本；`requirements/triton_ascend.txt` 安装
-NPU 对应的 Triton 实现。如果使用已有 Python 环境，应确认安装完成后的
-PyTorch 与 `torch-npu` 版本仍与上述版本一致。
+`requirements/npu.txt` 固定了相互匹配的 PyTorch、torchvision、torchaudio 和 `torch-npu` 版本；`requirements/triton_ascend.txt` 安装 NPU 对应的 Triton 实现。如果使用已有 Python 环境，应确认安装完成后的 PyTorch 与 `torch-npu` 版本仍与上述版本一致。
 
 ### 验证 PyTorch NPU
 
@@ -97,16 +88,16 @@ llamafactory-cli sft examples/v1/train_full/train_full_fsdp2.yaml
 
 | 功能 | 状态 | 说明 |
 |------|:----:|------|
-| SFT 全参训练 | 支持 | 支持 FSDP2 |
-| LoRA / Freeze | 支持 | 使用通用 PEFT 路径 |
-| QLoRA | 不支持 | 当前量化路径依赖 bitsandbytes |
-| DPO | 支持 | 使用偏好对数据 |
-| RM | 支持 | `cp_size` 需要为 `1` |
-| FSDP2 | 支持 | 使用 NPU 设备和通信后端 |
-| FSDPTurbo | 支持 | 提供 MoE 专家并行和专家参数分片 |
-| Ulysses CP | 支持 | 依赖适配的 attention 实现 |
-| DeepSpeed | 依赖环境 | 由 NPU DeepSpeed 发行版和配置决定 |
-| HF CLI 推理 | 支持 | `sample_backend: hf` |
+| [SFT 全参训练](../../feature-guide/sft.md) | 支持 | 支持 FSDP2 |
+| [LoRA / Freeze](../../feature-guide/sft.md) | 支持 | 使用通用 PEFT 路径 |
+| [QLoRA](../../feature-guide/sft.md#qlora) | 不支持 | 当前量化路径依赖 bitsandbytes |
+| [DPO](../../feature-guide/dpo.md) | 支持 | 使用偏好对数据 |
+| [RM](../../feature-guide/rm.md) | 支持 | `cp_size` 需要为 `1` |
+| [FSDP2](../../feature-guide/distributed_training.md) | 支持 | 使用 NPU 设备和通信后端 |
+| [FSDPTurbo](../../feature-guide/distributed_training.md) | 支持 | 提供 MoE 专家并行和专家参数分片 |
+| [Ulysses CP](../../feature-guide/distributed_training.md#ulysses-context-parallel) | 支持 | 依赖适配的 attention 实现 |
+| [DeepSpeed](../../feature-guide/distributed_training.md#deepspeed) | 依赖环境 | 由 NPU DeepSpeed 发行版和配置决定 |
+| [HF CLI 推理](../../feature-guide/inference.md) | 支持 | `sample_backend: hf` |
 
 ## 量化支持
 
@@ -128,15 +119,12 @@ kernel_config:
   name: npu_fused_rmsnorm,npu_fused_rope
 ```
 
-每个实现会检查当前设备及 `torch_npu` 依赖。模型结构不匹配时，具体
-Kernel 可能跳过替换或抛出明确错误。
+每个实现会检查当前设备及 `torch_npu` 依赖。模型结构不匹配时，具体 Kernel 可能跳过替换或抛出明确错误。
 
 ## Liger Kernel
 
-`liger_kernel` 接受 CUDA 或 NPU，但仍要求模型类型在当前 Liger 映射中，
-并且已安装兼容版本的 `liger_kernel`。
+`liger_kernel` 接受 CUDA 或 NPU，但仍要求模型类型在当前 Liger 映射中，并且已安装兼容版本的 `liger_kernel`。
 
 ## 分布式训练
 
-FSDP2、FSDPTurbo 与 Ulysses 使用 accelerator 抽象选择 NPU 通信设备。
-DeepSpeed 的可用性由 NPU DeepSpeed 发行版、依赖版本和配置共同决定。
+FSDP2、FSDPTurbo 与 Ulysses 使用 accelerator 抽象选择 NPU 通信设备。DeepSpeed 的可用性由 NPU DeepSpeed 发行版、依赖版本和配置共同决定。

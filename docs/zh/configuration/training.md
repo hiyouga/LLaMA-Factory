@@ -26,8 +26,7 @@
 | `batching_workers` | `int` | `16` | 数据加载 worker 数 |
 | `enable_activation_checkpointing` | `bool` | `true` | 是否启用激活值重算 |
 
-`dynamic_batching` 需要正数 `max_steps`，并使用 `save_steps` 保存
-checkpoint。
+各策略的 token 预算和使用约束见[批处理策略](../feature-guide/batching.md)。
 
 ### 分布式与优化器
 
@@ -37,11 +36,11 @@ checkpoint。
 | `dp_size` | `int \| None` | `None` | 默认由 world size 和 `cp_size` 推导 |
 | `cp_size` | `int` | `1` | Context Parallel 大小 |
 | `cp_mode` | `str` | `ulysses` | Context Parallel 实现 |
-| `mp_replicate_size` | `int` | `1` | 模型并行中复制的份数 |
-| `mp_shard_size` | `int \| None` | `None` | 模型并行中参数切分的份数；默认由 world size 推导 |
+| `mp_replicate_size` | `int` | `1` | FSDP 二维 Mesh 的参数复制维度大小 |
+| `mp_shard_size` | `int \| None` | `None` | FSDP 二维 Mesh 的参数分片维度大小；默认由 world size 推导 |
 | `dist_timeout` | `int` | `18000` | 进程组初始化超时，秒 |
 | `optim_config` | `dict \| None` | `None` | 优化器插件 |
-| `lr_scheduler_config` | `dict \| None` | `None` | 学习率调度插件 |
+| `lr_scheduler_config` | `dict \| None` | `None` | 学习率调度插件；当前没有内置实现 |
 
 ### Checkpoint 与日志配置
 
@@ -50,7 +49,7 @@ checkpoint。
 | `resume_from_checkpoint` | `str \| None` | `None` | checkpoint 路径或 `auto` |
 | `save_steps` | `int \| None` | `None` | 每 N 个全局 step 保存 |
 | `save_epochs` | `float \| None` | `None` | 每 N 个 epoch 保存 |
-| `save_ckpt_as_hf` | `bool` | `false` | 中间 checkpoint 是否使用 HF 格式 |
+| `save_ckpt_as_hf` | `bool` | `false` | 是否在中间 checkpoint 中额外保存 HF 格式模型 |
 | `save_total_limit` | `int \| None` | `None` | 最多保留数量 |
 | `logging_steps` | `int` | `1` | 日志间隔 |
 
@@ -102,8 +101,7 @@ checkpoint。
 | `hook_modules` | `list[str]` | `[]` | EFSDP hook 的模块模式 |
 | `fsdp_implementation` | `str` | `native` | `native` 或 `custom` |
 
-`dp_size`、`cp_size`、`mp_replicate_size` 和 `mp_shard_size` 是
-`TrainingArguments` 字段，不放在 `dist_config` 中。
+`dp_size`、`cp_size`、`mp_replicate_size` 和 `mp_shard_size` 是 `TrainingArguments` 字段，不放在 `dist_config` 中。
 
 ## optim_config
 
@@ -119,3 +117,5 @@ checkpoint。
 | `adamw_eps` | `float` | `1e-8` | 内部 AdamW epsilon |
 
 学习率统一使用顶层 `learning_rate`。
+
+Muon 的完整配置示例见[优化器](../feature-guide/optimizer.md)。

@@ -1,7 +1,6 @@
 # BaseTrainer
 
-`BaseTrainer` 提供 SFT、DPO 和 RM 共用的训练生命周期。子类主要实现
-`compute_loss`，必要时覆盖模型分片或输入处理。
+`BaseTrainer` 提供 SFT、DPO 和 RM 共用的训练生命周期。子类主要实现 `compute_loss`，必要时覆盖模型分片或输入处理。
 
 ## 初始化训练组件
 
@@ -27,8 +26,7 @@ epoch / global step
   → 可选 checkpoint
 ```
 
-`global_batch_size / (dp_size × micro_batch_size)` 决定梯度累积所需的
-micro-batch 数。
+`global_batch_size / (dp_size × micro_batch_size)` 决定梯度累积所需的 micro-batch 数。
 
 ## 训练器实现
 
@@ -38,5 +36,4 @@ micro-batch 数。
 
 ## 保存模型与 Checkpoint
 
-分布式模型、checkpoint 的保存和恢复通过 `DistributedPlugin` 对应方法
-完成；无显式后端时走普通模型/DDP 路径。
+分布式模型、checkpoint 的保存和恢复通过 `DistributedPlugin` 对应方法完成；无显式后端时走普通模型/DDP 路径。

@@ -18,6 +18,7 @@ LlamaFactory v1 文档
    feature-guide/rm
    feature-guide/batching
    feature-guide/distributed_training
+   feature-guide/optimizer
    feature-guide/model_saving
    feature-guide/model_export
    feature-guide/inference
@@ -32,7 +33,6 @@ LlamaFactory v1 文档
    configuration/model
    configuration/training
    configuration/inference
-   configuration/plugins
 
 .. toctree::
    :maxdepth: 2
@@ -40,8 +40,8 @@ LlamaFactory v1 文档
 
    developer-guide/index
    developer-guide/architecture_overview
-   developer-guide/baseplugin_mechanism
    developer-guide/core/index
+   developer-guide/baseplugin_mechanism
    developer-guide/plugins/index
 
 .. toctree::
