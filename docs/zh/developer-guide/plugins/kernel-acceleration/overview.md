@@ -23,6 +23,7 @@ ModelEngine
 
 - `liger_kernel`
 - `cuda_fused_moe`
+- `flash-linear-attention`
 - `npu_fused_moe`
 - `npu_fused_rmsnorm`
 - `npu_fused_rope`

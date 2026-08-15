@@ -41,7 +41,7 @@ kernel_config:
 
 | YAML 字段 | 可用名称 | 用途 | 参数 |
 |-----------|----------|------|------|
-| `dist_config` | `fsdp2`、`deepspeed` | 选择分布式训练后端 | [训练参数](training.md#dist_config) |
+| `dist_config` | `fsdp2`、`fsdpturbo`、`deepspeed` | 选择分布式训练后端 | [训练参数](training.md#dist_config) |
 | `optim_config` | `muon` | 使用 Muon 优化器 | [训练参数](training.md#optim_config) |
 
 `learning_rate` 始终使用顶层训练参数。配置 Muon 时不需要在

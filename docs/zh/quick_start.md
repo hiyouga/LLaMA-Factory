@@ -50,5 +50,5 @@ v1 当前支持以下命令：
 - 全参、LoRA、Freeze 与 QLoRA：[SFT](feature-guide/sft.md)
 - DPO 与 RM：[DPO](feature-guide/dpo.md) / [RM](feature-guide/rm.md)
 - 批处理策略：[批处理](feature-guide/batching.md)
-- FSDP2、DeepSpeed 与 Ulysses：[分布式训练](feature-guide/distributed_training.md)
+- FSDP2、FSDPTurbo、DeepSpeed 与 Ulysses：[分布式训练](feature-guide/distributed_training.md)
 - v1 内部结构：[开发者指南](developer-guide/index.md)

@@ -2,15 +2,17 @@
 
 ## DistributedPlugin
 
-当前注册 `fsdp2` 和 `deepspeed`。每个实现类提供统一的静态方法组：
+当前注册 `fsdp2`、`fsdpturbo` 和 `deepspeed`。每个实现类提供统一的
+模型切分、保存和 checkpoint 方法组：
 
 - `shard_model`
 - `save_model`
 - `save_checkpoint`
 - `load_checkpoint`
 
-FSDP2 和 DeepSpeed 的参数分别由 `FSDP2Params`、`DeepSpeedParams` 解析。
-DeviceMesh 拓扑由 `TrainingArguments` 和 `DistributedInterface` 管理。
+参数分别由 `FSDP2Params`、`FSDPTurboParams` 和 `DeepSpeedParams` 解析。
+FSDPTurbo 额外实现跨专家并行 Mesh 的梯度裁剪。公共 DeviceMesh 拓扑由
+`TrainingArguments` 和 `DistributedInterface` 管理。
 
 ## BatchingPlugin
 

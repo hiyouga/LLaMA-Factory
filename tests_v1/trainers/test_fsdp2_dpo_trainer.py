@@ -29,8 +29,6 @@ model: Qwen/Qwen3-0.6B
 trust_remote_code: true
 model_class: llm
 
-template: qwen3_nothink
-
 kernel_config:
     name: auto
 
@@ -41,7 +39,7 @@ dist_config:
     dcp_path: null
 
 init_config:
-    name: init_on_meta
+    name: init_on_default
 
 # PEFT Configuration
 peft_config:

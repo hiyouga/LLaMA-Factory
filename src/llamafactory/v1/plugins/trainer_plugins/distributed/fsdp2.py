@@ -1,4 +1,4 @@
-# Copyright 2025 the LlamaFactory team.
+# Copyright 2026 the LlamaFactory team.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -73,20 +73,50 @@ def _make_safetensor_loader(checkpoint_file: str, tensor_key: str):
     return _load_tensor
 
 
-def get_transformer_layer_cls(model: HFModel) -> type[nn.Module] | None:
+def _cast_norm_input_to_weight_dtype(module: nn.Module, args: tuple):
+    """forward-pre-hook: cast a norm layer's input to its weight dtype."""
+    if not args:
+        return None
+    x = args[0]
+    weight = getattr(module, "weight", None)
+    if isinstance(x, torch.Tensor) and weight is not None and x.dtype != weight.dtype:
+        return (x.to(weight.dtype), *args[1:])
+    return None
+
+
+def _make_norms_dtype_safe(model: HFModel) -> int:
+    """Register the dtype-safe hook on every dtype-strict ``nn.LayerNorm`` in the model."""
+    n = 0
+    for module in model.modules():
+        if isinstance(module, nn.LayerNorm):
+            module.register_forward_pre_hook(_cast_norm_input_to_weight_dtype)
+            n += 1
+    return n
+
+
+def get_transformer_layer_cls(model: HFModel) -> set[type[nn.Module]]:
+    classes: set[type[nn.Module]] = set()
+    for module in model.modules():
+        for attr in ("layers", "blocks"):
+            seq = getattr(module, attr, None)
+            if isinstance(seq, nn.ModuleList) and len(seq) > 0:
+                classes.add(type(seq[0]))
+    if classes:
+        return classes
+
     no_split_modules = getattr(model, "_no_split_modules", None)
     if no_split_modules:
-        if isinstance(no_split_modules, (list, tuple)):
-            for name, module in model.named_modules():
-                for cls_name in no_split_modules:
-                    if module.__class__.__name__ == cls_name:
-                        return module.__class__
-    if hasattr(model, "model") and hasattr(model.model, "layers"):
-        return type(model.model.layers[0])
-    if hasattr(model, "layers"):
-        return type(model.layers[0])
+        found: dict[str, type[nn.Module]] = {}
+        for _, module in model.named_modules():
+            cls_name = module.__class__.__name__
+            if cls_name in no_split_modules and cls_name not in found:
+                found[cls_name] = module.__class__
+            if len(found) == len(no_split_modules):
+                break
+        if found:
+            return set(found.values())
 
-    return None
+    return set()
 
 
 def save_model(model: HFModel, output_dir: str, processor: Processor) -> None:
@@ -190,22 +220,26 @@ class FSDP2Engine:
     def is_lora_module_wrap(self, model) -> bool:
         return any(isinstance(module, LoraLayer) for module in model.modules())
 
-    def prepare_model(self, model: HFModel) -> HFModel:
+    def prepare_model(self, model: HFModel, ignored_params: set[nn.Parameter] | None = None) -> HFModel:
         if self.fsdp_mesh is None:
             logger.warning("No FSDP Mesh available, skipping FSDP wrapping.")
             return model
 
         mp_policy = self.get_mp_policy()
-        layer_cls = get_transformer_layer_cls(model)
+        transformer_layer_cls_to_wrap = get_transformer_layer_cls(model)
 
-        if layer_cls is None:
+        if not transformer_layer_cls_to_wrap:
             logger.warning(
                 "Could not identify Transformer Layer class, applying FSDP to the whole model structure only."
             )
-            transformer_layer_cls_to_wrap = set()
         else:
-            logger.info(f"Applying per-layer FSDP to {layer_cls.__name__}")
-            transformer_layer_cls_to_wrap = {layer_cls}
+            names = ", ".join(cls.__name__ for cls in transformer_layer_cls_to_wrap)
+            logger.info(f"Applying per-layer FSDP to: {names}")
+
+        def _ignored_params_for(module: nn.Module) -> set[nn.Parameter] | None:
+            if not ignored_params:
+                return None
+            return ignored_params.intersection(module.parameters()) or None
 
         if self.is_lora_module_wrap(model):
             lora_modules = []
@@ -222,6 +256,7 @@ class FSDP2Engine:
                     reshard_after_forward=self.reshard_after_forward,
                     mp_policy=mp_policy,
                     offload_policy=CPUOffloadPolicy(pin_memory=self.pin_memory) if self.offload_params else None,
+                    ignored_params=_ignored_params_for(module),
                 )
 
             logger.info("Applying FSDP wrap for LoRA layer separately.")
@@ -242,6 +277,7 @@ class FSDP2Engine:
                     reshard_after_forward=self.reshard_after_forward,
                     mp_policy=mp_policy,
                     offload_policy=CPUOffloadPolicy(pin_memory=self.pin_memory) if self.offload_params else None,
+                    ignored_params=_ignored_params_for(module),
                 )
 
         # BaseTrainer is the single source of truth for gradient checkpointing.
@@ -259,12 +295,18 @@ class FSDP2Engine:
 
                 model.get_input_embeddings().register_forward_hook(make_inputs_require_grad)
 
+            if self.mixed_precision == "bf16":
+                n_patched = _make_norms_dtype_safe(model)
+                if self.rank == 0 and n_patched:
+                    logger.info(f"Made {n_patched} nn.LayerNorm(s) dtype-safe for bf16 checkpointing.")
+
         fully_shard(
             model,
             mesh=self.fsdp_mesh,
             reshard_after_forward=self.reshard_after_forward,
             mp_policy=mp_policy,
             offload_policy=CPUOffloadPolicy(pin_memory=self.pin_memory) if self.offload_params else None,
+            ignored_params=_ignored_params_for(model),
         )
 
         return model

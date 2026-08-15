@@ -9,16 +9,16 @@
 
 | 组件 | 版本 |
 |------|------|
-| CANN | `9.0.0` |
-| PyTorch | `2.7.1` |
-| torch-npu | `2.7.1.post4` |
-| torchvision | `0.22.1` |
-| torchaudio | `2.7.1` |
+| CANN | `9.1.0` |
+| PyTorch | `2.10.0` |
+| torch-npu | `2.10.0.post2` |
+| torchvision | `0.25.0` |
+| torchaudio | `2.10.0` |
 | Triton Ascend | `3.2.1` |
 
 安装前使用 [Ascend 兼容性查询助手](https://www.hiascend.com/hardware/compatibility)
 确认硬件与操作系统组合，并从
-[CANN 9.0.0 社区版资源中心](https://www.hiascend.com/developer/download/community/result?cann=9.0.0&module=cann)
+[CANN 9.1.0 社区版资源中心](https://www.hiascend.com/developer/download/community/result?cann=9.1.0&module=cann)
 选择对应 CPU 架构的软件包。
 
 ### 安装驱动与固件
@@ -103,6 +103,7 @@ llamafactory-cli sft examples/v1/train_full/train_full_fsdp2.yaml
 | DPO | 支持 | 使用偏好对数据 |
 | RM | 支持 | `cp_size` 需要为 `1` |
 | FSDP2 | 支持 | 使用 NPU 设备和通信后端 |
+| FSDPTurbo | 支持 | 提供 MoE 专家并行和专家参数分片 |
 | Ulysses CP | 支持 | 依赖适配的 attention 实现 |
 | DeepSpeed | 依赖环境 | 由 NPU DeepSpeed 发行版和配置决定 |
 | HF CLI 推理 | 支持 | `sample_backend: hf` |
@@ -137,5 +138,5 @@ Kernel 可能跳过替换或抛出明确错误。
 
 ## 分布式训练
 
-FSDP2 与 Ulysses 使用 accelerator 抽象选择 NPU 通信设备。DeepSpeed
-的可用性由 NPU DeepSpeed 发行版、依赖版本和配置共同决定。
+FSDP2、FSDPTurbo 与 Ulysses 使用 accelerator 抽象选择 NPU 通信设备。
+DeepSpeed 的可用性由 NPU DeepSpeed 发行版、依赖版本和配置共同决定。

@@ -41,6 +41,9 @@ v1 将训练样本统一为 Messages 结构。`DataEngine` 根据 `train_dataset
 多轮对话会按每个受监督的 assistant turn 展开为多条训练样本，每条样本
 只监督最后一个 assistant turn。
 
+多模态 SFT 示例位于 `data/v1_multimodal_demo.yaml`，对应训练配置为
+`examples/v1/train_full/train_multimodal.yaml`。
+
 ## DPO/RM 数据格式
 
 DPO 和 RM 使用 `chosen_messages` 与 `rejected_messages`：

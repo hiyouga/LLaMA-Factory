@@ -26,6 +26,21 @@ kernel_config:
 
 该方案使用 CUDA/Triton 实现替换受支持模型的 MoE 计算路径。
 
+## Flash Linear Attention
+
+`flash-linear-attention` 通过 FSDPTurbo 的算子注册表替换模型中的 FLA
+实现，支持 CUDA 和 NPU：
+
+```yaml
+kernel_config:
+  name: flash-linear-attention
+  include_kernels: chunk_gated_delta_rule,fused_recurrent_gated_delta_rule
+  chunk_size: 64
+```
+
+`include_kernels` 可以设置为 `auto` 或逗号分隔的算子名称；`chunk_size`
+支持 `16`、`32` 和 `64`。使用前需要安装 `requirements/fsdpturbo.txt`。
+
 ## 组合多个加速实现
 
 多个实现按配置顺序应用：

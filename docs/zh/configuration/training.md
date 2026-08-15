@@ -86,6 +86,22 @@ checkpoint。
 |------|------|--------|------|
 | `config_file` | `str` | 必填 | DeepSpeed JSON 配置 |
 
+### FSDPTurbo
+
+设置 `name: fsdpturbo`：
+
+| 字段 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `reshard_after_forward` | `bool` | `true` | forward 后是否重新分片 |
+| `offload_params` | `bool` | `false` | 是否 offload 参数 |
+| `pin_memory` | `bool` | `true` | 是否使用 pinned memory |
+| `dcp_path` | `str \| None` | `None` | 初始化 DCP 权重路径 |
+| `ep_size` | `int` | `1` | 专家并行组大小 |
+| `ep_dispatcher` | `str` | `eager` | 专家 token dispatcher |
+| `fsdp_ignored_modules` | `list[str]` | `[]` | 外层 FSDP2 忽略的额外模块 |
+| `hook_modules` | `list[str]` | `[]` | EFSDP hook 的模块模式 |
+| `fsdp_implementation` | `str` | `native` | `native` 或 `custom` |
+
 `dp_size`、`cp_size`、`mp_replicate_size` 和 `mp_shard_size` 是
 `TrainingArguments` 字段，不放在 `dist_config` 中。
 

@@ -19,7 +19,13 @@ import pytest
 from transformers import AutoTokenizer
 
 from llamafactory.data import get_template_and_fix_tokenizer
-from llamafactory.data.template import parse_template
+from llamafactory.data.template import TEMPLATES, parse_template
+from llamafactory.extras.constants import (
+    DEFAULT_TEMPLATE,
+    MULTIMODAL_SUPPORTED_MODELS,
+    SUPPORTED_MODELS,
+    DownloadSource,
+)
 from llamafactory.extras.packages import is_transformers_version_greater_than
 from llamafactory.hparams import DataArguments
 
@@ -89,6 +95,22 @@ def _check_template(
     assert content_str == prompt_str + answer_str
     assert content_ids == prompt_ids + answer_ids
     _check_tokenization(tokenizer, (prompt_ids, answer_ids), (prompt_str, answer_str))
+
+
+def test_moss_vl_registration():
+    model_name = "MOSS-VL-Instruct-0708"
+
+    assert model_name in SUPPORTED_MODELS
+    assert SUPPORTED_MODELS[model_name][DownloadSource.DEFAULT] == "OpenMOSS-Team/MOSS-VL-Instruct-0708"
+    assert DEFAULT_TEMPLATE[model_name] == "moss_vl"
+    assert model_name in MULTIMODAL_SUPPORTED_MODELS
+    assert TEMPLATES["moss_vl"].mm_plugin.__class__.__name__ == "MossVLPlugin"
+    assert TEMPLATES["moss_vl"].mm_plugin.image_token == "<|image_pad|>"
+    assert TEMPLATES["moss_vl"].mm_plugin.video_token == "<|video_pad|>"
+    assert TEMPLATES["moss_vl"].mm_plugin.vision_bos_token == "<|vision_start|>"
+    assert TEMPLATES["moss_vl"].mm_plugin.vision_eos_token == "<|vision_end|>"
+    assert TEMPLATES["moss_vl"].mm_plugin.time_bos_token == "<|time_start|>"
+    assert TEMPLATES["moss_vl"].mm_plugin.time_eos_token == "<|time_end|>"
 
 
 @pytest.mark.runs_on(["cpu", "mps"])

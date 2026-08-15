@@ -73,6 +73,23 @@ MCA_SUPPORTED_MODELS = {
     "qwen3_5_moe",
 }
 
+# Text LLM model_types supported by the Megatron Bridge PT/SFT path (gpt_step).
+# Multimodal / audio / omni architectures are excluded in v0.
+MEGATRON_BRIDGE_SUPPORTED_MODELS = {
+    "deepseek_v3",
+    "deepseek_v4",
+    "llama",
+    "mistral",
+    "qwen2",
+    "qwen3",
+    "qwen3_5",
+    "qwen3_5_moe",
+    "qwen3_5_moe_text",
+    "qwen3_5_text",
+    "qwen3_moe",
+    "qwen3_next",
+}
+
 METHODS = ["full", "freeze", "lora", "oft"]
 
 MOD_SUPPORTED_MODELS = {"bloom", "falcon", "gemma", "llama", "mistral", "mixtral", "phi", "starcoder2"}
@@ -2178,6 +2195,17 @@ register_model_group(
         },
     },
     template="moonlight",
+)
+
+
+register_model_group(
+    models={
+        "MOSS-VL-Instruct-0708": {
+            DownloadSource.DEFAULT: "OpenMOSS-Team/MOSS-VL-Instruct-0708",
+        },
+    },
+    template="moss_vl",
+    multimodal=True,
 )
 
 

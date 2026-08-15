@@ -473,6 +473,354 @@ class BasePlugin(MMPluginMixin):
 
 
 @dataclass
+class MossVLPlugin(BasePlugin):
+    vision_bos_token: str = "<|vision_start|>"
+    vision_eos_token: str = "<|vision_end|>"
+    time_bos_token: str = "<|time_start|>"
+    time_eos_token: str = "<|time_end|>"
+
+    @staticmethod
+    def _split_pixel_values(
+        pixel_values: "torch.Tensor",
+        grid_thw: "torch.Tensor",
+    ) -> list["torch.Tensor"]:
+        patch_counts = [int(grid.prod().item()) for grid in grid_thw]
+        return list(torch.split(pixel_values, patch_counts))
+
+    @staticmethod
+    def _create_cross_attention_mask(
+        input_ids: Union[list[list[int]], "torch.Tensor"],
+        grid_thw: "torch.Tensor",
+        media_nums_per_sample: list[int],
+        image_token_id: int,
+        attention_mask: Optional["torch.Tensor"] = None,
+        padding_side: Literal["left", "right"] = "right",
+    ) -> "torch.Tensor":
+        r"""Create the native MOSS-VL frame-level causal cross-attention mask."""
+        if isinstance(input_ids, list):
+            max_text_len = max(len(token_ids) for token_ids in input_ids)
+            input_ids_tensor = torch.full((len(input_ids), max_text_len), -1, dtype=torch.long)
+            attention_mask_tensor = torch.zeros_like(input_ids_tensor, dtype=torch.bool)
+            for batch_index, token_ids in enumerate(input_ids):
+                seq_len = len(token_ids)
+                start = max_text_len - seq_len if padding_side == "left" else 0
+                input_ids_tensor[batch_index, start : start + seq_len] = torch.tensor(token_ids, dtype=torch.long)
+                attention_mask_tensor[batch_index, start : start + seq_len] = True
+        else:
+            input_ids_tensor = input_ids
+            attention_mask_tensor = (
+                torch.ones_like(input_ids_tensor, dtype=torch.bool)
+                if attention_mask is None
+                else attention_mask.bool()
+            )
+
+        total_frames_per_sample = []
+        media_index = 0
+        for num_media in media_nums_per_sample:
+            sample_grid = grid_thw[media_index : media_index + num_media]
+            total_frames_per_sample.append(int(sample_grid[:, 0].sum().item()))
+            media_index += num_media
+
+        max_num_frames = max(total_frames_per_sample)
+        frame_indices = torch.arange(max_num_frames, device=input_ids_tensor.device).view(1, 1, -1)
+        visible_mask = (input_ids_tensor == image_token_id).cumsum(dim=1).unsqueeze(-1) > frame_indices
+        visible_mask &= attention_mask_tensor.unsqueeze(-1)
+        valid_frames = frame_indices < torch.tensor(
+            total_frames_per_sample,
+            device=input_ids_tensor.device,
+        ).view(-1, 1, 1)
+        visible_mask &= valid_frames
+        return (~visible_mask).unsqueeze(1)
+
+    def _get_video_inputs(
+        self,
+        videos: list["VideoInput"],
+        processor: "MMProcessor",
+        return_metadata: bool,
+    ) -> dict[str, Any]:
+        video_kwargs = {"return_tensors": "pt", "return_metadata": return_metadata}
+        if getattr(processor, "video_fps", None) is not None:
+            video_kwargs["video_fps"] = processor.video_fps
+        if getattr(processor, "video_maxlen", None) is not None:
+            video_kwargs["max_frames"] = processor.video_maxlen
+
+        video_min_pixels = getattr(processor, "video_min_pixels", None)
+        video_max_pixels = getattr(processor, "video_max_pixels", None)
+        if video_min_pixels is not None and video_max_pixels is not None:
+            video_kwargs["size"] = {
+                "shortest_edge": video_min_pixels,
+                "longest_edge": video_max_pixels,
+            }
+
+        return dict(processor.video_processor(videos=videos, **video_kwargs))
+
+    def _get_media_order_from_ids(
+        self,
+        input_ids: list[int],
+        processor: "MMProcessor",
+        num_images: int,
+        num_videos: int,
+        expected_video_frames: Optional[list[int]] = None,
+    ) -> list[str]:
+        media_order = []
+        video_frame_counts = []
+        in_video = False
+        current_video_frames = 0
+        for token_id in input_ids:
+            if token_id == processor.vision_start_token_id:
+                if in_video:
+                    raise ValueError(
+                        "MOSS-VL encountered nested video token blocks after tokenization. "
+                        "Please increase `cutoff_len` if a video placeholder was truncated."
+                    )
+
+                media_order.append("video")
+                in_video = True
+                current_video_frames = 0
+            elif token_id == processor.vision_end_token_id:
+                if not in_video:
+                    raise ValueError(
+                        "MOSS-VL encountered a video end token without a matching start token after tokenization. "
+                        "Please increase `cutoff_len` if a video placeholder was truncated."
+                    )
+
+                video_frame_counts.append(current_video_frames)
+                in_video = False
+            elif token_id == processor.image_token_id:
+                if in_video:
+                    current_video_frames += 1
+                else:
+                    media_order.append("image")
+
+        if in_video:
+            raise ValueError(
+                "MOSS-VL encountered an incomplete video token block after tokenization. "
+                "Please increase `cutoff_len` or reduce `video_maxlen`."
+            )
+
+        if media_order.count("image") != num_images or media_order.count("video") != num_videos:
+            raise ValueError(
+                "MOSS-VL media tokens do not match the provided media after tokenization: "
+                f"order={media_order}, images={num_images}, videos={num_videos}. "
+                "Please increase `cutoff_len` if a visual placeholder was truncated."
+            )
+
+        if expected_video_frames is not None and video_frame_counts != expected_video_frames:
+            raise ValueError(
+                "MOSS-VL video frame tokens do not match the processed video after tokenization: "
+                f"tokens={video_frame_counts}, frames={expected_video_frames}. "
+                "Please increase `cutoff_len` or reduce `video_maxlen`."
+            )
+
+        return media_order
+
+    @override
+    def process_messages(
+        self,
+        messages: list[dict[str, str]],
+        images: list["ImageInput"],
+        videos: list["VideoInput"],
+        audios: list["AudioInput"],
+        processor: Optional["MMProcessor"],
+    ) -> list[dict[str, str]]:
+        self._validate_input(processor, images, videos, audios)
+        self._validate_messages(messages, images, videos, audios)
+        messages = deepcopy(messages)
+
+        video_inputs = self._get_video_inputs(videos, processor, return_metadata=True) if videos else {}
+        video_grid_thw = video_inputs.get("video_grid_thw", [])
+        video_metadata = video_inputs.get("video_metadata", [])
+        video_index = 0
+        for message in messages:
+            content = message["content"]
+            content = content.replace(IMAGE_PLACEHOLDER, self.image_token)
+            while VIDEO_PLACEHOLDER in content:
+                metadata = video_metadata[video_index]
+                if metadata.fps is None:
+                    metadata.fps = 24
+
+                timestamps = processor._calculate_timestamps(
+                    metadata.frames_indices,
+                    metadata.total_num_frames,
+                    metadata.fps,
+                    metadata.duration,
+                    processor.video_processor.temporal_patch_size,
+                    actual_timestamps=getattr(metadata, "actual_timestamps", None),
+                )
+                num_frames = int(video_grid_thw[video_index][0].item())
+                frame_tokens = [
+                    f"{self.time_bos_token}{timestamps[frame_idx]:.1f} seconds{self.time_eos_token}{self.image_token}"
+                    for frame_idx in range(num_frames)
+                ]
+                video_tokens = f"{self.vision_bos_token}{''.join(frame_tokens)}{self.vision_eos_token}"
+                content = content.replace(VIDEO_PLACEHOLDER, video_tokens, 1)
+                video_index += 1
+
+            message["content"] = content
+
+        return messages
+
+    @override
+    def get_mm_inputs(
+        self,
+        images: list["ImageInput"],
+        videos: list["VideoInput"],
+        audios: list["AudioInput"],
+        imglens: list[int],
+        vidlens: list[int],
+        audlens: list[int],
+        batch_ids: list[list[int]],
+        processor: Optional["MMProcessor"],
+    ) -> dict[str, Union[list[int], "torch.Tensor"]]:
+        self._validate_input(processor, images, videos, audios)
+        if audios:
+            raise ValueError("MOSS-VL does not support audio inputs.")
+
+        if not (len(imglens) == len(vidlens) == len(batch_ids)):
+            raise ValueError("MOSS-VL batch metadata must have one entry per sample.")
+        final_pixel_values = []
+        final_grid_thw = []
+        media_nums_per_sample = []
+        image_offset = 0
+        video_offset = 0
+        for imglen, vidlen, input_ids in zip(imglens, vidlens, batch_ids):
+            sample_images = images[image_offset : image_offset + imglen]
+            sample_videos = videos[video_offset : video_offset + vidlen]
+            image_offset += imglen
+            video_offset += vidlen
+            image_chunks, image_grids = [], []
+            if sample_images:
+                regularized_images = self._regularize_images(
+                    sample_images,
+                    image_max_pixels=2**63 - 1,
+                    image_min_pixels=1,
+                )["images"]
+                image_kwargs = {"return_tensors": "pt"}
+                if getattr(processor, "image_min_pixels", None) is not None:
+                    image_kwargs["min_pixels"] = processor.image_min_pixels
+                if getattr(processor, "image_max_pixels", None) is not None:
+                    image_kwargs["max_pixels"] = processor.image_max_pixels
+
+                image_inputs = processor.image_processor(images=regularized_images, **image_kwargs)
+                image_grids = list(image_inputs["image_grid_thw"])
+                image_chunks = self._split_pixel_values(image_inputs["pixel_values"], image_inputs["image_grid_thw"])
+
+            video_chunks, video_grids = [], []
+            if sample_videos:
+                video_inputs = self._get_video_inputs(sample_videos, processor, return_metadata=False)
+                video_grids = list(video_inputs["video_grid_thw"])
+                video_chunks = self._split_pixel_values(
+                    video_inputs["pixel_values_videos"],
+                    video_inputs["video_grid_thw"],
+                )
+
+            media_order = self._get_media_order_from_ids(
+                input_ids,
+                processor,
+                imglen,
+                vidlen,
+                expected_video_frames=[int(grid[0].item()) for grid in video_grids],
+            )
+
+            if not media_order:
+                patch_size = getattr(processor.image_processor, "patch_size", None)
+                if patch_size is None:  # lightweight/test processors without the native MOSS-VL contract
+                    blank_image = Image.new("RGB", (128, 128), (255, 255, 255))
+                    blank_inputs = processor.image_processor(images=[blank_image], return_tensors="pt")
+                    final_pixel_values.append(blank_inputs["pixel_values"])
+                    final_grid_thw.append(blank_inputs["image_grid_thw"][0])
+                else:
+                    temporal_patch_size = getattr(processor.image_processor, "temporal_patch_size", None) or 1
+                    merge_size = getattr(processor.image_processor, "merge_size", None) or 2
+                    factor = patch_size * merge_size
+                    side = math.ceil(128 / factor) * factor
+                    grid_thw = torch.tensor([1, side // patch_size, side // patch_size])
+                    feature_dim = 3 * temporal_patch_size * patch_size * patch_size
+                    final_pixel_values.append(torch.zeros((int(grid_thw.prod()), feature_dim), dtype=torch.float32))
+                    final_grid_thw.append(grid_thw)
+                media_nums_per_sample.append(1)
+                continue
+
+            image_index = 0
+            video_index = 0
+            for modality in media_order:
+                if modality == "image":
+                    final_pixel_values.append(image_chunks[image_index])
+                    final_grid_thw.append(image_grids[image_index])
+                    image_index += 1
+                else:
+                    final_pixel_values.append(video_chunks[video_index])
+                    final_grid_thw.append(video_grids[video_index])
+                    video_index += 1
+
+            media_nums_per_sample.append(len(media_order))
+
+        if image_offset != len(images) or video_offset != len(videos):
+            raise ValueError("MOSS-VL media lengths do not consume all provided inputs.")
+
+        mm_inputs = {
+            "pixel_values": torch.cat(final_pixel_values, dim=0),
+            "grid_thw": torch.stack(final_grid_thw),
+            "media_nums_per_sample": media_nums_per_sample,
+        }
+        mm_inputs["cross_attention_mask"] = self._create_cross_attention_mask(
+            batch_ids,
+            mm_inputs["grid_thw"],
+            media_nums_per_sample,
+            processor.image_token_id,
+            padding_side=processor.tokenizer.padding_side,
+        )
+        return mm_inputs
+
+    def post_process_mossvl_inputs(
+        self,
+        features: dict[str, "torch.Tensor"],
+        mm_inputs: dict[str, Any],
+        processor: "MMProcessor",
+    ) -> dict[str, Any]:
+        r"""Create MOSS-VL batch-only inputs after the text batch has been padded."""
+        input_ids = features["input_ids"]
+        attention_mask = features["attention_mask"].bool()
+        mm_inputs["cross_attention_mask"] = self._create_cross_attention_mask(
+            input_ids,
+            mm_inputs["grid_thw"],
+            mm_inputs["media_nums_per_sample"],
+            processor.image_token_id,
+            attention_mask,
+        )
+
+        dummy_image_tokens = (input_ids == processor.image_token_id) & ~attention_mask
+        input_ids.masked_fill_(dummy_image_tokens, processor.tokenizer.pad_token_id)
+
+        labels = features.get("labels")
+        if labels is not None:
+            control_token_ids = {
+                processor.image_token_id,
+                processor.video_token_id,
+                processor.vision_start_token_id,
+                processor.vision_end_token_id,
+                processor.tokenizer.convert_tokens_to_ids(self.time_bos_token),
+                processor.tokenizer.convert_tokens_to_ids(self.time_eos_token),
+            }
+            for batch_index, token_ids in enumerate(input_ids):
+                in_vision = False
+                for token_index, token_id in enumerate(token_ids.tolist()):
+                    if token_id == processor.vision_start_token_id:
+                        in_vision = True
+                    if in_vision or token_id in control_token_ids:
+                        labels[batch_index, token_index] = IGNORE_INDEX
+                    if token_id == processor.vision_end_token_id:
+                        in_vision = False
+
+            # Native MOSS-VL labels_spans supervise through <|im_end|>, but not its trailing newline.
+            im_end_token_id = processor.tokenizer.convert_tokens_to_ids("<|im_end|>")
+            labels[:, 1:].masked_fill_(input_ids[:, :-1] == im_end_token_id, IGNORE_INDEX)
+
+        features.pop("position_ids", None)
+        return mm_inputs
+
+
+@dataclass
 class ErnieVLPlugin(BasePlugin):
     @override
     def process_messages(
@@ -2911,6 +3259,7 @@ PLUGINS = {
     "minicpm_v": MiniCPMVPlugin,
     "minicpm_v_4_6": MiniCPMV4_6Plugin,
     "mllama": MllamaPlugin,
+    "moss_vl": MossVLPlugin,
     "paligemma": PaliGemmaPlugin,
     "pixtral": PixtralPlugin,
     "qwen2_audio": Qwen2AudioPlugin,

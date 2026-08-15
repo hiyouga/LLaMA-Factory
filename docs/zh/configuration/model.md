@@ -78,11 +78,14 @@ meta 初始化不能与量化同时使用。
 | 字段 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
 | `name` | `str` | 必填 | `auto`、单个实现名称或逗号分隔的多个名称 |
+| `include_kernels` | `str` | `auto` | Flash Linear Attention 使用的算子名称 |
+| `chunk_size` | `int` | `64` | Flash Linear Attention chunk size；可选 `16`、`32`、`64` |
 
 可用名称：
 
 - `liger_kernel`
 - `cuda_fused_moe`
+- `flash-linear-attention`
 - `npu_fused_moe`
 - `npu_fused_rmsnorm`
 - `npu_fused_rope`

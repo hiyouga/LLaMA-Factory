@@ -17,7 +17,7 @@
 | 页面 | 内容 |
 |------|------|
 | [批处理](batching.md) | 四种 batching strategy |
-| [分布式训练](distributed_training.md) | FSDP2、DeepSpeed、Ulysses |
+| [分布式训练](distributed_training.md) | FSDP2、FSDPTurbo、DeepSpeed、Ulysses |
 | [融合算子加速](kernel_acceleration.md) | Liger、融合算子和组合配置 |
 
 ## 模型保存与使用

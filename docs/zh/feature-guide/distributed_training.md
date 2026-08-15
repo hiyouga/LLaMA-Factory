@@ -14,6 +14,27 @@ dist_config:
   dcp_path: null
 ```
 
+## FSDPTurbo
+
+FSDPTurbo 在 FSDP2 基础上提供 MoE 专家并行和专家参数分片。先安装对应
+依赖：
+
+```bash
+python -m pip install -r requirements/fsdpturbo.txt
+```
+
+然后在 `dist_config` 中选择 `fsdpturbo`：
+
+```yaml
+dist_config:
+  name: fsdpturbo
+  ep_size: 16
+  ep_dispatcher: eager
+```
+
+`ep_size` 必须能够整除 data parallel size。完整示例见
+`examples/v1/train_full/train_full_qwen3_moe_fsdpturbo_ep_fsdp.yaml`。
+
 ## DeepSpeed
 
 ```yaml

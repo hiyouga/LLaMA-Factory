@@ -112,8 +112,7 @@ class ModelEngine:
         if self.args.custom_chat_template:
             if not is_tokenizer(self.processor):
                 self.processor.chat_template = self.args.custom_chat_template
-            else:
-                tokenizer.chat_template = self.args.custom_chat_template
+            tokenizer.chat_template = self.args.custom_chat_template
 
     def _init_model_config(self) -> HFConfig:
         """Init model config."""
@@ -150,8 +149,19 @@ class ModelEngine:
         if self.args.model_class == ModelClass.LLM:
             from transformers import AutoModelForCausalLM, AutoModelForImageTextToText
 
-            if type(self.model_config) in AutoModelForImageTextToText._model_mapping.keys():
+            # AutoModelForMultimodalLM (audio / other multimodal LMs, e.g. Qwen2-Audio) was added in
+            # a newer transformers; fall back gracefully when it is absent (e.g. 4.57.1).
+            try:
+                from transformers import AutoModelForMultimodalLM
+            except ImportError:
+                AutoModelForMultimodalLM = None
+
+            cfg_type = type(self.model_config)
+            if cfg_type in AutoModelForImageTextToText._model_mapping.keys():
                 AutoClass = AutoModelForImageTextToText
+            elif AutoModelForMultimodalLM is not None and cfg_type in AutoModelForMultimodalLM._model_mapping.keys():
+                # Audio / other multimodal LMs (e.g. Qwen2-Audio) live here, not in CausalLM.
+                AutoClass = AutoModelForMultimodalLM
             else:
                 AutoClass = AutoModelForCausalLM
 
@@ -173,7 +183,7 @@ class ModelEngine:
         if init_device.type == DeviceType.META:
             assert self.args.quant_config is None, "Quantization is not supported with meta device."
             with init_empty_weights():
-                model = AutoClass.from_config(self.model_config)
+                model = AutoClass.from_config(self.model_config, attn_implementation=self.args.flash_attn)
         else:
             model = AutoClass.from_pretrained(
                 self.args.model,
@@ -186,6 +196,10 @@ class ModelEngine:
 
         init_mode = self.args.init_config.name if self.args.init_config is not None else "init_on_default"
         model._init_mode = init_mode
+
+        if hasattr(model, "thinker"):
+            model = model.thinker
+            model._init_mode = init_mode
 
         if self.args.peft_config is None:
             if self.is_train:
