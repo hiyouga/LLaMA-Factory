@@ -65,7 +65,7 @@ class ComputeAccuracy:
     def _dump(self) -> Optional[dict[str, float]]:
         result = None
         if hasattr(self, "score_dict"):
-            result = {k: float(np.mean(v)) for k, v in self.score_dict.items()}
+            result = {k: float(np.mean(v)) for k, v in self.score_dict.items() if len(v) > 0}
 
         self.score_dict = {"accuracy": []}
         return result
@@ -78,7 +78,8 @@ class ComputeAccuracy:
         for i in range(len(preds)):
             pred, label = preds[i, :-1], labels[i, 1:]
             label_mask = label != IGNORE_INDEX
-            self.score_dict["accuracy"].append(np.mean(pred[label_mask] == label[label_mask]))
+            if label_mask.any():
+                self.score_dict["accuracy"].append(np.mean(pred[label_mask] == label[label_mask]))
 
         if compute_result:
             return self._dump()
