@@ -527,7 +527,8 @@ class Runner:
 
             output_dir = get_save_dir(model_name, finetuning_type, output_dir)
             config_dict = load_args(os.path.join(output_dir, LLAMABOARD_CONFIG))  # load llamaboard config
-            for elem_id, value in config_dict.items():
-                output_dict[self.manager.get_elem_by_id(elem_id)] = value
+            if config_dict is not None:
+                for elem_id, value in config_dict.items():
+                    output_dict[self.manager.get_elem_by_id(elem_id)] = value
 
         return output_dict
