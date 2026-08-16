@@ -101,7 +101,7 @@ class ChatCompletionRequest(BaseModel):
     do_sample: bool | None = None
     temperature: float | None = None
     top_p: float | None = None
-    n: int = 1
+    n: int = Field(default=1, ge=1)
     presence_penalty: float | None = None
     max_tokens: int | None = None
     stop: str | list[str] | None = None
