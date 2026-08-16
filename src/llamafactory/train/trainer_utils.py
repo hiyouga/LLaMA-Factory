@@ -762,7 +762,7 @@ def _kl_divergence(
     # mask padding tokens
     mask = (labels != ignore_index).float()
 
-    return (kl * mask).sum() / mask.sum()
+    return (kl * mask).sum() / mask.sum().clamp_min(1.0)
 
 
 def eaft_loss_func(
