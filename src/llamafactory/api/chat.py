@@ -70,6 +70,23 @@ ROLE_MAPPING = {
 }
 
 
+def _fetch_remote_media(url: str) -> io.BytesIO:
+    check_ssrf_url(url)
+    response = None
+    try:
+        response = requests.get(url, timeout=10, allow_redirects=False)
+        if response.is_redirect:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Media URL redirects are not allowed.")
+
+        response.raise_for_status()
+        return io.BytesIO(response.content)
+    except requests.RequestException as err:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Failed to fetch media URL: {err}")
+    finally:
+        if response is not None:
+            response.close()
+
+
 def _process_request(
     request: "ChatCompletionRequest",
 ) -> tuple[
@@ -127,8 +144,7 @@ def _process_request(
                         check_lfi_path(image_url)
                         image_stream = open(image_url, "rb")
                     else:  # web uri
-                        check_ssrf_url(image_url)
-                        image_stream = requests.get(image_url, stream=True).raw
+                        image_stream = _fetch_remote_media(image_url)
 
                     images.append(Image.open(image_stream).convert("RGB"))
                 elif input_item.type == "video_url":
@@ -140,8 +156,7 @@ def _process_request(
                         check_lfi_path(video_url)
                         video_stream = video_url
                     else:  # web uri
-                        check_ssrf_url(video_url)
-                        video_stream = requests.get(video_url, stream=True).raw
+                        video_stream = _fetch_remote_media(video_url)
 
                     videos.append(video_stream)
                 elif input_item.type == "audio_url":
@@ -153,8 +168,7 @@ def _process_request(
                         check_lfi_path(audio_url)
                         audio_stream = audio_url
                     else:  # web uri
-                        check_ssrf_url(audio_url)
-                        audio_stream = requests.get(audio_url, stream=True).raw
+                        audio_stream = _fetch_remote_media(audio_url)
 
                     audios.append(audio_stream)
                 else:
