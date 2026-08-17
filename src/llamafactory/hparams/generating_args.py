@@ -68,7 +68,7 @@ class GeneratingArguments:
     )
 
     def __post_init__(self) -> None:
-        if self.top_p <= 0:
+        if not 0 < self.top_p <= 1:
             raise ValueError("`top_p` must be in the interval (0, 1], got {0}.".format(self.top_p))
 
     def to_dict(self, obey_generation_config: bool = False) -> dict[str, Any]:
