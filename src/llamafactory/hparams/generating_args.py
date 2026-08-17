@@ -67,6 +67,10 @@ class GeneratingArguments:
         metadata={"help": "Whether or not to remove special tokens in the decoding."},
     )
 
+    def __post_init__(self) -> None:
+        if self.top_p <= 0:
+            raise ValueError("`top_p` must be in the interval (0, 1], got {0}.".format(self.top_p))
+
     def to_dict(self, obey_generation_config: bool = False) -> dict[str, Any]:
         args = asdict(self)
         if args.get("max_new_tokens", -1) > 0:
