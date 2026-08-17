@@ -305,6 +305,10 @@ class BaseTrainer:
                         grads = [p.grad for p in self.model.parameters() if p.grad is not None]
                         total_norm = torch.nn.utils.get_total_norm(grads)
                         if isinstance(total_norm, DTensor):
+                            # CPU-offloaded gradients produce a CPU-local partial scalar. Stage only that
+                            # scalar to the mesh device before full_tensor performs the DTensor collective.
+                            if total_norm.device != self.device:
+                                total_norm = total_norm.to(self.device)
                             # full_tensor all-reduces across the fsdp mesh (spans CP under default
                             # mp_shard=world); a separate CP reduce would over-count by sqrt(cp_size).
                             total_norm = total_norm.full_tensor()
