@@ -3015,9 +3015,29 @@ register_model_group(
 
 register_model_group(
     models={
+        "Qwen3.8-27B": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3.8-27B",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3.8-27B",
+        },
+        "Qwen3.8-27B-FP8": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3.8-27B-FP8",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3.8-27B-FP8",
+        },
+    },
+    template="qwen3_5",
+    multimodal=True,
+)
+
+
+register_model_group(
+    models={
         "Qwen3.8-2.4T-A95B": {
             DownloadSource.DEFAULT: "Qwen/Qwen3.8-2.4T-A95B",
             DownloadSource.MODELSCOPE: "Qwen/Qwen3.8-2.4T-A95B",
+        },
+        "Qwen3.8-2.4T-A95B-FP8": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3.8-2.4T-A95B-FP8",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3.8-2.4T-A95B-FP8",
         },
     },
     template="qwen3_5",
