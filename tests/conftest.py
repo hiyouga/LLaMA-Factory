@@ -49,7 +49,7 @@ def pytest_configure(config: Config):
 
 
 def _handle_runs_on(items: list[Item]):
-    """Skip tests on specified device TYPES (cpu/cuda/npu)."""
+    """Skip tests on specified device TYPES (cpu/cuda/npu/xpu)."""
     for item in items:
         marker = item.get_closest_marker("runs_on")
         if not marker:
@@ -78,6 +78,8 @@ def _get_visible_devices_env() -> str | None:
         return "CUDA_VISIBLE_DEVICES"
     elif CURRENT_DEVICE == "npu":
         return "ASCEND_RT_VISIBLE_DEVICES"
+    elif CURRENT_DEVICE == "xpu":
+        return "ZE_AFFINITY_MASK"
     else:
         return None
 
@@ -160,6 +162,8 @@ def _manage_distributed_env(request: FixtureRequest, monkeypatch: MonkeyPatch) -
             monkeypatch.setattr(torch.cuda, "device_count", lambda: 1)
         elif CURRENT_DEVICE == "npu":
             monkeypatch.setattr(torch.npu, "device_count", lambda: 1)
+        elif CURRENT_DEVICE == "xpu":
+            monkeypatch.setattr(torch.xpu, "device_count", lambda: 1)
 
 
 @pytest.fixture
