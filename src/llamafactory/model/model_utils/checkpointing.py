@@ -51,8 +51,11 @@ def _get_gradient_checkpointing_kwargs(model_args: "ModelArguments") -> dict[str
 
     try:
         from kt_kernel.sft import get_activation_checkpoint_context_fn
-    except (ImportError, ModuleNotFoundError) as exc:
-        raise RuntimeError("The installed kt-kernel does not provide the activation checkpoint context API.") from exc
+    except (ImportError, ModuleNotFoundError):
+        logger.warning_rank0_once(
+            "The installed kt-kernel predates the activation checkpoint context API; using non-reentrant checkpointing."
+        )
+        return {"use_reentrant": False}
 
     return {"use_reentrant": False, "context_fn": get_activation_checkpoint_context_fn()}
 

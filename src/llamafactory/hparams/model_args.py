@@ -558,6 +558,12 @@ class KTransformersArguments:
             raise TypeError("LLaMA-Factory `kt_config` must be a flat mapping.")
 
         config = dict(raw_config)
+        # Transformers-KT adds these defaults to the user-owned mapping during
+        # TrainingArguments.__post_init__. They are transport metadata, not
+        # conflicting user overrides.
+        for key in ("enabled", "kt_skip_expert_loading"):
+            if config.get(key) is True:
+                config.pop(key)
         conflicts = sorted(set(config) & self._KT_DERIVED_KEYS)
         if conflicts:
             raise ValueError(f"These `kt_config` values are derived from LLaMA-Factory arguments: {conflicts}.")
@@ -608,8 +614,9 @@ class KTransformersArguments:
         advanced_config: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         r"""Map LLaMA-Factory-owned training values to the public KT configuration."""
-        if getattr(finetuning_args, "finetuning_type", None) != "lora":
-            raise ValueError("KTransformers thin integration currently supports LoRA finetuning only.")
+        finetuning_type = getattr(finetuning_args, "finetuning_type", None)
+        if finetuning_type not in {"lora", "full"}:
+            raise ValueError("KTransformers supports LoRA and full-parameter finetuning.")
 
         kt_config = dict(advanced_config or {})
         configured_capacity = kt_config.pop("kt_model_max_length", None)
@@ -634,8 +641,8 @@ class KTransformersArguments:
                 "kt_lora_expert_num": self.kt_lora_expert_num,
                 "kt_lora_expert_intermediate_size": self.kt_lora_expert_intermediate_size,
                 "kt_activation_policy": self.get_kt_activation_policy(),
-                "kt_train_mode": "lora",
-                "kt_full_weight_grad": False,
+                "kt_train_mode": finetuning_type,
+                "kt_full_weight_grad": finetuning_type == "full",
             }
         )
         return {key: value for key, value in kt_config.items() if value is not None}
@@ -668,13 +675,29 @@ class KTransformersArguments:
             self._get_advanced_kt_config(training_args),
         )
         update_kt_config = getattr(training_args, "update_kt_config", None)
-        if not callable(update_kt_config):
-            raise RuntimeError(
-                "The installed Transformers-KT does not provide `TrainingArguments.update_kt_config()`."
-            )
-
         adapter_dir = self._resolve_kt_adapter_artifact_dir("training")
-        update_kt_config(kt_config, adapter_name_or_path=adapter_dir)
+        if callable(update_kt_config):
+            update_kt_config(kt_config, adapter_name_or_path=adapter_dir)
+            return
+
+        # transformers-kt 5.6 exposes the config object but predates the public
+        # update helper. Keep its flat loading config and Accelerate's nested
+        # plugin config synchronized without requiring another dependency pin.
+        from kt_kernel.sft import KTConfig
+
+        supported_keys = {item.name for item in fields(KTConfig)}
+        compatible_config = {key: value for key, value in kt_config.items() if key in supported_keys}
+        if self.get_kt_activation_policy()["gpu"] == "recompute":
+            compatible_config.setdefault("kt_share_cache_pool", True)
+
+        hf_kt_config = getattr(training_args, "hf_kt_config", None)
+        if hf_kt_config is None or not isinstance(getattr(hf_kt_config, "_kt_config", None), dict):
+            raise RuntimeError("The installed Transformers-KT does not expose a mutable KT configuration.")
+        hf_kt_config._kt_config.update(compatible_config)
+
+        accelerator_config = getattr(training_args, "accelerator_config", None)
+        if accelerator_config is not None:
+            accelerator_config.kt_config = {"enabled": True, "kt_config": compatible_config}
 
     def configure_kt_loading(self, finetuning_args: Any, model_max_length: int | None) -> None:
         r"""Configure KT model loading for inference and evaluation."""
