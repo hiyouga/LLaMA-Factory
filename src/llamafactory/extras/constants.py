@@ -1107,6 +1107,14 @@ register_model_group(
             DownloadSource.DEFAULT: "MiniMaxAI/MiniMax-M2.1",
             DownloadSource.MODELSCOPE: "MiniMaxAI/MiniMax-M2.1",
         },
+        "MiniMax-M2.7-Thinking": {
+            DownloadSource.DEFAULT: "MiniMaxAI/MiniMax-M2.7",
+            DownloadSource.MODELSCOPE: "MiniMaxAI/MiniMax-M2.7",
+        },
+        "MiniMax-M3-Thinking": {
+            DownloadSource.DEFAULT: "MiniMaxAI/MiniMax-M3",
+            DownloadSource.MODELSCOPE: "MiniMaxAI/MiniMax-M3",
+        },
     },
     template="minimax2",
 )
