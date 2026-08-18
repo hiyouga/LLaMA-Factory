@@ -372,6 +372,27 @@ def test_qwen3_template(cot_messages: bool):
 
 
 @pytest.mark.runs_on(["cpu", "mps"])
+def test_qwen35_tools_precede_system_content():
+    tokenizer = AutoTokenizer.from_pretrained(TINY_LLAMA3)
+    template = get_template_and_fix_tokenizer(tokenizer, DataArguments(template="qwen3_5_nothink"))
+    tools = (
+        '[{"type":"function","function":{"name":"lookup_quote","description":"Quote lookup.",'
+        '"parameters":{"type":"object","properties":{},"required":[]}}}]'
+    )
+    prompt_ids, _ = template.encode_oneturn(
+        tokenizer,
+        [
+            {"role": "user", "content": "Check the quote."},
+            {"role": "assistant", "content": "Done."},
+        ],
+        system="You are a market data assistant.",
+        tools=tools,
+    )
+    prompt_str = tokenizer.decode(prompt_ids)
+    assert prompt_str.index("# Tools") < prompt_str.index("You are a market data assistant.")
+
+
+@pytest.mark.runs_on(["cpu", "mps"])
 def test_parse_llama3_template():
     tokenizer = AutoTokenizer.from_pretrained(TINY_LLAMA3)
     template = parse_template(tokenizer)
