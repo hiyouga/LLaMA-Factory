@@ -555,6 +555,14 @@ class FinetuningArguments(
         default=False,
         metadata={"help": "Whether or not to freeze the language model in MLLM training."},
     )
+    num_mtp_layers: int = field(
+        default=0,
+        metadata={"help": "Number of Multi-Token Prediction (MTP) layers to train externally."},
+    )
+    mtp_loss_weight: float = field(
+        default=0.0,
+        metadata={"help": "Weight of the external MTP auxiliary loss. 0 disables MTP training."},
+    )
     compute_accuracy: bool = field(
         default=False,
         metadata={"help": "Whether or not to compute the token-level accuracy at evaluation."},
