@@ -200,8 +200,7 @@ class SGLangEngine(BaseEngine):
             "max_new_tokens": max_tokens,
             "repetition_penalty": (
                 repetition_penalty if repetition_penalty is not None else self.generating_args["repetition_penalty"]
-            )
-            or 1.0,  # repetition_penalty must > 0
+            ),
             "skip_special_tokens": skip_special_tokens
             if skip_special_tokens is not None
             else self.generating_args["skip_special_tokens"],

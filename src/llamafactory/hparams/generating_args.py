@@ -70,6 +70,10 @@ class GeneratingArguments:
     def __post_init__(self) -> None:
         if not 0 < self.top_p <= 1:
             raise ValueError("`top_p` must be in the interval (0, 1], got {0}.".format(self.top_p))
+        if self.repetition_penalty <= 0:
+            raise ValueError(
+                "`repetition_penalty` must be a strictly positive float, got {0}.".format(self.repetition_penalty)
+            )
 
     def to_dict(self, obey_generation_config: bool = False) -> dict[str, Any]:
         args = asdict(self)
