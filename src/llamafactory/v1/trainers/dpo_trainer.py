@@ -24,6 +24,7 @@ from ..config import InputArgument, TrainingArguments, get_args
 from ..core.base_trainer import BaseTrainer
 from ..core.data_engine import DataEngine
 from ..core.model_engine import ModelEngine
+from ..plugins.model_plugins.chunk_loss import ChunkLogProbHandler
 from ..utils import logging
 from ..utils.constants import IGNORE_INDEX
 from ..utils.types import BatchInput, HFModel, Tensor
@@ -114,6 +115,13 @@ class DPOTrainer(BaseTrainer):
         if self.pref_loss == "sigmoid":
             self._init_ref_model()
 
+    def _build_chunk_loss_handler(self, model: HFModel) -> ChunkLogProbHandler:
+        return ChunkLogProbHandler(
+            model,
+            chunk_size=self.args.chunk_loss_size,
+            token_budget=self.args.chunk_loss_token_budget,
+        )
+
     def _shard_model(self) -> None:
         if self.args.dist_config is None:
             if DistributedInterface().get_world_size(Dim.DP) > 1:
@@ -165,20 +173,35 @@ class DPOTrainer(BaseTrainer):
         logger.info_rank0("Full fine-tuning — created independent reference model via deep copy.")
 
     # ------------------------------------------------------------------
-    # Shared log-probability extraction from logits
+    # Shared token log-probability extraction and preference aggregation
     # ------------------------------------------------------------------
 
-    def _extract_chosen_rejected_logps(
+    def _compute_per_token_logps(self, logits: Tensor, labels: Tensor) -> Tensor:
+        """Compute causal per-token log-probabilities from full vocabulary logits.
+
+        Returns:
+            Per-token log-probabilities with shape ``(batch_size, seq_len - 1)``.
+        """
+        shift_logits = logits[..., :-1, :].contiguous()
+        shift_labels = labels[..., 1:].contiguous()
+        return -F.cross_entropy(
+            shift_logits.view(-1, shift_logits.size(-1)),
+            shift_labels.view(-1),
+            reduction="none",
+            ignore_index=IGNORE_INDEX,
+        ).view(shift_labels.size(0), shift_labels.size(1))
+
+    def _aggregate_chosen_rejected_logps(
         self,
-        logits: Tensor,
+        per_token_logps: Tensor,
         labels: Tensor,
         token_type_ids: Tensor,
         use_ld: bool = True,
     ) -> tuple[Tensor, Tensor, Tensor, Tensor]:
-        """Extract chosen / rejected log-probabilities (sum and average) from logits.
+        """Aggregate causal per-token log-probabilities into chosen / rejected scores.
 
         Args:
-            logits: (batch_size, seq_len, vocab_size)
+            per_token_logps: (batch_size, seq_len - 1)
             labels: (batch_size, seq_len)
             token_type_ids: (batch_size, seq_len) – 1=chosen, 2=rejected
             use_ld: Whether to apply LD-DPO length-dependent weighting. Should be
@@ -191,16 +214,8 @@ class DPOTrainer(BaseTrainer):
             chosen_logps_avg:   (batch_size,) length-normalised chosen log-probs
             rejected_logps_avg: (batch_size,) length-normalised rejected log-probs
         """
-        shift_logits = logits[..., :-1, :].contiguous()
         shift_labels = labels[..., 1:].contiguous()
         shift_token_type_ids = token_type_ids[..., 1:]
-
-        per_token_logps = -F.cross_entropy(
-            shift_logits.view(-1, shift_logits.size(-1)),
-            shift_labels.view(-1),
-            reduction="none",
-            ignore_index=IGNORE_INDEX,
-        ).view(shift_labels.size(0), shift_labels.size(1))
 
         loss_mask = shift_labels != IGNORE_INDEX
         chosen_mask = (shift_token_type_ids == 1) & loss_mask
@@ -243,6 +258,17 @@ class DPOTrainer(BaseTrainer):
         rejected_logps_avg = rejected_logps / (rejected_valid_len + 1e-6)
 
         return chosen_logps, rejected_logps, chosen_logps_avg, rejected_logps_avg
+
+    def _extract_chosen_rejected_logps(
+        self,
+        logits: Tensor,
+        labels: Tensor,
+        token_type_ids: Tensor,
+        use_ld: bool = True,
+    ) -> tuple[Tensor, Tensor, Tensor, Tensor]:
+        """Compute per-token log-probabilities and aggregate preference scores from full logits."""
+        per_token_logps = self._compute_per_token_logps(logits, labels)
+        return self._aggregate_chosen_rejected_logps(per_token_logps, labels, token_type_ids, use_ld=use_ld)
 
     # ------------------------------------------------------------------
     # Model inputs (block-diagonal attention + per-document position_ids)
@@ -359,22 +385,28 @@ class DPOTrainer(BaseTrainer):
         model_inputs = self._prepare_model_inputs(input_ids, token_type_ids)
 
         # --- Policy forward ---
-        model_output = self.model(**model_inputs, use_cache=False, return_dict=True)
-        logits = model_output.logits.float()
+        if self._chunk_loss_handler is not None:
+            target_labels = labels[..., 1:].contiguous()
+            per_token_logps, per_token_logits_mean = self._chunk_loss_handler(
+                self.model, model_inputs, target_labels
+            )
+            policy_chosen_logps, policy_rejected_logps, chosen_logps_avg, rejected_logps_avg = (
+                self._aggregate_chosen_rejected_logps(per_token_logps, labels, token_type_ids)
+            )
+        else:
+            model_output = self.model(**model_inputs, use_cache=False, return_dict=True)
+            logits = model_output.logits.float()
+            shift_logits = logits[..., :-1, :].contiguous()
+            per_token_logits_mean = shift_logits.mean(dim=-1)
+            policy_chosen_logps, policy_rejected_logps, chosen_logps_avg, rejected_logps_avg = (
+                self._extract_chosen_rejected_logps(logits, labels, token_type_ids)
+            )
 
-        # Split logits into chosen / rejected for metrics
-        shift_logits = logits[..., :-1, :].contiguous()
         shift_token_type_ids = token_type_ids[..., 1:]
         chosen_logit_mask = (shift_token_type_ids == 1).float()
         rejected_logit_mask = (shift_token_type_ids == 2).float()
-
-        policy_chosen_logps, policy_rejected_logps, chosen_logps_avg, rejected_logps_avg = (
-            self._extract_chosen_rejected_logps(logits, labels, token_type_ids)
-        )
-
-        # Raw logits means (for logging)
-        chosen_logits_mean = (shift_logits.mean(dim=-1) * chosen_logit_mask).sum() / (chosen_logit_mask.sum() + 1e-6)
-        rejected_logits_mean = (shift_logits.mean(dim=-1) * rejected_logit_mask).sum() / (
+        chosen_logits_mean = (per_token_logits_mean * chosen_logit_mask).sum() / (chosen_logit_mask.sum() + 1e-6)
+        rejected_logits_mean = (per_token_logits_mean * rejected_logit_mask).sum() / (
             rejected_logit_mask.sum() + 1e-6
         )
 

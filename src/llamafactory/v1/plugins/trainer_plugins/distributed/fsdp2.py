@@ -316,7 +316,7 @@ class FSDP2Engine:
         if self.rank == 0:
             logger.info("Materializing sharded model params...")
 
-        device = get_current_accelerator()
+        device = torch.device("cpu") if self.offload_params else get_current_accelerator()
         model.to_empty(device=device)
 
         if dcp_path and os.path.exists(dcp_path):
@@ -377,7 +377,7 @@ class FSDP2Engine:
 
             model = self.prepare_model(model)
 
-            device = get_current_accelerator()
+            device = torch.device("cpu") if self.offload_params else get_current_accelerator()
             model.to_empty(device=device)
 
             # Scatter params from Rank 0 into all DTensor shards
@@ -411,7 +411,7 @@ class FSDP2Engine:
         return model
 
     def _warmup_grad_norm(self, model: HFModel) -> None:
-        """Warmup grad norm computation to initialize NCCL communication groups."""
+        """Warm up the global grad norm reduction on the FSDP mesh."""
         if self.fsdp_mesh is None:
             return
 
@@ -422,9 +422,14 @@ class FSDP2Engine:
                 param.grad = torch.zeros_like(param)
 
         with torch.no_grad():
-            grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+            grads = [param.grad for param in model.parameters() if param.grad is not None]
+            grad_norm = torch.nn.utils.get_total_norm(grads)
             if isinstance(grad_norm, torch.distributed.tensor.DTensor):
+                device = get_current_accelerator()
+                if grad_norm.device != device:
+                    grad_norm = grad_norm.to(device)
                 grad_norm = grad_norm.full_tensor()
+            torch.nn.utils.clip_grads_with_norm_(model.parameters(), 1.0, grad_norm)
 
         for param in model.parameters():
             if param.requires_grad:
