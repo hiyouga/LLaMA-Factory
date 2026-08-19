@@ -168,6 +168,17 @@ class TrainingArguments:
         default=None,
         metadata={"help": "Alpha parameter from LD-DPO, controls weighting of verbose token log-probabilities."},
     )
+    chunk_loss_size: int | None = field(
+        default=None,
+        metadata={"help": "Sequence chunk size for memory-efficient loss computation. None disables Chunk Loss."},
+    )
+    chunk_loss_token_budget: int | None = field(
+        default=None,
+        metadata={
+            "help": "Maximum batch_size * chunk_size for dynamic memory-efficient loss computation. "
+            "Mutually exclusive with chunk_loss_size."
+        },
+    )
 
     def __post_init__(self) -> None:
         self.dist_config = get_plugin_config(self.dist_config)
@@ -190,6 +201,13 @@ class TrainingArguments:
                     "`learning_rate` instead and remove `lr` from `optim_config`."
                 )
             self.optim_config["lr"] = self.learning_rate
+
+        if self.chunk_loss_size is not None and self.chunk_loss_size <= 0:
+            raise ValueError("`chunk_loss_size` must be positive when chunk loss is enabled.")
+        if self.chunk_loss_token_budget is not None and self.chunk_loss_token_budget <= 0:
+            raise ValueError("`chunk_loss_token_budget` must be positive when chunk loss is enabled.")
+        if self.chunk_loss_size is not None and self.chunk_loss_token_budget is not None:
+            raise ValueError("`chunk_loss_size` and `chunk_loss_token_budget` are mutually exclusive.")
 
         if str(self.batching_strategy) == str(BatchingStrategy.DYNAMIC_BATCHING):
             if self.max_steps is None or self.max_steps <= 0:

@@ -30,7 +30,6 @@ Train Phase:
 from abc import abstractmethod
 
 import torch
-import torch.nn.functional as F
 from torch.distributed.tensor import DTensor
 
 from ..accelerator.helper import ReduceOp
@@ -44,7 +43,7 @@ from ..utils.callbacks import (
     TrainerState,
 )
 from ..utils.helper import compute_valid_tokens, is_tokenizer, model_uses_mrope
-from ..utils.types import BatchInput, HFModel, ModelOutput, Tensor, TorchDataset
+from ..utils.types import BatchInput, HFModel, Tensor, TorchDataset
 from .rendering import Renderer
 from .utils.batching import BatchGenerator
 from .utils.checkpoint import TrainingCheckpointCoordinator
@@ -66,6 +65,16 @@ class BaseTrainer:
         self.model = model
         self.renderer = renderer
         self.train_dataset = train_dataset
+        self._chunk_loss_handler = None
+
+        if self.args.chunk_loss_size is not None or self.args.chunk_loss_token_budget is not None:
+            self._chunk_loss_handler = self._build_chunk_loss_handler(model)
+            if self._chunk_loss_handler is None:
+                raise NotImplementedError(f"{type(self).__name__} does not support Chunk Loss.")
+
+        dist_name = self.args.dist_config.name if self.args.dist_config is not None else None
+        if self.args.cp_size > 1 and dist_name != "fsdp2":
+            raise ValueError("Context parallelism currently requires `dist_config.name: fsdp2`.")
 
         # info
         self.global_step = 0
@@ -95,12 +104,7 @@ class BaseTrainer:
             # tower keeps activation checkpointing too.
 
         self._deepspeed_engine = None
-        dist_name = self.args.dist_config.name if self.args.dist_config is not None else None
-
         if dist_name == "deepspeed":
-            if self.args.cp_size > 1:
-                raise ValueError("Context parallelism currently requires `dist_config.name: fsdp2`.")
-
             from ..plugins.trainer_plugins.distributed.interface import DistributedPlugin
 
             self._deepspeed_engine = DistributedPlugin("deepspeed").shard_model(
@@ -161,12 +165,15 @@ class BaseTrainer:
 
             SequenceParallelModelPlugin(self.args.cp_mode)(model, self.args.cp_size)
 
+    def _build_chunk_loss_handler(self, model: HFModel):
+        return None
+
     def _create_batch_generator(self) -> None:
         if (
-            self.args.batching_strategy == BatchingStrategy.PADDING_FREE
+            self.args.batching_strategy in (BatchingStrategy.PADDING_FREE, BatchingStrategy.DYNAMIC_PADDING_FREE)
             and getattr(self.model.config, "_attn_implementation", None) != "flash_attention_2"
         ):
-            raise ValueError("`padding_free` requires `flash_attn: flash_attention_2`.")
+            raise ValueError(f"`{self.args.batching_strategy}` requires `flash_attn: flash_attention_2`.")
 
         self.train_batch_generator = BatchGenerator(
             dataset=self.train_dataset,
@@ -223,25 +230,6 @@ class BaseTrainer:
                 self.optimizer, self.num_training_steps, self.args.lr_scheduler_config
             )
 
-    def compute_log_probs(self, model: HFModel, batch: BatchInput) -> Tensor:
-        """Compute log probs.
-
-        log_probs: Tensor of shape (batch_size, seq_len - 1)
-        """
-        batch_size, _ = batch["labels"].shape
-        model_inputs = {
-            k: v.to(self.device, non_blocking=True) for k, v in batch.items() if isinstance(v, torch.Tensor)
-        }
-        # Let mRoPE models build their own multimodal 3D position ids (see _uses_mrope in __init__).
-        if self._uses_mrope:
-            model_inputs.pop("position_ids", None)
-        labels = batch["labels"].to(self.device, non_blocking=True)
-        outputs: ModelOutput = model(**model_inputs)
-        logits = outputs.logits.float()
-        shift_labels = labels[..., 1:].contiguous().view(-1)
-        shift_logits = logits[..., :-1, :].contiguous().view(shift_labels.size(0), -1)
-        return -F.cross_entropy(shift_logits, shift_labels, reduction="none").view(batch_size, -1)
-
     @abstractmethod
     def compute_loss(self, batch: BatchInput) -> Tensor:
         """Compute the scalar loss."""
@@ -270,14 +258,7 @@ class BaseTrainer:
                 step_valid_tokens = DistributedInterface().all_reduce(step_valid_tokens, op=ReduceOp.SUM)
                 num_micro = len(micro_batches)
                 for i, micro_batch in enumerate(micro_batches):
-                    if self.args.cp_size > 1:
-                        from ..plugins.model_plugins.parallelization.sequence_parallel import (
-                            SequenceParallelLossPlugin,
-                        )
-
-                        loss = SequenceParallelLossPlugin("sequence_parallel_loss")(self.model, micro_batch)
-                    else:
-                        loss = self.compute_loss(micro_batch)
+                    loss = self.compute_loss(micro_batch)
                     mini_step_valid_tokens = compute_valid_tokens([micro_batch])
                     # fsdp uses mean reduction so we need to scale the loss by dp_size
                     loss = loss * mini_step_valid_tokens * self.dp_size / (step_valid_tokens + 1e-6)
