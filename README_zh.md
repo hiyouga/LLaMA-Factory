@@ -674,6 +674,14 @@ pip install .
 
 ### 快速开始
 
+无需先训练即可体验 CLI：使用仓库提供的 Qwen3 配置启动交互式对话。
+
+```bash
+llamafactory-cli chat examples/inference/qwen3.yaml
+```
+
+首次运行时会下载 `examples/inference/qwen3.yaml` 中配置的模型。在终端输入提示词即可开始对话，按 `Ctrl+C` 退出。
+
 下面三行命令分别对 Qwen3-4B-Instruct 模型进行 LoRA **微调**、**推理**和**合并**。
 
 ```bash

@@ -674,6 +674,14 @@ You can also use **[Easy Dataset](https://github.com/ConardLi/easy-dataset)**, *
 
 ### Quickstart
 
+To try the CLI without training first, start an interactive chat with the provided Qwen3 configuration:
+
+```bash
+llamafactory-cli chat examples/inference/qwen3.yaml
+```
+
+The first run downloads the model configured in `examples/inference/qwen3.yaml`. Enter a prompt in the terminal to chat, and press `Ctrl+C` to exit.
+
 Use the following 3 commands to run LoRA **fine-tuning**, **inference** and **merging** of the Qwen3-4B-Instruct model, respectively.
 
 ```bash
