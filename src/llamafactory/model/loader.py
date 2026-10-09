@@ -125,7 +125,13 @@ def load_tokenizer(model_args: "ModelArguments") -> "TokenizerModule":
 def load_config(model_args: "ModelArguments") -> "PretrainedConfig":
     r"""Load model config."""
     init_kwargs = _get_init_kwargs(model_args)
-    return AutoConfig.from_pretrained(model_args.model_name_or_path, **init_kwargs)
+    config = AutoConfig.from_pretrained(model_args.model_name_or_path, **init_kwargs)
+    if model_args.use_kt:
+        from transformers.integrations.kt_artifacts import prepare_kt_pretrained_config
+
+        prepare_kt_pretrained_config(config)
+
+    return config
 
 
 def load_model(
