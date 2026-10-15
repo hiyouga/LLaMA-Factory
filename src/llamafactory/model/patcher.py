@@ -185,8 +185,8 @@ def patch_qwen3_5_forward_npu(model: "PreTrainedModel") -> None:
             logger.warning_rank0(f"Failed to replace chunk_gated_delta_rule for NPU: {e}")
     elif model.config.architectures[0] == "Qwen3_5ForConditionalGeneration":
         try:
-            # Qwen3.5 structure: model.model.layers
-            _replace_gdn_kernel_for_npu(model.model.layers, npu_chunk_gated_delta_rule, "Qwen3.5")
+            # Qwen3.5 structure: model.model.language_model.layers
+            _replace_gdn_kernel_for_npu(model.model.language_model.layers, npu_chunk_gated_delta_rule, "Qwen3.5")
         except Exception as e:
             logger.warning_rank0(f"Failed to replace chunk_gated_delta_rule for NPU: {e}")
 

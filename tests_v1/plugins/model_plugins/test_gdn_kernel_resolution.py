@@ -12,16 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import importlib.metadata
 import sys
 from types import ModuleType, SimpleNamespace
 
 import pytest
 import torch
 
+from llamafactory.model import patcher
 from llamafactory.model.patcher import (
     _install_npu_gdn_kernel_on_layer,
     _install_npu_gdn_kernel_on_modeling,
     _replace_gdn_kernel_for_npu,
+    patch_qwen3_5_forward_npu,
 )
 from llamafactory.v1.plugins.model_plugins.parallelization import gdn_attention
 from llamafactory.v1.plugins.model_plugins.parallelization.gdn_attention import (
@@ -184,3 +187,37 @@ def test_activation_falls_back_to_the_name_and_is_not_rebuilt(monkeypatch):
     # SiLUActivation and torch.nn.SiLU across the supported range. The point is the identity.
     assert isinstance(first, torch.nn.Module)
     assert first is second
+
+
+@pytest.mark.parametrize(
+    ("architecture", "patch_label"),
+    [
+        ("Qwen3_5ForConditionalGeneration", "Qwen3.5"),
+        ("Qwen3_5MoeForConditionalGeneration", "Qwen3.5-MoE"),
+    ],
+)
+def test_npu_patch_reads_the_language_model_layers(monkeypatch, architecture, patch_label):
+    # Both are the multimodal wrapper: model.model is Qwen3_5Model / Qwen3_5MoeModel, which holds the
+    # decoder stack under .language_model and has no .layers of its own. Reading model.model.layers
+    # raised AttributeError, the except swallowed it, and the kernel replacement never ran.
+    calls = []
+
+    def record(layers, kernel, label):
+        calls.append((layers, label))
+
+    monkeypatch.setattr(patcher, "_replace_gdn_kernel_for_npu", record)
+    monkeypatch.setattr(torch, "npu", SimpleNamespace(get_device_name=lambda index: "Ascend910B"), raising=False)
+    monkeypatch.setattr(importlib.metadata, "version", lambda package: "3.2.0")
+    kernel_module = ModuleType("llamafactory.third_party.triton.chunk_gated_delta_rule")
+    kernel_module.chunk_gated_delta_rule = "npu kernel"
+    monkeypatch.setitem(sys.modules, kernel_module.__name__, kernel_module)
+
+    language_model = SimpleNamespace(layers=[SimpleNamespace(linear_attn=SimpleNamespace())])
+    model = SimpleNamespace(
+        config=SimpleNamespace(architectures=[architecture]),
+        model=SimpleNamespace(language_model=language_model),
+    )
+
+    patch_qwen3_5_forward_npu(model)
+
+    assert calls == [(language_model.layers, patch_label)]
