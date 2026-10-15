@@ -131,7 +131,7 @@ class SupervisedDatasetProcessor(DatasetProcessor):
     def preprocess_dataset(self, examples: dict[str, list[Any]]) -> dict[str, list[Any]]:
         # build inputs with format `<bos> X Y <eos>` and labels with format `<ignore> ... <ignore> Y <eos>`
         # for multiturn examples, we only mask the prompt part in each prompt-response pair.
-        erased_prompt = resolve_erased_prompt(self.data_args.cig_erased_prompt)
+        erased_prompt = resolve_erased_prompt(getattr(self.data_args, "cig_erased_prompt", None))
         erased_prompts = examples.get(ERASED_PROMPT_COLUMN, None)
         erased_view_flags = []
         model_inputs = defaultdict(list)
@@ -196,7 +196,7 @@ class SupervisedDatasetProcessor(DatasetProcessor):
 @dataclass
 class PackedSupervisedDatasetProcessor(SupervisedDatasetProcessor):
     def __post_init__(self) -> None:
-        if self.data_args.cig_erased_prompt is not None:
+        if getattr(self.data_args, "cig_erased_prompt", None) is not None:
             raise ValueError("The CIG-SFT loss aligns two views per example and cannot be used with packing.")
 
     def preprocess_dataset(self, examples: dict[str, list[Any]]) -> dict[str, list[Any]]:
