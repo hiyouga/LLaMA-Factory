@@ -660,12 +660,6 @@ def get_train_args(args: dict[str, Any] | list[str] | None = None) -> _TRAIN_CLS
         if finetuning_args.use_hyper_parallel or finetuning_args.use_megatron_bridge or finetuning_args.use_mca:
             raise ValueError("The CIG-SFT loss currently supports the ordinary Transformers SFT path only.")
 
-        if training_args.deepspeed is not None or getattr(training_args, "fsdp", None):
-            raise ValueError(
-                "The CIG-SFT loss currently supports ordinary Transformers DDP only; "
-                "DeepSpeed and FSDP reference-model placement are not supported yet."
-            )
-
         if data_args.train_on_prompt or data_args.mask_history:
             raise ValueError("The CIG-SFT loss requires response-only, single-turn labels.")
 
