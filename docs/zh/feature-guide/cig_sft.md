@@ -1,6 +1,6 @@
 # CIG-SFT
 
-CIG-SFT 已接入 LLaMA-Factory 现有的 `llamafactory-cli train` Transformers SFT 入口。首版支持文本单轮样本的全参训练和 Freeze 训练；关闭 `use_cig_sft_loss` 时仍走普通 SFT 损失。
+CIG-SFT 已接入 LLaMA-Factory 现有的 `llamafactory-cli train` Transformers SFT 入口。首版支持文本单轮样本的全参训练和 Freeze 训练；冻结的 reference model 使用现有的 DeepSpeed/FSDP 模型放置逻辑；关闭 `use_cig_sft_loss` 时仍走普通 SFT 损失。
 
 ## 快速开始
 
@@ -35,6 +35,6 @@ llamafactory-cli train examples/extras/cig_sft/qwen25_full_sft.yaml
 
 ## 当前范围和限制
 
-当前实现要求每条样本只有一个 user message 和一个 assistant response。暂不支持 packing、streaming、多模态 erased view、DeepSpeed、FSDP、Megatron Bridge、MCA、HyperParallel、LoRA/OFT 以及其他非标准 SFT 后端。评估和生成使用普通模型输入与普通 SFT loss。
+当前实现要求每条样本只有一个 user message 和一个 assistant response。暂不支持 packing、streaming、多模态 erased view、Megatron Bridge、MCA、HyperParallel、LoRA/OFT 以及其他非标准 SFT 后端。reference model 在训练期间保留；credit 写入缓存后，训练步骤会复用缓存，不再重复执行 reference-model 前向。评估和生成使用普通模型输入与普通 SFT loss。
 
 删除或设置 `use_cig_sft_loss: false` 即可回到标准 SFT。CIG-SFT 不能和 DFT、ASFT、EAFT 同时启用。
