@@ -1,6 +1,6 @@
 # CIG-SFT
 
-CIG-SFT is available on LLaMA-Factory's ordinary (`llamafactory-cli train`) Transformers SFT path. The first integration supports text-only full-parameter and freeze fine-tuning. It keeps the normal SFT fallback when `use_cig_sft_loss` is false.
+CIG-SFT is available on LLaMA-Factory's standard (`llamafactory-cli train`) Transformers SFT path. The first integration supports text-only full-parameter and freeze fine-tuning. Its frozen reference model uses the existing DeepSpeed and FSDP model-placement helpers. It keeps the normal SFT fallback when `use_cig_sft_loss` is false.
 
 ## Quick start
 
@@ -35,6 +35,6 @@ A non-empty row value overrides the dataset-level `cig_erased_prompt`; blank or 
 
 ## Supported scope and limitations
 
-The current path requires one user message and one assistant response per example. It rejects packing, streaming datasets, multimodal erased views, DeepSpeed, FSDP, Megatron Bridge, MCA, HyperParallel, LoRA/OFT, and other non-standard SFT backends. Evaluation and generation use the ordinary model inputs and loss.
+The current path requires one user message and one assistant response per example. It rejects packing, streaming datasets, multimodal erased views, Megatron Bridge, MCA, HyperParallel, LoRA/OFT, and other non-standard SFT backends. The frozen reference model remains available while training; once a credit is cached, the training step reuses it without another reference-model forward. Evaluation and generation use the ordinary model inputs and loss.
 
 Set `use_cig_sft_loss: false` (or remove it) to return to standard SFT. CIG-SFT cannot be combined with DFT, ASFT, or EAFT.
