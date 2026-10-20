@@ -172,7 +172,7 @@ def _save_standard_training_states(
     if rank == 0:
         model_to_save = model.module if hasattr(model, "module") else model
         model_dir = os.path.join(ckpt_dir, "model")
-        model_to_save.save_pretrained(model_dir, max_shard_size="4GB")
+        model_to_save.save_pretrained(model_dir, state_dict=model_to_save.state_dict(), max_shard_size="4GB")
         processor.save_pretrained(model_dir)
 
         os.makedirs(os.path.join(ckpt_dir, "optimizer"), exist_ok=True)
@@ -212,7 +212,11 @@ def _load_standard_training_states(
             for f in sorted(glob.glob(os.path.join(model_dir, "*.bin"))):
                 state_dict.update(torch.load(f, map_location="cpu", weights_only=True))
         if state_dict:
-            model_to_load.load_state_dict(state_dict)
+            incompatible_keys = model_to_load.load_state_dict(state_dict, strict=False)
+            if incompatible_keys.missing_keys:
+                raise RuntimeError(
+                    f"Unexpected missing keys when loading checkpoint model weights: {incompatible_keys.missing_keys}."
+                )
         else:
             logger.warning_rank0(f"No model weights found in {model_dir}, skipping model state restore.")
 
@@ -246,8 +250,8 @@ class TrainingCheckpointCoordinator:
                 num_training_steps=self._t.num_training_steps,
             )
 
-        if self._dist_name in ("fsdp2", "deepspeed"):
-            from ...plugins.trainer_plugins.distributed.hub import DistributedPlugin
+        if self._dist_name in ("fsdp2", "fsdpturbo", "deepspeed"):
+            from ...plugins.trainer_plugins.distributed.interface import DistributedPlugin
 
             DistributedPlugin(self._dist_name).save_checkpoint(
                 self._t.model,
@@ -302,8 +306,8 @@ class TrainingCheckpointCoordinator:
         self._t.global_step = metadata["global_step"]
         self._t._resume_epoch = metadata["epoch"]
 
-        if self._dist_name in ("fsdp2", "deepspeed"):
-            from ...plugins.trainer_plugins.distributed.hub import DistributedPlugin
+        if self._dist_name in ("fsdp2", "fsdpturbo", "deepspeed"):
+            from ...plugins.trainer_plugins.distributed.interface import DistributedPlugin
 
             DistributedPlugin(self._dist_name).load_checkpoint(
                 self._t.model,

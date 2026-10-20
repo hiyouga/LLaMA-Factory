@@ -30,10 +30,3 @@ def test_map_dataset(num_samples: int):
     for index in indexes:
         print(data_engine[index])
         assert data_engine[index] == {"_dataset_name": "default", **original_data[index]}
-
-
-if __name__ == "__main__":
-    """
-    python -m tests_v1.core.test_data_engine
-    """
-    test_map_dataset(1)

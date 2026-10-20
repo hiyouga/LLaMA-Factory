@@ -52,16 +52,9 @@ def test_all_device():
     assert DistributedInterface().get_local_world_size() == int(os.getenv("LOCAL_WORLD_SIZE", "1"))
 
 
-@pytest.mark.runs_on(["cuda", "npu"])
+@pytest.mark.runs_on(["cuda", "npu", "xpu"])
 @pytest.mark.require_distributed(2)
 def test_multi_device():
     master_port = find_available_port()
     world_size = 2
     mp.spawn(_all_reduce_tests, args=(world_size, master_port), nprocs=world_size)
-
-
-if __name__ == "__main__":
-    """
-    python tests_v1/accelerator/test_interface.py
-    """
-    test_all_device()

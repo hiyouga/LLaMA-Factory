@@ -15,6 +15,7 @@
 
 from dataclasses import dataclass, field
 
+from ..utils.types import AttentionFunction
 from .arg_utils import ModelClass, PluginConfig, get_plugin_config
 
 
@@ -24,13 +25,19 @@ class ModelArguments:
         default="Qwen/Qwen3-4B-Instruct-2507",
         metadata={"help": "Path to the model or model identifier from Hugging Face."},
     )
-    template: str = field(
-        default="qwen3_nothink",
-        metadata={"help": "Template for the model."},
+    custom_chat_template: str | None = field(
+        default=None,
+        metadata={"help": "Custom Jinja2 chat template string. Overrides the model's built-in template."},
     )
     trust_remote_code: bool = field(
         default=False,
         metadata={"help": "Trust remote code from Hugging Face."},
+    )
+    flash_attn: AttentionFunction = field(
+        default=AttentionFunction.SDPA,
+        metadata={
+            "help": "Attention implementation to use: eager, sdpa, or flash_attention_2. SDPA is the default implementation for models."
+        },
     )
     model_class: ModelClass = field(
         default=ModelClass.LLM,
@@ -54,6 +61,12 @@ class ModelArguments:
     )
 
     def __post_init__(self) -> None:
+        supported_flash_attn = [item.value for item in AttentionFunction]
+        if self.flash_attn not in supported_flash_attn:
+            raise ValueError(
+                f"Unsupported `flash_attn`: {self.flash_attn}. Supported values are: {supported_flash_attn}."
+            )
+
         self.init_config = get_plugin_config(self.init_config)
         self.peft_config = get_plugin_config(self.peft_config)
         self.kernel_config = get_plugin_config(self.kernel_config)

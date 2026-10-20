@@ -27,12 +27,19 @@ from ..extras.misc import find_available_port, get_device_name, get_torch_device
 from ..extras.packages import (
     is_hyper_parallel_available,
     is_mcore_adapter_available,
+    is_megatron_bridge_available,
     is_ray_available,
     is_transformers_version_greater_than,
 )
 from ..hparams import RayArguments, get_infer_args, get_ray_args, get_train_args, read_args
 from ..model import load_model, load_tokenizer
-from .callbacks import LogCallback, PissaConvertCallback, ReporterCallback
+from .callbacks import (
+    LogCallback,
+    ModuleProfilerCallback,
+    PissaConvertCallback,
+    ReporterCallback,
+    TorchProfilerCallback,
+)
 from .dpo import run_dpo
 from .kto import run_kto
 from .ppo import run_ppo
@@ -74,14 +81,43 @@ def _training_function(config: dict[str, Any]) -> None:
     if finetuning_args.early_stopping_steps is not None:
         callbacks.append(EarlyStoppingCallback(early_stopping_patience=finetuning_args.early_stopping_steps))
 
+    if getattr(training_args, "enable_torch_profiler", False):
+        callbacks.append(TorchProfilerCallback(training_args))
+
+    if getattr(training_args, "profile_modules", None):
+        callbacks.append(ModuleProfilerCallback(training_args.profile_modules))
+
     callbacks.append(ReporterCallback(model_args, data_args, finetuning_args, generating_args))  # add to last
 
-    if finetuning_args.stage == "sft" and finetuning_args.use_hyper_parallel:
+    if finetuning_args.stage in ["pt", "sft"] and finetuning_args.use_hyper_parallel:
         if not is_hyper_parallel_available():
             raise ImportError("hyper_parallel is not installed. Please install it with `pip install hyper_parallel`.")
-        from .hyper_parallel import run_sft as run_sft_hp
+        if finetuning_args.stage == "pt":
+            from .hyper_parallel import run_pt as run_pt_hp
 
-        run_sft_hp(model_args, data_args, training_args, finetuning_args, generating_args, callbacks)
+            run_pt_hp(model_args, data_args, training_args, finetuning_args, callbacks)
+        else:
+            from .hyper_parallel import run_sft as run_sft_hp
+
+            run_sft_hp(model_args, data_args, training_args, finetuning_args, generating_args, callbacks)
+
+    elif finetuning_args.stage in ["pt", "sft"] and finetuning_args.use_megatron_bridge:
+        if not is_megatron_bridge_available():
+            raise ImportError(
+                "megatron-bridge is not installed. "
+                "Please install it with `pip install --no-build-isolation megatron-bridge`."
+            )
+        mb_args = finetuning_args.megatron_bridge_args
+        if mb_args is None:
+            raise ValueError("Megatron Bridge arguments are missing. Please set USE_MEGATRON_BRIDGE=1.")
+        if finetuning_args.stage == "pt":
+            from .megatron_bridge import run_pt as run_pt_mb
+
+            run_pt_mb(model_args, data_args, training_args, finetuning_args, mb_args, callbacks)
+        else:
+            from .megatron_bridge import run_sft as run_sft_mb
+
+            run_sft_mb(model_args, data_args, training_args, finetuning_args, mb_args, callbacks)
 
     elif finetuning_args.stage in ["pt", "sft", "dpo"] and finetuning_args.use_mca:
         if not is_mcore_adapter_available():
@@ -115,7 +151,7 @@ def _training_function(config: dict[str, Any]) -> None:
         raise ValueError(f"Unknown task: {finetuning_args.stage}.")
 
     if is_ray_available() and ray.is_initialized():
-        return  # if ray is intialized it will destroy the process group on return
+        return  # if ray is initialized it will destroy the process group on return
 
     try:
         if dist.is_initialized():
