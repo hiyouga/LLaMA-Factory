@@ -1787,6 +1787,8 @@ class MiniCPMVPlugin(BasePlugin):
             mm_inputs.update(audio_inputs)
             mm_inputs.update({"audio_bounds": audio_bounds_ls, "spk_bounds": spk_bounds_ls})
 
+        return mm_inputs
+
 
 @dataclass
 class MiniCPMV4_6Plugin(BasePlugin):
@@ -2005,6 +2007,33 @@ class MiniCPMV4_6Plugin(BasePlugin):
             mm_inputs.update(audio_inputs)
 
         return mm_inputs
+
+
+@dataclass
+class MiniCPMOcrPlugin(MiniCPMV4_6Plugin):
+    """Reuse MiniCPM-V placeholders with OCR's native image preprocessing."""
+
+    @override
+    def _get_mm_inputs(self, images, videos, audios, processor, **kwargs):
+        self._validate_input(processor, images, videos, audios)
+        image_processor = processor.image_processor
+        downsample_mode = os.getenv("DOWNSAMPLE_MODE", image_processor.downsample_mode)
+        if downsample_mode not in ("4x", "16x"):
+            raise ValueError("MiniCPM-OCR DOWNSAMPLE_MODE must be '4x' or '16x'.")
+
+        mm_inputs = {"downsample_mode": downsample_mode}
+        if images:
+            # OCR aligns patch grids differently in 4x and 16x modes.
+            images = self._regularize_images(images, image_max_pixels=2**63 - 1, image_min_pixels=1)["images"]
+            mm_inputs.update(image_processor(images, return_tensors="pt", downsample_mode=downsample_mode))
+        return mm_inputs
+
+    @override
+    def get_mm_inputs(self, images, videos, audios, imglens, vidlens, audlens, batch_ids, processor):
+        mm_inputs = self._get_mm_inputs(images, videos, audios, processor)
+        # Grid metadata is only needed to expand placeholders, not by model.forward.
+        # Do not send empty pixel tensors for text-only calls.
+        return {k: v for k, v in mm_inputs.items() if k in ("pixel_values", "target_sizes", "downsample_mode")}
 
 
 @dataclass
@@ -3465,6 +3494,7 @@ PLUGINS = {
     "lfm2_vl": LFMVLPlugin,
     "minicpm_v": MiniCPMVPlugin,
     "minicpm_v_4_6": MiniCPMV4_6Plugin,
+    "minicpm_ocr": MiniCPMOcrPlugin,
     "mllama": MllamaPlugin,
     "moss_vl": MossVLPlugin,
     "paligemma": PaliGemmaPlugin,
