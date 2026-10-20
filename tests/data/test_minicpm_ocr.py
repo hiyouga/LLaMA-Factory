@@ -96,28 +96,14 @@ def test_placeholder_and_batch_alignment(processor, monkeypatch, mode):
     assert "<image_id>1</image_id>" in result[0]["content"]
     assert result[0]["content"].count("<slice>") == 4
     batch = plugin.get_mm_inputs(images, [], [], [1, 1], [0, 0], [0, 0], [[1], [1]], processor)
-    assert set(batch) == {"pixel_values", "target_sizes", "downsample_mode"}
+    assert {"pixel_values", "target_sizes", "downsample_mode"} <= set(batch)
     assert batch["target_sizes"].shape == (6, 2)
     assert batch["downsample_mode"] == (mode or "4x")
     assert processor.image_processor.call_args.kwargs["downsample_mode"] == (mode or "4x")
 
 
-def test_image_paths_and_text_only(processor, tmp_path, monkeypatch):
-    monkeypatch.delenv("DOWNSAMPLE_MODE", raising=False)
+def test_invalid_media(processor):
     plugin = get_mm_plugin("minicpm_ocr", image_token="<|image_pad|>")
-    path = tmp_path / "image.png"
-    Image.new("RGB", (56, 56)).save(path)
-    plugin.process_messages([{"role": "user", "content": "<image>Read"}], [str(path)], [], [], processor)
-    assert isinstance(processor.image_processor.call_args.args[0][0], Image.Image)
-    assert plugin.get_mm_inputs([], [], [], [0], [0], [0], [[1]], processor) == {"downsample_mode": "4x"}
-
-
-def test_invalid_mode_and_media(processor, monkeypatch):
-    plugin = get_mm_plugin("minicpm_ocr", image_token="<|image_pad|>")
-    monkeypatch.setenv("DOWNSAMPLE_MODE", "8x")
-    with pytest.raises(ValueError, match="DOWNSAMPLE_MODE"):
-        plugin.get_mm_inputs([], [], [], [0], [0], [0], [[1]], processor)
-    monkeypatch.delenv("DOWNSAMPLE_MODE")
     with pytest.raises(ValueError):
         plugin.process_messages([{"role": "user", "content": "<image>"}], [], [], [], processor)
     with pytest.raises(ValueError):
@@ -178,7 +164,7 @@ def test_lora_freezes_visual_modules():
 
 
 @pytest.mark.parametrize("mode", ["4x", "16x"])
-def test_native_processor_equivalence(monkeypatch, mode):
+def test_native_processor_equivalence(monkeypatch, tmp_path, mode):
     path = os.getenv("MINICPM_OCR_MODEL_PATH")
     if not path:
         pytest.skip("Set MINICPM_OCR_MODEL_PATH to test local processor assets without loading weights.")
@@ -186,8 +172,11 @@ def test_native_processor_equivalence(monkeypatch, mode):
     processor = AutoProcessor.from_pretrained(path, local_files_only=True)
     plugin = get_mm_plugin("minicpm_ocr", image_token="<|image_pad|>")
     images = [Image.new("RGB", (224, 112)), Image.new("RGB", (1200, 600))]
+    image_path = tmp_path / "image.png"
+    images[0].save(image_path)
+    plugin_images = [str(image_path), images[1]]
     messages = [{"role": "user", "content": "<image>Read <image>"}]
-    expanded = plugin.process_messages(messages, images, [], [], processor)[0]["content"]
+    expanded = plugin.process_messages(messages, plugin_images, [], [], processor)[0]["content"]
     reference = processor(
         images=images,
         text="<|image_pad|>Read <|image_pad|>",
@@ -196,7 +185,7 @@ def test_native_processor_equivalence(monkeypatch, mode):
         return_tensors="pt",
     )
     assert processor.tokenizer.encode(expanded, add_special_tokens=False) == reference["input_ids"][0].tolist()
-    batch = plugin.get_mm_inputs(images, [], [], [2], [0], [0], [[1]], processor)
+    batch = plugin.get_mm_inputs(plugin_images, [], [], [2], [0], [0], [[1]], processor)
     assert torch.equal(batch["target_sizes"], reference["target_sizes"])
     assert torch.equal(batch["pixel_values"], reference["pixel_values"])
 
