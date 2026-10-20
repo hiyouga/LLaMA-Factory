@@ -13,7 +13,7 @@ from tokenizers.models import WordLevel
 from tokenizers.pre_tokenizers import Whitespace
 from transformers import AutoProcessor, PreTrainedTokenizerFast
 
-from llamafactory.data import MultiModalDataCollatorForSeq2Seq, get_template_and_fix_tokenizer
+from llamafactory.data import TEMPLATES, MultiModalDataCollatorForSeq2Seq, get_template_and_fix_tokenizer
 from llamafactory.data.mm_plugin import get_mm_plugin
 from llamafactory.extras.constants import IGNORE_INDEX, SUPPORTED_MODELS
 from llamafactory.hparams import DataArguments, FinetuningArguments
@@ -79,31 +79,26 @@ def processor():
     )
 
 
-@pytest.mark.parametrize("mode", [None, "4x", "16x"])
-def test_placeholder_and_batch_alignment(processor, monkeypatch, mode):
+def test_placeholder_and_batch_alignment(processor, monkeypatch):
     monkeypatch.delenv("DOWNSAMPLE_MODE", raising=False)
-    if mode:
-        monkeypatch.setenv("DOWNSAMPLE_MODE", mode)
-    divisor = 16 if mode == "16x" else 4
-    plugin = get_mm_plugin("minicpm_ocr", image_token="<|image_pad|>")
+    plugin = TEMPLATES["minicpm_ocr"].mm_plugin
     images = [Image.new("RGB", (56, 56))] * 2
     messages = [{"role": "user", "content": "<image>Read <image>"}]
     original = deepcopy(messages)
     result = plugin.process_messages(messages, images, [], [], processor)
     assert messages == original
-    assert result[0]["content"].count("<|image_pad|>") == 6 * 16 // divisor
+    assert result[0]["content"].count("<|image_pad|>") == 24
     assert "<image_id>0</image_id>" in result[0]["content"]
     assert "<image_id>1</image_id>" in result[0]["content"]
     assert result[0]["content"].count("<slice>") == 4
     batch = plugin.get_mm_inputs(images, [], [], [1, 1], [0, 0], [0, 0], [[1], [1]], processor)
     assert {"pixel_values", "target_sizes", "downsample_mode"} <= set(batch)
     assert batch["target_sizes"].shape == (6, 2)
-    assert batch["downsample_mode"] == (mode or "4x")
-    assert processor.image_processor.call_args.kwargs["downsample_mode"] == (mode or "4x")
+    assert batch["downsample_mode"] == "4x"
 
 
 def test_invalid_media(processor):
-    plugin = get_mm_plugin("minicpm_ocr", image_token="<|image_pad|>")
+    plugin = TEMPLATES["minicpm_ocr"].mm_plugin
     with pytest.raises(ValueError):
         plugin.process_messages([{"role": "user", "content": "<image>"}], [], [], [], processor)
     with pytest.raises(ValueError):
@@ -163,14 +158,13 @@ def test_lora_freezes_visual_modules():
     assert "MiniCPM-OCR-1.0" in SUPPORTED_MODELS
 
 
-@pytest.mark.parametrize("mode", ["4x", "16x"])
-def test_native_processor_equivalence(monkeypatch, tmp_path, mode):
+def test_native_processor_equivalence(monkeypatch, tmp_path):
     path = os.getenv("MINICPM_OCR_MODEL_PATH")
     if not path:
         pytest.skip("Set MINICPM_OCR_MODEL_PATH to test local processor assets without loading weights.")
-    monkeypatch.setenv("DOWNSAMPLE_MODE", mode)
+    monkeypatch.delenv("DOWNSAMPLE_MODE", raising=False)
     processor = AutoProcessor.from_pretrained(path, local_files_only=True)
-    plugin = get_mm_plugin("minicpm_ocr", image_token="<|image_pad|>")
+    plugin = TEMPLATES["minicpm_ocr"].mm_plugin
     images = [Image.new("RGB", (224, 112)), Image.new("RGB", (1200, 600))]
     image_path = tmp_path / "image.png"
     images[0].save(image_path)
@@ -180,12 +174,12 @@ def test_native_processor_equivalence(monkeypatch, tmp_path, mode):
     reference = processor(
         images=images,
         text="<|image_pad|>Read <|image_pad|>",
-        downsample_mode=mode,
         add_special_tokens=False,
         return_tensors="pt",
     )
     assert processor.tokenizer.encode(expanded, add_special_tokens=False) == reference["input_ids"][0].tolist()
     batch = plugin.get_mm_inputs(plugin_images, [], [], [2], [0], [0], [[1]], processor)
+    assert batch["downsample_mode"] == "4x"
     assert torch.equal(batch["target_sizes"], reference["target_sizes"])
     assert torch.equal(batch["pixel_values"], reference["pixel_values"])
 

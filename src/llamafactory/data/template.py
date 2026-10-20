@@ -1990,7 +1990,7 @@ register_template(
     stop_words=["<|im_end|>"],
     replace_eos=True,
     template_class=ReasoningTemplate,
-    mm_plugin=get_mm_plugin(name="minicpm_ocr", image_token="<|image_pad|>"),
+    mm_plugin=get_mm_plugin(name="minicpm_v_4_6", image_token="<|image_pad|>"),
 )
 
 

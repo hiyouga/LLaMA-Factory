@@ -2010,17 +2010,6 @@ class MiniCPMV4_6Plugin(BasePlugin):
 
 
 @dataclass
-class MiniCPMOcrPlugin(MiniCPMV4_6Plugin):
-    @override
-    def _get_mm_inputs(self, images, videos, audios, processor, **kwargs):
-        if not images:
-            return {}
-        image_processor = processor.image_processor
-        downsample_mode = os.getenv("DOWNSAMPLE_MODE", image_processor.downsample_mode)
-        return image_processor(images, return_tensors="pt", downsample_mode=downsample_mode)
-
-
-@dataclass
 class MllamaPlugin(BasePlugin):
     @override
     def process_messages(
@@ -3478,7 +3467,6 @@ PLUGINS = {
     "lfm2_vl": LFMVLPlugin,
     "minicpm_v": MiniCPMVPlugin,
     "minicpm_v_4_6": MiniCPMV4_6Plugin,
-    "minicpm_ocr": MiniCPMOcrPlugin,
     "mllama": MllamaPlugin,
     "moss_vl": MossVLPlugin,
     "paligemma": PaliGemmaPlugin,
