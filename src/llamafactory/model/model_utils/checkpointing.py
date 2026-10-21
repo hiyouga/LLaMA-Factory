@@ -79,14 +79,13 @@ def get_unsloth_gradient_checkpointing_func() -> Callable:
             ctx.save_for_backward(saved_hidden_states)
             ctx.forward_function = forward_function
             ctx.args = args
-            ctx.device = hidden_states.device  # keep the accelerator device (cuda/npu/supa/...)
             return outputs
 
         @staticmethod
         @torch.cuda.amp.custom_bwd
         def backward(ctx: "torch.autograd.Function", grad_output: "torch.Tensor") -> "torch.Tensor":
             (hidden_states,) = ctx.saved_tensors
-            hidden_states = hidden_states.to(ctx.device, non_blocking=True).detach()
+            hidden_states = hidden_states.to("cuda", non_blocking=True).detach()
             hidden_states.requires_grad_(True)
             with torch.enable_grad():
                 outputs = ctx.forward_function(hidden_states, *ctx.args)
@@ -203,3 +202,4 @@ def prepare_model_for_training(model: "PreTrainedModel", model_args: "ModelArgum
         if isinstance(output_layer, torch.nn.Linear) and output_layer.weight.dtype != torch.float32:
             logger.info_rank0("Upcasting lm_head outputs in float32.")
             output_layer.register_forward_hook(_fp32_forward_post_hook)
+

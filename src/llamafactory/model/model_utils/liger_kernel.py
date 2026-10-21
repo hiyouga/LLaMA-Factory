@@ -38,8 +38,7 @@ def apply_liger_kernel(
         return
 
     if get_device_name() == "supa":
-        # liger kernels are Triton/CUDA(-NPU) specific and do not run on supa.
-        logger.warning_rank0("Liger kernel is not supported on supa, skipping. Use fused supa RMSNorm instead.")
+        # liger kernels can not run on supa currently.
         return
 
     model_type = getattr(config, "model_type", None)
