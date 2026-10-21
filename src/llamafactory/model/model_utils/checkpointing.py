@@ -202,4 +202,3 @@ def prepare_model_for_training(model: "PreTrainedModel", model_args: "ModelArgum
         if isinstance(output_layer, torch.nn.Linear) and output_layer.weight.dtype != torch.float32:
             logger.info_rank0("Upcasting lm_head outputs in float32.")
             output_layer.register_forward_hook(_fp32_forward_post_hook)
-
