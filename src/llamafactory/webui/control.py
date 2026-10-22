@@ -164,17 +164,21 @@ def _is_checkpoint_dir(path: str) -> bool:
 
 
 def _checkpoint_sort_key(checkpoint: str) -> tuple[str, int, int, str]:
-    r"""Order checkpoints by step number so that checkpoint-200 precedes checkpoint-1000.
+    r"""Order the checkpoint dropdown so that each nested checkpoint sits under its own run.
 
-    Only a `checkpoint-<step>` name carries a step. Any other name, such as a run dir named after its start time,
-    sorts lexicographically after the numbered ones within its parent.
+    Runs are ordered by ascending name, and timestamped names are chronological. Within a run, the run's own entry
+    (its final save) comes first, then its `checkpoint-<step>` entries in numeric step order, then any other nested
+    name in string order. Each position of the key has one fixed type, so an int is never compared with a str.
     """
     parent, name = os.path.split(checkpoint)
+    if not parent:
+        return (name, 0, 0, "")
+
     match = re.fullmatch(r"checkpoint-(\d+)", name)
     if match:
-        return (parent, 0, int(match.group(1)), "")
+        return (parent, 1, int(match.group(1)), name)
 
-    return (parent, 1, 0, name)
+    return (parent, 2, 0, name)
 
 
 def list_checkpoints(model_name: str, finetuning_type: str) -> "gr.Dropdown":

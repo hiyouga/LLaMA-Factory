@@ -186,3 +186,51 @@ def test_list_checkpoints_lists_intermediate_saves_of_a_finished_run(tmp_path, m
         "train_run",
         os.path.join("train_run", "checkpoint-100"),
     ]
+
+
+def test_list_checkpoints_keeps_nested_checkpoints_under_their_run(tmp_path, monkeypatch):
+    r"""A newer run must not sort between an older run and its own checkpoints (see #9766)."""
+    monkeypatch.setattr(webui_common, "DEFAULT_SAVE_DIR", str(tmp_path))
+
+    save_dir = tmp_path / "mymodel" / "lora"
+    older_run = "train_2026-08-29-12-00-05"
+    (save_dir / older_run).mkdir(parents=True)
+    (save_dir / older_run / "adapter_model.safetensors").touch()
+    for step in (100, 200):
+        (save_dir / older_run / f"checkpoint-{step}").mkdir()
+        (save_dir / older_run / f"checkpoint-{step}" / "adapter_model.safetensors").touch()
+
+    newer_run = "train_2026-08-30-09-00-00"
+    (save_dir / newer_run).mkdir(parents=True)
+    (save_dir / newer_run / "adapter_model.safetensors").touch()
+    (save_dir / newer_run / "checkpoint-50").mkdir()
+    (save_dir / newer_run / "checkpoint-50" / "adapter_model.safetensors").touch()
+
+    result = list_checkpoints("mymodel", "lora")
+    assert [value for _, value in result.choices] == [
+        older_run,
+        os.path.join(older_run, "checkpoint-100"),
+        os.path.join(older_run, "checkpoint-200"),
+        newer_run,
+        os.path.join(newer_run, "checkpoint-50"),
+    ]
+
+
+def test_list_checkpoints_orders_other_nested_names_after_numbered_steps(tmp_path, monkeypatch):
+    r"""A nested name without a step, such as `best`, follows the numbered checkpoints of its run, in string order."""
+    monkeypatch.setattr(webui_common, "DEFAULT_SAVE_DIR", str(tmp_path))
+
+    run_dir = tmp_path / "mymodel" / "lora" / "train_run"
+    run_dir.mkdir(parents=True)
+    (run_dir / "adapter_model.safetensors").touch()
+    for name in ("best", "checkpoint-100", "checkpoint-20"):
+        (run_dir / name).mkdir()
+        (run_dir / name / "adapter_model.safetensors").touch()
+
+    result = list_checkpoints("mymodel", "lora")
+    assert [value for _, value in result.choices] == [
+        "train_run",
+        os.path.join("train_run", "checkpoint-20"),
+        os.path.join("train_run", "checkpoint-100"),
+        os.path.join("train_run", "best"),
+    ]
