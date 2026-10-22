@@ -64,7 +64,7 @@ def test_ocr_accumulation_matches_token_weighted_cross_entropy(tmp_path):
         {"input_ids": torch.tensor([[1, 2, 3]]), "labels": torch.tensor([[-100, -100, 2]])},
         {"input_ids": torch.tensor([[4, 5, 6, 7, 8]]), "labels": torch.tensor([[-100, -100, 1, 2, 3]])},
     ]
-    count = trainer._get_num_items_in_batch(batches, torch.device("cpu"))
+    batches, count = trainer.get_batch_samples(iter(batches), len(batches), torch.device("cpu"))
     assert count.item() == 4
     trainer.current_gradient_accumulation_steps = 2
     trainer.create_optimizer()
