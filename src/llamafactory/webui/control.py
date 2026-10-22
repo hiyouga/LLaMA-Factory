@@ -211,6 +211,20 @@ def list_checkpoints(model_name: str, finetuning_type: str) -> "gr.Dropdown":
         return gr.Dropdown(value=None, choices=checkpoints, multiselect=False)
 
 
+def get_checkpoint_dir(model_name: str, finetuning_type: str, checkpoint: str) -> os.PathLike:
+    r"""Get the path to a checkpoint picked from the checkpoint dropdown.
+
+    A value naming a checkpoint directory under the save dir, as list_checkpoints lists it (`<run_dir>` or
+    `<run_dir>/checkpoint-<step>`), resolves there. Anything else resolves as get_save_dir resolves it, so a
+    user-typed relative path still resolves against the cwd and an absolute path still bypasses the save dir.
+    """
+    save_dir = get_save_dir(model_name, finetuning_type)
+    if _is_checkpoint_dir(os.path.join(save_dir, checkpoint)):
+        return os.path.join(save_dir, checkpoint)
+
+    return get_save_dir(model_name, finetuning_type, checkpoint)
+
+
 def list_config_paths(current_time: str) -> "gr.Dropdown":
     r"""List all the saved configuration files.
 

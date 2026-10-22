@@ -15,7 +15,7 @@
 import os
 
 from llamafactory.webui import common as webui_common
-from llamafactory.webui.control import list_checkpoints
+from llamafactory.webui.control import get_checkpoint_dir, list_checkpoints
 
 
 def test_list_checkpoints_finds_nested_and_top_level(tmp_path, monkeypatch):
@@ -52,12 +52,15 @@ def test_list_checkpoints_no_save_dir_returns_empty(tmp_path, monkeypatch):
     assert result.choices == []
 
 
-def test_get_save_dir_resolves_nested_checkpoint(monkeypatch):
-    r"""A nested checkpoint value returned by list_checkpoints must still resolve under the save dir."""
-    monkeypatch.setattr(webui_common, "DEFAULT_SAVE_DIR", "saves")
+def test_get_checkpoint_dir_resolves_nested_checkpoint(tmp_path, monkeypatch):
+    r"""A nested checkpoint picked from the dropdown must resolve under the save dir (see #9766)."""
+    monkeypatch.setattr(webui_common, "DEFAULT_SAVE_DIR", str(tmp_path))
+    checkpoint_dir = tmp_path / "mymodel" / "lora" / "train_interrupted" / "checkpoint-100"
+    checkpoint_dir.mkdir(parents=True)
+    (checkpoint_dir / "adapter_model.safetensors").touch()
+
     nested = os.path.join("train_interrupted", "checkpoint-100")
-    expected = os.path.join("saves", "mymodel", "lora", "train_interrupted", "checkpoint-100")
-    assert str(webui_common.get_save_dir("mymodel", "lora", nested)) == expected
+    assert get_checkpoint_dir("mymodel", "lora", nested) == str(checkpoint_dir)
 
 
 def test_get_save_dir_still_bypasses_for_absolute_custom_path(monkeypatch):
@@ -65,6 +68,50 @@ def test_get_save_dir_still_bypasses_for_absolute_custom_path(monkeypatch):
     monkeypatch.setattr(webui_common, "DEFAULT_SAVE_DIR", "saves")
     absolute_path = os.path.abspath(os.path.join(os.sep, "abs", "custom", "path"))
     assert webui_common.get_save_dir("mymodel", "lora", absolute_path) == absolute_path
+
+
+def test_get_save_dir_keeps_relative_custom_path_against_cwd(monkeypatch):
+    r"""A user-typed relative output_dir such as my/custom/dir keeps resolving against the cwd, as it always has."""
+    monkeypatch.setattr(webui_common, "DEFAULT_SAVE_DIR", "saves")
+    custom_path = os.path.join("my", "custom", "dir")
+    assert webui_common.get_save_dir("mymodel", "lora", custom_path) == custom_path
+
+
+def test_get_checkpoint_dir_keeps_typed_relative_path_against_cwd(tmp_path, monkeypatch):
+    r"""A relative path typed into the checkpoint dropdown keeps resolving against the cwd unless it names a checkpoint."""
+    monkeypatch.setattr(webui_common, "DEFAULT_SAVE_DIR", str(tmp_path))
+    (tmp_path / "mymodel" / "lora" / "train_run" / "notes").mkdir(parents=True)
+
+    typed = os.path.join("my", "custom", "adapter")
+    assert get_checkpoint_dir("mymodel", "lora", typed) == typed
+
+    # exists under the save dir, but holds no checkpoint, so it is not a dropdown value
+    not_a_checkpoint = os.path.join("train_run", "notes")
+    assert get_checkpoint_dir("mymodel", "lora", not_a_checkpoint) == not_a_checkpoint
+
+
+def test_get_checkpoint_dir_still_bypasses_for_absolute_path(tmp_path, monkeypatch):
+    r"""An absolute path typed into the checkpoint dropdown still bypasses the save dir."""
+    monkeypatch.setattr(webui_common, "DEFAULT_SAVE_DIR", str(tmp_path))
+    absolute_path = os.path.abspath(os.path.join(os.sep, "abs", "custom", "path"))
+    assert get_checkpoint_dir("mymodel", "lora", absolute_path) == absolute_path
+
+
+def test_get_checkpoint_dir_resolves_every_listed_choice(tmp_path, monkeypatch):
+    r"""Every value list_checkpoints offers must resolve to a checkpoint that exists."""
+    monkeypatch.setattr(webui_common, "DEFAULT_SAVE_DIR", str(tmp_path))
+
+    save_dir = tmp_path / "mymodel" / "lora"
+    (save_dir / "train_completed").mkdir(parents=True)
+    (save_dir / "train_completed" / "adapter_model.safetensors").touch()
+    (save_dir / "train_interrupted" / "checkpoint-100").mkdir(parents=True)
+    (save_dir / "train_interrupted" / "checkpoint-100" / "adapter_model.safetensors").touch()
+
+    choices = [value for _, value in list_checkpoints("mymodel", "lora").choices]
+    assert len(choices) == 2
+    for value in choices:
+        resolved = get_checkpoint_dir("mymodel", "lora", value)
+        assert os.path.isfile(os.path.join(resolved, "adapter_model.safetensors"))
 
 
 def test_list_checkpoints_sorts_by_step_number(tmp_path, monkeypatch):
