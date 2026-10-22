@@ -164,12 +164,13 @@ def _is_checkpoint_dir(path: str) -> bool:
 
 
 def _checkpoint_sort_key(checkpoint: str) -> tuple[str, int, int, str]:
-    r"""Order checkpoints by trailing step number so that checkpoint-200 precedes checkpoint-1000.
+    r"""Order checkpoints by step number so that checkpoint-200 precedes checkpoint-1000.
 
-    Names without a trailing step fall back to a lexicographic sort, after the numbered ones.
+    Only a `checkpoint-<step>` name carries a step. Any other name, such as a run dir named after its start time,
+    sorts lexicographically after the numbered ones within its parent.
     """
     parent, name = os.path.split(checkpoint)
-    match = re.search(r"-(\d+)$", name)
+    match = re.fullmatch(r"checkpoint-(\d+)", name)
     if match:
         return (parent, 0, int(match.group(1)), "")
 

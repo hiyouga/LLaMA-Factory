@@ -158,6 +158,19 @@ def test_list_checkpoints_ignores_unrelated_dirs(tmp_path, monkeypatch):
     assert [value for _, value in result.choices] == ["train_run"]
 
 
+def test_list_checkpoints_keeps_timestamped_runs_in_chronological_order(tmp_path, monkeypatch):
+    r"""Default run dirs end in a timestamp, whose trailing seconds must not be read as a checkpoint step."""
+    monkeypatch.setattr(webui_common, "DEFAULT_SAVE_DIR", str(tmp_path))
+
+    save_dir = tmp_path / "mymodel" / "lora"
+    for run_name in ("train_2026-08-29-12-00-05", "train_2026-08-30-09-00-00"):
+        (save_dir / run_name).mkdir(parents=True)
+        (save_dir / run_name / "adapter_model.safetensors").touch()
+
+    result = list_checkpoints("mymodel", "lora")
+    assert [value for _, value in result.choices] == ["train_2026-08-29-12-00-05", "train_2026-08-30-09-00-00"]
+
+
 def test_list_checkpoints_lists_intermediate_saves_of_a_finished_run(tmp_path, monkeypatch):
     r"""A finished run keeps its intermediate checkpoints selectable alongside its final save."""
     monkeypatch.setattr(webui_common, "DEFAULT_SAVE_DIR", str(tmp_path))
